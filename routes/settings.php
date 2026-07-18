@@ -32,3 +32,8 @@ Route::get('.well-known/passkey-endpoints', function () {
         'manage' => route('security.edit'),
     ]);
 })->name('well-known.passkeys');
+
+Route::middleware(['auth'])->group(function () {
+    Route::inertia('settings/preferences', 'settings/Preferences')->name('preferences.edit');
+    Route::inertia('settings/notifications', 'settings/Notifications')->name('notifications.edit');
+});
