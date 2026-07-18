@@ -6,11 +6,13 @@ use Illuminate\Validation\Rule;
 
 trait ProfileValidationRules
 {
-    protected function profileRules(string $userId): array
+    protected function profileRules(?string $userId = null): array
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($userId)],
+            'email' => ['required', 'string', 'email', 'max:255',
+                $userId ? Rule::unique('users')->ignore($userId) : Rule::unique('users'),
+            ],
         ];
     }
 }

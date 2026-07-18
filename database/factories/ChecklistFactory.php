@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Checklist;
-use App\Models\TodoFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ChecklistFactory extends Factory

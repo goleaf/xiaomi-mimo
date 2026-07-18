@@ -4,8 +4,6 @@ namespace Database\Factories;
 
 use App\Enums\ReminderType;
 use App\Models\Reminder;
-use App\Models\TodoFactory;
-use App\Models\UserFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ReminderFactory extends Factory

@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\ActivityLog;
-use App\Models\UserFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ActivityLogFactory extends Factory

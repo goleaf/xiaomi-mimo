@@ -3,8 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Attachment;
-use App\Models\TodoFactory;
-use App\Models\UserFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class AttachmentFactory extends Factory

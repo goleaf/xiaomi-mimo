@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\ChecklistFactory;
 use App\Models\ChecklistItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
