@@ -37,3 +37,8 @@ Route::middleware(['auth'])->group(function () {
     Route::inertia('settings/preferences', 'settings/Preferences')->name('preferences.edit');
     Route::inertia('settings/notifications', 'settings/Notifications')->name('notifications.edit');
 });
+
+Route::middleware(['auth'])->group(function () {
+    Route::inertia('settings/backup', 'settings/Backup')->name('backup.edit');
+    Route::inertia('settings/members', 'settings/Members')->name('members.edit');
+});
