@@ -1,4 +1,5 @@
 import { createInertiaApp } from '@inertiajs/vue3';
+import { createPinia } from 'pinia';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
@@ -9,6 +10,13 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
+    setup({ el, App, props, plugin }) {
+        const pinia = createPinia();
+        window.Vue.createApp({ render: () => window.Vue.h(App, props) })
+            .use(plugin)
+            .use(pinia)
+            .mount(el);
+    },
     layout: (name) => {
         switch (true) {
             case name === 'Welcome':
@@ -26,8 +34,5 @@ createInertiaApp({
     },
 });
 
-// This will set light / dark mode on page load...
 initializeTheme();
-
-// This will listen for flash toast data from the server...
 initializeFlashToast();

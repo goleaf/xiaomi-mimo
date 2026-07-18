@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Models;
+
+use App\Concerns\HasUuid;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
+class Label extends Model
+{
+    use HasUuid;
+
+    protected $fillable = ['workspace_id', 'name', 'color'];
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    public function todos(): BelongsToMany
+    {
+        return $this->belongsToMany(Todo::class);
+    }
+}
