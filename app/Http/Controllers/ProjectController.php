@@ -24,7 +24,6 @@ class ProjectController extends Controller
 
         $projects = $workspace->projects()
             ->withCount('todos')
-            ->with('todos', fn ($q) => $q->select('id', 'project_id', 'status')->limit(100))
             ->get();
 
         return Inertia::render('projects/Index', [
@@ -37,18 +36,22 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->loadCount('todos');
+        $todos = $project->todos()
+            ->with(['assignee', 'labels', 'tags'])
+            ->active()
+            ->orderBy('position')
+            ->get();
 
         return Inertia::render('projects/Show', [
             'project' => new ProjectResource($project),
-            'workspace' => $workspace,
+            'todos' => $todos,
+            'workspace' => ['id' => $workspace->id],
         ]);
     }
 
     public function store(StoreProjectRequest $request, Workspace $workspace, CreateProject $action): JsonResponse
     {
         $this->authorize('create', [Project::class, $workspace]);
-
         $project = $action->handle($workspace, $request->validated());
 
         return response()->json(['project' => new ProjectResource($project)], 201);

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ChecklistController;
+use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\LabelController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\TagController;
@@ -39,6 +41,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/tasks/{todo}', [TodoController::class, 'destroy']);
     Route::post('/tasks/{todo}/complete', [TodoController::class, 'complete']);
     Route::post('/tasks/{todo}/uncomplete', [TodoController::class, 'uncomplete']);
+
+    // Comments
+    Route::get('/tasks/{todo}/comments', [CommentController::class, 'index']);
+    Route::post('/tasks/{todo}/comments', [CommentController::class, 'store']);
+    Route::put('/comments/{comment}', [CommentController::class, 'update']);
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+
+    // Checklists
+    Route::get('/tasks/{todo}/checklists', [ChecklistController::class, 'index']);
+    Route::post('/tasks/{todo}/checklists', [ChecklistController::class, 'store']);
+    Route::post('/checklists/{checklist}/items', [ChecklistController::class, 'storeItem']);
+    Route::patch('/checklist-items/{item}/toggle', [ChecklistController::class, 'toggleItem']);
 
     // Labels
     Route::get('/workspaces/{workspace}/labels', [LabelController::class, 'index']);
