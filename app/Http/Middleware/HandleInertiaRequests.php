@@ -27,6 +27,7 @@ class HandleInertiaRequests extends Middleware
             'currentWorkspace' => fn () => $user
                 ? $user->workspaces()->withCount(['projects', 'todos'])->first()
                 : null,
+            'preferences' => fn () => $user?->preferences,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

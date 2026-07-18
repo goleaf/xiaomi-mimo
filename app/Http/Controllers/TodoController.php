@@ -33,7 +33,7 @@ class TodoController extends Controller
         private TodoSortService $sortService,
     ) {}
 
-    public function index(Request $request, Workspace $workspace): Response
+    public function index(Request $request, Workspace $workspace): Response|JsonResponse
     {
         $this->authorize('view', $workspace);
 
@@ -51,28 +51,38 @@ class TodoController extends Controller
 
         $todos = $query->paginate($request->get('per_page', 50));
 
+        if ($request->expectsJson()) {
+            return response()->json(TodoResource::collection($todos));
+        }
+
         return Inertia::render('tasks/Index', [
             'todos' => TodoResource::collection($todos),
             'filters' => $request->only(['search', 'project_id', 'status', 'priority']),
+            'projects' => $workspace->projects()->active()->get(),
+            'workspace' => ['id' => $workspace->id],
         ]);
     }
 
     public function store(StoreTodoRequest $request, Workspace $workspace, CreateTodo $action): JsonResponse
     {
         $this->authorize('create', [Todo::class, $workspace]);
-
         $todo = $action->handle($workspace, $request->validated(), $request->user()->id);
 
         return response()->json(['todo' => new TodoResource($todo)], 201);
     }
 
-    public function show(Todo $todo): JsonResponse
+    public function show(Todo $todo): Response|JsonResponse
     {
         $this->authorize('view', $todo);
-
         $todo->load(['project', 'assignee', 'labels', 'tags', 'comments.user', 'checklists.items', 'attachments.user', 'reminders', 'subtasks']);
 
-        return response()->json(['todo' => new TodoResource($todo)]);
+        if (request()->expectsJson()) {
+            return response()->json(['todo' => new TodoResource($todo)]);
+        }
+
+        return Inertia::render('tasks/Show', [
+            'todo' => new TodoResource($todo),
+        ]);
     }
 
     public function update(UpdateTodoRequest $request, Todo $todo, UpdateTodo $action): JsonResponse

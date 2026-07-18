@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Settings\BackupController;
+use App\Http\Controllers\Settings\ExportController;
+use App\Http\Controllers\Settings\MembersController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -10,6 +13,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::inertia('settings/appearance', 'settings/Appearance')->name('appearance.edit');
+    Route::inertia('settings/preferences', 'settings/Preferences')->name('preferences.edit');
+    Route::inertia('settings/notifications', 'settings/Notifications')->name('notifications.edit');
+    Route::get('settings/backup', [BackupController::class, 'edit'])->name('backup.edit');
+    Route::get('settings/export', [ExportController::class, 'edit'])->name('export.edit');
+    Route::get('settings/members', [MembersController::class, 'edit'])->name('members.edit');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -22,8 +31,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('settings/password', [SecurityController::class, 'update'])
         ->middleware('throttle:6,1')
         ->name('user-password.update');
-
-    Route::inertia('settings/appearance', 'settings/Appearance')->name('appearance.edit');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {
@@ -32,13 +39,3 @@ Route::get('.well-known/passkey-endpoints', function () {
         'manage' => route('security.edit'),
     ]);
 })->name('well-known.passkeys');
-
-Route::middleware(['auth'])->group(function () {
-    Route::inertia('settings/preferences', 'settings/Preferences')->name('preferences.edit');
-    Route::inertia('settings/notifications', 'settings/Notifications')->name('notifications.edit');
-});
-
-Route::middleware(['auth'])->group(function () {
-    Route::inertia('settings/backup', 'settings/Backup')->name('backup.edit');
-    Route::inertia('settings/members', 'settings/Members')->name('members.edit');
-});
