@@ -1,4 +1,4 @@
-<script setup lang="ts";
+<script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
