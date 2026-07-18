@@ -46,6 +46,7 @@ class WorkspaceController extends Controller
 
     public function destroy(Workspace $workspace, DeleteWorkspace $action): JsonResponse
     {
+        $this->authorize('delete', $workspace);
         $action->handle($workspace);
 
         return response()->json(null, 204);

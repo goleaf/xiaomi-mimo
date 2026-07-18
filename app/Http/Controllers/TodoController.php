@@ -41,7 +41,7 @@ class TodoController extends Controller
             ->with(['project', 'assignee', 'labels', 'tags'])
             ->active();
 
-        $query = $this->filterService->apply($query, $request->only([
+        $query = $this->filterService->apply($query->getQuery(), $request->only([
             'search', 'project_id', 'status', 'priority', 'assigned_to',
             'label_id', 'tag_id', 'is_pinned', 'is_favorite',
             'due_date_from', 'due_date_to', 'overdue', 'completed_today',
@@ -77,6 +77,7 @@ class TodoController extends Controller
 
     public function update(UpdateTodoRequest $request, Todo $todo, UpdateTodo $action): JsonResponse
     {
+        $this->authorize('update', $todo);
         $todo = $action->handle($todo, $request->validated());
 
         return response()->json(['todo' => new TodoResource($todo)]);

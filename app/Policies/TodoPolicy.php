@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Todo;
 use App\Models\User;
+use App\Models\Workspace;
 
 class TodoPolicy
 {
@@ -12,9 +13,9 @@ class TodoPolicy
         return $todo->workspace->hasMember($user);
     }
 
-    public function create(User $user, Todo $todo): bool
+    public function create(User $user, Workspace $workspace): bool
     {
-        return $todo->workspace->hasMember($user);
+        return $workspace->hasMember($user);
     }
 
     public function update(User $user, Todo $todo): bool

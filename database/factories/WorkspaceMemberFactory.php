@@ -2,9 +2,10 @@
 
 namespace Database\Factories;
 
+
 use App\Enums\WorkspaceRole;
 use App\Models\UserFactory;
-use App\Models\WorkspaceFactory;
+use Database\Factories\WorkspaceFactory;
 use App\Models\WorkspaceMember;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

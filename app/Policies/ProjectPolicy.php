@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Project;
 use App\Models\User;
+use App\Models\Workspace;
 
 class ProjectPolicy
 {
@@ -12,9 +13,9 @@ class ProjectPolicy
         return $project->workspace->hasMember($user);
     }
 
-    public function create(User $user, Project $project): bool
+    public function create(User $user, Workspace $workspace): bool
     {
-        return $project->workspace->hasMember($user);
+        return $workspace->hasMember($user);
     }
 
     public function update(User $user, Project $project): bool

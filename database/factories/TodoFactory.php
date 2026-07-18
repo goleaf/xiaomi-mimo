@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+
 use App\Enums\TodoPriority;
 use App\Enums\TodoStatus;
 use App\Models\Todo;
-use App\Models\WorkspaceFactory;
+use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

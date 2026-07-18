@@ -109,12 +109,12 @@ class Todo extends Model
 
     public function labels(): BelongsToMany
     {
-        return $this->belongsToMany(Label::class);
+        return $this->belongsToMany(Label::class, 'todo_label');
     }
 
     public function tags(): BelongsToMany
     {
-        return $this->belongsToMany(Tag::class);
+        return $this->belongsToMany(Tag::class, 'todo_tag');
     }
 
     public function activityLogs(): HasMany

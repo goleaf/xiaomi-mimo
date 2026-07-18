@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Comment;
+use App\Models\Todo;
 use App\Models\User;
 
 class CommentPolicy
@@ -12,9 +13,9 @@ class CommentPolicy
         return $comment->todo->workspace->hasMember($user);
     }
 
-    public function create(User $user, Comment $comment): bool
+    public function create(User $user, Todo $todo): bool
     {
-        return $comment->todo->workspace->hasMember($user);
+        return $todo->workspace->hasMember($user);
     }
 
     public function update(User $user, Comment $comment): bool

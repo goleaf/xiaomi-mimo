@@ -20,6 +20,6 @@ class Tag extends Model
 
     public function todos(): BelongsToMany
     {
-        return $this->belongsToMany(Todo::class);
+        return $this->belongsToMany(Todo::class, 'todo_tag');
     }
 }
