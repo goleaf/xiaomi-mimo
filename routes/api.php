@@ -1,8 +1,54 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\LabelController;
+use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\TagController;
+use App\Http\Controllers\Api\TodoController;
+use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+// Auth
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/register', [AuthController::class, 'register']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn (Request $request) => $request->user());
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+    // Workspaces
+    Route::get('/workspaces', [WorkspaceController::class, 'index']);
+    Route::post('/workspaces', [WorkspaceController::class, 'store']);
+    Route::get('/workspaces/{workspace}', [WorkspaceController::class, 'show']);
+    Route::put('/workspaces/{workspace}', [WorkspaceController::class, 'update']);
+    Route::delete('/workspaces/{workspace}', [WorkspaceController::class, 'destroy']);
+
+    // Projects
+    Route::get('/workspaces/{workspace}/projects', [ProjectController::class, 'index']);
+    Route::post('/workspaces/{workspace}/projects', [ProjectController::class, 'store']);
+    Route::get('/projects/{project}', [ProjectController::class, 'show']);
+    Route::put('/projects/{project}', [ProjectController::class, 'update']);
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
+
+    // Todos
+    Route::get('/workspaces/{workspace}/tasks', [TodoController::class, 'index']);
+    Route::post('/workspaces/{workspace}/tasks', [TodoController::class, 'store']);
+    Route::get('/tasks/{todo}', [TodoController::class, 'show']);
+    Route::put('/tasks/{todo}', [TodoController::class, 'update']);
+    Route::delete('/tasks/{todo}', [TodoController::class, 'destroy']);
+    Route::post('/tasks/{todo}/complete', [TodoController::class, 'complete']);
+    Route::post('/tasks/{todo}/uncomplete', [TodoController::class, 'uncomplete']);
+
+    // Labels
+    Route::get('/workspaces/{workspace}/labels', [LabelController::class, 'index']);
+    Route::post('/workspaces/{workspace}/labels', [LabelController::class, 'store']);
+    Route::put('/labels/{label}', [LabelController::class, 'update']);
+    Route::delete('/labels/{label}', [LabelController::class, 'destroy']);
+
+    // Tags
+    Route::get('/workspaces/{workspace}/tags', [TagController::class, 'index']);
+    Route::post('/workspaces/{workspace}/tags', [TagController::class, 'store']);
+    Route::put('/tags/{tag}', [TagController::class, 'update']);
+    Route::delete('/tags/{tag}', [TagController::class, 'destroy']);
 });
