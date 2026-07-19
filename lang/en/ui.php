@@ -35,7 +35,10 @@ return [
             'dashboard' => 'Dashboard',
             'documentation' => 'Documentation',
             'menu' => 'Navigation menu',
+            'more' => 'More',
             'repository' => 'Repository',
+            'sidebar' => 'Sidebar',
+            'sidebar_description' => 'Displays the mobile sidebar.',
             'toggle_sidebar' => 'Toggle sidebar',
         ],
         'states' => [
@@ -46,6 +49,8 @@ return [
             'unknown' => 'Unknown',
         ],
         'toast' => [
+            'close' => 'Close notification',
+            'notifications' => 'Notifications',
             'undo' => 'Undo',
         ],
     ],

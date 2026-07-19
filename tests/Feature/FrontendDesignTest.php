@@ -191,12 +191,69 @@ test('shared navigation feedback uses localized labels and the projects orange a
         ->toContain("t('common.states.loading')")
         ->and(File::get(resource_path('js/components/ui/breadcrumb/Breadcrumb.vue')))
         ->toContain("t('common.navigation.breadcrumb')")
+        ->and(File::get(resource_path('js/components/ui/breadcrumb/BreadcrumbEllipsis.vue')))
+        ->toContain("t('common.navigation.more')")
+        ->and(File::get(resource_path('js/components/ui/sidebar/SidebarTrigger.vue')))
+        ->toContain("t('common.navigation.toggle_sidebar')")
         ->and(File::get(resource_path('js/components/ui/sidebar/SidebarRail.vue')))
         ->toContain("t('common.navigation.toggle_sidebar')")
         ->toContain('hover:after:bg-orange-500')
         ->and(File::get(resource_path('js/components/UserInfo.vue')))
         ->toContain('bg-orange-500/10')
         ->toContain('text-orange-800');
+});
+
+test('shared transient surfaces use the warm precision interaction contract', function () {
+    expect(File::get(resource_path('js/components/ui/dropdown-menu/DropdownMenuContent.vue')))
+        ->toContain('rounded-xl')
+        ->toContain('border-border/80')
+        ->toContain('motion-reduce:data-[state=open]:animate-none')
+        ->and(File::get(resource_path('js/components/ui/dropdown-menu/DropdownMenuItem.vue')))
+        ->toContain('min-h-10')
+        ->toContain('focus:bg-orange-500/10')
+        ->and(File::get(resource_path('js/components/ui/select/SelectContent.vue')))
+        ->toContain('rounded-xl')
+        ->toContain('border-border/80')
+        ->and(File::get(resource_path('js/components/ui/select/SelectItem.vue')))
+        ->toContain('min-h-10')
+        ->toContain('focus:bg-orange-500/10')
+        ->toContain('text-orange-600')
+        ->and(File::get(resource_path('js/components/ui/tooltip/TooltipContent.vue')))
+        ->toContain('rounded-lg')
+        ->toContain('border-orange-500/15')
+        ->toContain('motion-reduce:animate-none');
+});
+
+test('shared overlays and feedback surfaces use warm focus and reduced motion', function () {
+    expect(File::get(resource_path('js/components/ui/dialog/DialogContent.vue')))
+        ->toContain('bg-card')
+        ->toContain('focus-visible:ring-orange-500')
+        ->toContain("t('common.actions.close')")
+        ->and(File::get(resource_path('js/components/ui/dialog/DialogOverlay.vue')))
+        ->toContain('bg-black/65')
+        ->toContain('backdrop-blur-[2px]')
+        ->toContain('motion-reduce:data-[state=open]:animate-none')
+        ->and(File::get(resource_path('js/components/ui/sheet/SheetContent.vue')))
+        ->toContain('bg-card')
+        ->toContain('focus-visible:ring-orange-500')
+        ->toContain("closeLabel ?? t('common.actions.close')")
+        ->and(File::get(resource_path('js/components/ui/sheet/SheetOverlay.vue')))
+        ->toContain('bg-black/65')
+        ->toContain('backdrop-blur-[2px]')
+        ->and(File::get(resource_path('js/components/ui/sonner/Sonner.vue')))
+        ->toContain('resolvedAppearance')
+        ->toContain('0 24px 70px -36px')
+        ->toContain('motion-reduce:animate-none');
+});
+
+test('shared transient accessibility copy uses semantic translations', function () {
+    expect(File::get(resource_path('js/components/ui/sidebar/Sidebar.vue')))
+        ->toContain("t('common.navigation.sidebar')")
+        ->toContain("t('common.navigation.sidebar_description')")
+        ->not->toContain('<SheetTitle>Sidebar</SheetTitle>')
+        ->and(File::get(resource_path('js/components/ui/sonner/Sonner.vue')))
+        ->toContain("t('common.toast.notifications')")
+        ->toContain('t("common.toast.close")');
 });
 
 test('shared interaction accessibility copy exists in every supported language', function (string $locale) {
@@ -208,6 +265,15 @@ test('shared interaction accessibility copy exists in every supported language',
         ->and(data_get($copy, 'common.navigation.toggle_sidebar'))
         ->toBeString()
         ->not->toBeEmpty()
+        ->and(data_get($copy, 'common.navigation.more'))
+        ->toBeString()
+        ->not->toBeEmpty()
+        ->and(data_get($copy, 'common.navigation.sidebar'))
+        ->toBeString()
+        ->not->toBeEmpty()
+        ->and(data_get($copy, 'common.navigation.sidebar_description'))
+        ->toBeString()
+        ->not->toBeEmpty()
         ->and(data_get($copy, 'common.states.loading'))
         ->toBeString()
         ->not->toBeEmpty()
@@ -215,6 +281,12 @@ test('shared interaction accessibility copy exists in every supported language',
         ->toBeString()
         ->not->toBeEmpty()
         ->and(data_get($copy, 'auth.common.hide_password'))
+        ->toBeString()
+        ->not->toBeEmpty()
+        ->and(data_get($copy, 'common.toast.close'))
+        ->toBeString()
+        ->not->toBeEmpty()
+        ->and(data_get($copy, 'common.toast.notifications'))
         ->toBeString()
         ->not->toBeEmpty();
 })->with(['en', 'lt', 'ru']);

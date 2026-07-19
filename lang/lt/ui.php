@@ -35,7 +35,10 @@ return [
             'dashboard' => 'Apžvalga',
             'documentation' => 'Dokumentacija',
             'menu' => 'Naršymo meniu',
+            'more' => 'Daugiau',
             'repository' => 'Saugykla',
+            'sidebar' => 'Šoninė juosta',
+            'sidebar_description' => 'Rodo mobiliąją šoninę juostą.',
             'toggle_sidebar' => 'Perjungti šoninę juostą',
         ],
         'states' => [
@@ -46,6 +49,8 @@ return [
             'unknown' => 'Nežinomas',
         ],
         'toast' => [
+            'close' => 'Uždaryti pranešimą',
+            'notifications' => 'Pranešimai',
             'undo' => 'Atšaukti veiksmą',
         ],
     ],
