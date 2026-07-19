@@ -234,7 +234,7 @@ return [
 
     'android' => [
         'compile_sdk' => (int) env('NATIVEPHP_ANDROID_COMPILE_SDK', 36),
-        'min_sdk' => (int) env('NATIVEPHP_ANDROID_MIN_SDK', 33),
+        'min_sdk' => (int) env('NATIVEPHP_ANDROID_MIN_SDK', 31),
         'target_sdk' => (int) env('NATIVEPHP_ANDROID_TARGET_SDK', 36),
         'gradle_jdk_path' => env('NATIVEPHP_GRADLE_PATH'),
         'android_sdk_path' => env('NATIVEPHP_ANDROID_SDK_LOCATION'),

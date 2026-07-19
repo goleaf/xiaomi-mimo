@@ -1894,3 +1894,53 @@ No functional limitation remains in the audited interaction surfaces. Laravel's 
 - Implementation commit: `abf8312` (`fix: align interactive workspace surfaces`).
 - Implementation push: successful to `origin/main`.
 - Documentation commit and push: pending this record update.
+
+## Android 12 Native Runtime Compatibility
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Reproduce the Android 12 support mismatch through the NativePHP build configuration before changing application behavior.
+- Keep compile and target SDK 36 while lowering only the minimum supported Android SDK to API 31.
+- Preserve the existing settings UI and routing because the audited settings code contains no Android-specific native call.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Changed Files
+
+- `config/nativephp.php`
+- `.env.example`
+- `tests/Feature/NativePhpMobileTest.php`
+- `docs/progress.md`
+
+The ignored local `.env` minimum SDK override was also aligned to API 31 so local Android builds use the repaired contract.
+
+### Verification
+
+- TDD red phase: the Android 12 compatibility test failed as expected because the configured minimum SDK was 33 instead of 31.
+- `php artisan test --compact tests/Feature/NativePhpMobileTest.php`: passed, 19 tests and 308 assertions.
+- `npm run build:android`: passed after transforming 3,362 modules.
+- NativePHP 3.3.6 debug APK assembly: passed; Gradle completed all 40 tasks successfully.
+- Generated APK manifest inspection: confirmed `sdkVersion: 31`, `targetSdkVersion: 36`, and application ID `com.goleaf.xiaomimimo`.
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `php artisan test --compact`: passed, 332 tests and 1,442 assertions.
+- `vendor/bin/phpstan analyse --no-progress`: passed with zero errors.
+- `npm run test:frontend`: passed, 1 test.
+- `npm run types:check`: passed.
+- `npm run lint:check`: passed.
+- `npm run format:check`: passed.
+- `npm run build`: passed after transforming 3,362 modules.
+- `git diff --check`: passed.
+
+### Known Limitations
+
+An Android 12 device or API 31 emulator is not currently available in the configured local Android environment. The debug APK was compiled and its manifest was verified directly; installation was intentionally skipped by using a non-device ADB serial.
+
+### Git Delivery
+
+This phase is committed as `fix: support Android 12` and pushed to `origin/main` with only Android compatibility files staged; unrelated progress notes remain outside the commit.

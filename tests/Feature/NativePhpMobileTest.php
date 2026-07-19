@@ -67,7 +67,7 @@ test('the NativePHP v3 upgrade contract is configured', function () {
         ->and(json_encode($composer, JSON_THROW_ON_ERROR))->not->toContain('nativephp.composer.sh')
         ->and((new NativeServiceProvider(app()))->plugins())->toBe([])
         ->and(config('nativephp.android.compile_sdk'))->toBe(36)
-        ->and(config('nativephp.android.min_sdk'))->toBe(33)
+        ->and(config('nativephp.android.min_sdk'))->toBe(31)
         ->and(config('nativephp.android.target_sdk'))->toBe(36)
         ->and(Artisan::all())->toHaveKeys([
             'native:plugin:list',
@@ -83,8 +83,15 @@ test('the NativePHP Android environment contract is documented', function () {
         ->toContain('NATIVEPHP_GRADLE_PATH=')
         ->toContain('NATIVEPHP_ANDROID_SDK_LOCATION=')
         ->toContain('NATIVEPHP_ANDROID_COMPILE_SDK=36')
-        ->toContain('NATIVEPHP_ANDROID_MIN_SDK=33')
+        ->toContain('NATIVEPHP_ANDROID_MIN_SDK=31')
         ->toContain('NATIVEPHP_ANDROID_TARGET_SDK=36');
+});
+
+test('the NativePHP Android build supports Android 12', function () {
+    $environmentExample = file_get_contents(base_path('.env.example'));
+
+    expect(config('nativephp.android.min_sdk'))->toBe(31)
+        ->and($environmentExample)->toContain('NATIVEPHP_ANDROID_MIN_SDK=31');
 });
 
 test('the NativePHP v3 mobile configuration contract is complete', function () {
