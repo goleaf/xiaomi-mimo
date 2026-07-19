@@ -1944,3 +1944,75 @@ An Android 12 device or API 31 emulator is not currently available in the config
 ### Git Delivery
 
 This phase is committed as `fix: support Android 12` and pushed to `origin/main` with only Android compatibility files staged; unrelated progress notes remain outside the commit.
+
+## UI Follow-up Phase: Shared Interaction Polish
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Audit shared controls that appear across authentication, sidebar, settings, and navigation flows after the page-level `/projects` design pass.
+- Replace remaining neutral interaction accents with the established orange focus and action language.
+- Restore keyboard access and translated accessible names for shared controls without changing their application behavior.
+- Keep existing routes, Inertia data contracts, dark/light theme behavior, and component architecture unchanged.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Changed Files
+
+- `resources/js/app.ts`
+  - changed the Inertia progress indicator from legacy gray to the `/projects` orange accent.
+- `resources/js/components/PasswordInput.vue`
+  - made the visibility toggle keyboard reachable, localized, state-aware, and visually aligned with the shared input focus treatment.
+- `resources/js/components/TextLink.vue`
+- `resources/js/components/UserInfo.vue`
+  - replaced the remaining neutral link and avatar-fallback accents with the warm orange semantic treatment.
+- `resources/js/components/ui/breadcrumb/Breadcrumb.vue`
+- `resources/js/components/ui/input-otp/InputOTPSlot.vue`
+- `resources/js/components/ui/sidebar/SidebarRail.vue`
+- `resources/js/components/ui/spinner/Spinner.vue`
+  - aligned shared feedback/focus surfaces and localized their accessible names.
+- `resources/js/pages/auth/Login.vue`
+- `resources/js/pages/auth/Register.vue`
+- `resources/js/pages/auth/TwoFactorChallenge.vue`
+  - removed manual positive tab ordering and normalized inline authentication actions.
+- `lang/en/ui.php`
+- `lang/lt/ui.php`
+- `lang/ru/ui.php`
+  - added stable interaction and accessibility copy in every supported language.
+- `tests/Feature/FrontendDesignTest.php`
+  - added shared interaction, focus, progress-accent, and translation coverage.
+- `docs/progress.md`
+  - recorded this phase and its verification state.
+
+### Verification
+
+- Dark-mode Login screenshots at 390×844 and 1440×1000 confirmed the same orange/black/card language as `/projects`, with zero horizontal overflow.
+- Browser keyboard QA confirmed `Password -> Show password -> Confirm password -> Show password` follows natural DOM order across Login and Register.
+- The password toggle exposes translated `aria-label` and `aria-pressed`; keyboard focus produced the orange three-pixel ring and Space changed the field type to text.
+- A delayed Inertia visit exposed the live progress bar as `rgb(234, 88, 12)`.
+- Desktop sidebar QA confirmed the translated rail label/title and orange hover rail; current browser sessions produced no console or page errors.
+- `vendor/bin/pint --dirty --format agent` — passed.
+- `php artisan test --compact tests/Feature/FrontendDesignTest.php` — 50 tests passed, 195 assertions.
+- `php artisan test --compact` — 340 tests passed, 1519 assertions.
+- `vendor/bin/phpstan analyse --memory-limit=1G --no-progress` — passed with 0 errors.
+- `npm run test:frontend` — passed, 1 test.
+- `npm run types:check` — passed.
+- `npm run lint:check` — passed.
+- `npm run format:check` — passed.
+- `npm run build` — passed.
+- `git diff --check` — passed.
+
+### Known Limitations
+
+The Fortify two-factor challenge redirects ordinary guest sessions to Login unless a real pending two-factor authentication session exists. OTP styling and reduced-motion behavior are covered by the focused source contract, TypeScript, lint, and production build, but the protected challenge state was not artificially forged for browser QA.
+
+### Git Delivery
+
+- Implementation commit: `2de801c` (`fix: polish shared interaction surfaces`).
+- Implementation push: successful to `origin/main`.
+- Documentation commit and push: pending this record update.
