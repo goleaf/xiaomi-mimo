@@ -57,7 +57,7 @@ const emit = defineEmits<{ action: [] }>();
             <slot name="icon">
                 <LoaderCircle
                     v-if="status === 'loading'"
-                    class="size-7 animate-spin"
+                    class="size-7 animate-spin motion-reduce:animate-none"
                     aria-hidden="true"
                 />
                 <AlertTriangle

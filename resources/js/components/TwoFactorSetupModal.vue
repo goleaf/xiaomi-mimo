@@ -153,11 +153,11 @@ watch(
                                 class="relative mx-auto flex max-w-md items-center overflow-hidden"
                             >
                                 <div
-                                    class="relative mx-auto aspect-square w-64 overflow-hidden rounded-lg border border-border"
+                                    class="relative mx-auto aspect-square w-64 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_16px_45px_-32px_rgba(234,88,12,0.5)]"
                                 >
                                     <div
                                         v-if="!qrCodeSvg"
-                                        class="absolute inset-0 z-10 flex aspect-square h-auto w-full animate-pulse items-center justify-center bg-background"
+                                        class="absolute inset-0 z-10 flex aspect-square h-auto w-full animate-pulse items-center justify-center bg-background motion-reduce:animate-none"
                                     >
                                         <Spinner class="size-6" />
                                     </div>

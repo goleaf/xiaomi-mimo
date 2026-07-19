@@ -290,7 +290,7 @@ function removeMember(): void {
                                 </div>
                                 <a
                                     :href="`mailto:${member.email}`"
-                                    class="mt-0.5 block truncate text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                    class="mt-0.5 block truncate text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-orange-800 hover:underline focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none motion-reduce:transition-none dark:hover:text-orange-200"
                                 >
                                     {{ member.email }}
                                 </a>
@@ -441,7 +441,7 @@ function removeMember(): void {
                         >
                             <LoaderCircle
                                 v-if="inviteForm.processing"
-                                class="animate-spin"
+                                class="animate-spin motion-reduce:animate-none"
                                 aria-hidden="true"
                             />
                             <UserPlus v-else aria-hidden="true" />
@@ -523,7 +523,7 @@ function removeMember(): void {
                         >
                             <LoaderCircle
                                 v-if="removeForm.processing"
-                                class="animate-spin"
+                                class="animate-spin motion-reduce:animate-none"
                                 aria-hidden="true"
                             />
                             <Trash2 v-else aria-hidden="true" />

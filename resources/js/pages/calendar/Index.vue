@@ -317,7 +317,7 @@ function statusLabel(status: TodoStatus): string {
                                 role="tab"
                                 :aria-selected="view === option"
                                 :class="[
-                                    'min-h-10 cursor-pointer rounded-lg px-3.5 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none',
+                                    'min-h-10 cursor-pointer rounded-lg px-3.5 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none motion-reduce:transition-none',
                                     view === option
                                         ? 'bg-card text-foreground shadow-sm'
                                         : 'text-muted-foreground hover:text-foreground',

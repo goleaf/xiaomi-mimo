@@ -242,7 +242,7 @@ function eventTone(event: string): string {
                             type="button"
                             :aria-pressed="activeFilter === filter.value"
                             :class="[
-                                'flex min-h-11 min-w-max cursor-pointer items-center justify-between gap-5 rounded-xl px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none lg:w-full',
+                                'flex min-h-11 min-w-max cursor-pointer items-center justify-between gap-5 rounded-xl px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none motion-reduce:transition-none lg:w-full',
                                 activeFilter === filter.value
                                     ? 'bg-card text-foreground shadow-sm'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',

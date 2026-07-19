@@ -93,7 +93,7 @@ async function switchWorkspace(workspace: Workspace) {
                         </span>
                         <LoaderCircle
                             v-if="switchRequest.processing"
-                            class="ml-auto size-4 animate-spin"
+                            class="ml-auto size-4 animate-spin motion-reduce:animate-none"
                         />
                         <ChevronsUpDown
                             v-else

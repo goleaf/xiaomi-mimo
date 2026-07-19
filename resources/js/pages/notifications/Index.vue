@@ -234,7 +234,7 @@ function notificationTone(notification: NotificationItem): string {
                             role="tab"
                             :aria-selected="activeTab === 'all'"
                             :class="[
-                                'min-h-10 cursor-pointer rounded-lg px-4 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none',
+                                'min-h-10 cursor-pointer rounded-lg px-4 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none motion-reduce:transition-none',
                                 activeTab === 'all'
                                     ? 'bg-card text-foreground shadow-sm'
                                     : 'text-muted-foreground hover:text-foreground',
@@ -248,7 +248,7 @@ function notificationTone(notification: NotificationItem): string {
                             role="tab"
                             :aria-selected="activeTab === 'unread'"
                             :class="[
-                                'flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-4 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none',
+                                'flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-4 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none motion-reduce:transition-none',
                                 activeTab === 'unread'
                                     ? 'bg-card text-foreground shadow-sm'
                                     : 'text-muted-foreground hover:text-foreground',

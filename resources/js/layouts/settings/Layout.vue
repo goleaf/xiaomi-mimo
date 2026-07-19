@@ -128,7 +128,7 @@ const metricIcons = {
                                 : undefined
                         "
                         :class="[
-                            'flex min-h-10 shrink-0 items-center gap-3 rounded-lg px-3 py-2 text-sm whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none',
+                            'flex min-h-10 shrink-0 items-center gap-3 rounded-lg px-3 py-2 text-sm whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none motion-reduce:transition-none',
                             currentUrl.startsWith(item.href)
                                 ? 'bg-card font-medium text-orange-800 shadow-sm dark:text-orange-200'
                                 : 'text-muted-foreground hover:bg-card/70 hover:text-foreground',

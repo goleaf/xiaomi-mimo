@@ -15,6 +15,6 @@ const { t } = useUi()
   <Loader2Icon
     role="status"
     :aria-label="t('common.states.loading')"
-    :class="cn('size-4 animate-spin', props.class)"
+    :class="cn('size-4 animate-spin motion-reduce:animate-none', props.class)"
   />
 </template>

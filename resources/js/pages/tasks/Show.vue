@@ -527,7 +527,7 @@ function priorityBadge(
                                 >
                                     <LoaderCircle
                                         v-if="editForm.processing"
-                                        class="h-4 w-4 animate-spin"
+                                        class="h-4 w-4 animate-spin motion-reduce:animate-none"
                                     />
                                     {{
                                         editForm.processing
