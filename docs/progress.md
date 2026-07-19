@@ -1592,3 +1592,53 @@ No migration or Composer/npm package change is planned.
 
 - Commit `8ea6e40` (`feat: unify pages with projects design`) was pushed successfully to `origin main`.
 - This phase record will be committed and pushed separately while preserving unrelated pre-existing progress changes.
+
+## UI Phase: Frontend Baseline And Dormant Surface Closure
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Remove the remaining Vue type-check failure in the autosave composable with lifecycle-safe native Vue watcher cleanup.
+- Make dormant authentication and header layouts delegate to the canonical projects-style shells so future route changes cannot reintroduce the old visual language.
+- Extend the shared Warm Precision state surface with accessible loading and error variants while preserving every existing empty-state call site.
+- Re-run focused contracts, the full frontend verification stack, production build, and representative browser coverage before delivery.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change is planned.
+
+### Changed Files
+
+- `resources/js/composables/useAutosave.ts`
+- `resources/js/layouts/auth/AuthCardLayout.vue`
+- `resources/js/layouts/auth/AuthSplitLayout.vue`
+- `resources/js/layouts/app/AppHeaderLayout.vue`
+- `resources/js/components/shared/EmptyState.vue`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Verification
+
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `php artisan test --compact tests/Feature/FrontendDesignTest.php`: passed, 42 tests and 124 assertions.
+- `php artisan test --compact`: passed, 232 tests and 1,284 assertions.
+- `npm run test:frontend`: passed, 1 test.
+- `npm run types:check`: passed with zero Vue or TypeScript errors; the previous autosave baseline is closed.
+- `npm run lint:check`: passed with zero ESLint errors or warnings.
+- `npm run format:check`: passed for all files under `resources/`.
+- `npm run build`: passed; Vite transformed 3,362 modules and generated the production bundle. The existing optional `fontaine` notice remains non-blocking.
+- `vendor/bin/phpstan analyse --no-progress`: retains the pre-existing application-wide backlog of 327 errors; this phase changed no application PHP logic.
+- Browser verification passed for `/projects`, `/tasks`, `/workspaces`, `/settings/preferences`, and `/settings/backup` at 1440x1000 light mode and 390x844 dark mode: 10/10 HTTP 200 responses, zero horizontal overflow, and no fresh console or page errors. The mobile dark `/projects` reference was also visually inspected after the production build.
+
+### Known Limitations
+
+- The application-wide Larastan backlog is not part of this frontend closure phase.
+- The optional `fontaine` build notice remains unchanged because resolving it requires a dependency or build-configuration decision outside this phase.
+
+### Git Delivery
+
+- Commit `3b09177` (`fix: close frontend visual baseline`) was pushed successfully to `origin main`.
+- This final phase record will be committed separately while preserving unrelated pre-existing progress changes.
