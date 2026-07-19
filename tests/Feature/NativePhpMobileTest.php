@@ -7,7 +7,9 @@ use App\Models\User;
 use App\Providers\NativeServiceProvider;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Native\Mobile\Traits\CleansEnvFile;
 
 test('the application is configured for the NativePHP on-device runtime', function () {
     $cleanupEnvironmentKeys = config('nativephp.cleanup_env_keys');
@@ -81,13 +83,13 @@ test('the NativePHP Android environment contract is documented', function () {
 });
 
 test('the NativePHP v3 mobile configuration contract is complete', function () {
+    $appStoreConnect = config('nativephp.app_store_connect');
     $cleanupExcludedFiles = config('nativephp.cleanup_exclude_files');
     $environmentExample = file_get_contents(base_path('.env.example'));
     $nativeConfiguration = file_get_contents(config_path('nativephp.php'));
 
     expect(config('nativephp.deeplink_scheme'))->toBeNull()
         ->and(config('nativephp.deeplink_host'))->toBeNull()
-        ->and(config('nativephp.development_team'))->toBeNull()
         ->and(config('nativephp.permissions'))->toBe([])
         ->and(config('nativephp.permission_localizations'))->toBe([])
         ->and(config('nativephp.runtime'))->toBe([
@@ -132,14 +134,18 @@ test('the NativePHP v3 mobile configuration contract is complete', function () {
             'landscape_left' => false,
             'landscape_right' => false,
         ])
-        ->and(config('nativephp.app_store_connect'))->toBe([
-            'api_key' => null,
-            'api_key_id' => null,
-            'api_issuer_id' => null,
-            'app_name' => null,
+        ->and($appStoreConnect)->toHaveKeys([
+            'api_key',
+            'api_key_path',
+            'api_key_id',
+            'api_issuer_id',
+            'app_name',
         ])
         ->and($nativeConfiguration)
-        ->toContain("env('NATIVEPHP_ANDROID_STATUS_BAR_STYLE', 'auto')")
+        ->toContain(
+            "env('NATIVEPHP_ANDROID_STATUS_BAR_STYLE', 'auto')",
+            "'api_key_path' => env('APP_STORE_API_KEY_PATH')",
+        )
         ->and($environmentExample)->toContain(
             'NATIVEPHP_DEEPLINK_SCHEME=',
             'NATIVEPHP_DEEPLINK_HOST=',
@@ -149,7 +155,7 @@ test('the NativePHP v3 mobile configuration contract is complete', function () {
             'NATIVEPHP_WS_PORT=8081',
             'NATIVEPHP_SERVICE_NAME="Xiaomi Mimo"',
             'NATIVEPHP_OPEN_BROWSER=false',
-            'APP_STORE_API_KEY=',
+            'APP_STORE_API_KEY_PATH=',
             'APP_STORE_API_KEY_ID=',
             'APP_STORE_API_ISSUER_ID=',
             'APP_STORE_APP_NAME=',
@@ -198,6 +204,119 @@ test('the NativePHP v3 development workflow is configured', function () {
             'native:run',
             'native:watch',
         ]);
+});
+
+test('the NativePHP v3 deployment contract protects signing credentials', function () {
+    $cleanupEnvironmentKeys = config('nativephp.cleanup_env_keys');
+    $cleanupExcludedFiles = config('nativephp.cleanup_exclude_files');
+    $environmentExample = file_get_contents(base_path('.env.example'));
+    $gitIgnore = file_get_contents(base_path('.gitignore'));
+    $packageDefinition = Artisan::all()['native:package']->getDefinition();
+
+    expect(config('nativephp.app_id'))->toBe('com.goleaf.xiaomimimo')
+        ->and(config('nativephp.version_code'))->toBeInt()
+        ->and($cleanupEnvironmentKeys)->toContain(
+            'ANDROID_EMULATOR',
+            'ANDROID_KEYSTORE_*',
+            'ANDROID_KEY_ALIAS',
+            'ANDROID_KEY_PASSWORD',
+            'FCM_SERVER_KEY',
+            'GOOGLE_SERVICE_ACCOUNT_KEY',
+            'IOS_*',
+            'NATIVEPHP_ANDROID_SDK_LOCATION',
+            'NATIVEPHP_DEVELOPMENT_TEAM',
+            'NATIVEPHP_GRADLE_PATH',
+        )
+        ->and($cleanupExcludedFiles)->toContain('credentials')
+        ->and($gitIgnore)->toContain('/credentials', '/nativephp')
+        ->and($environmentExample)->toContain(
+            'ANDROID_KEYSTORE_FILE=',
+            'ANDROID_KEYSTORE_PASSWORD=',
+            'ANDROID_KEY_ALIAS=',
+            'ANDROID_KEY_PASSWORD=',
+            'FCM_SERVER_KEY=',
+            'GOOGLE_SERVICE_ACCOUNT_KEY=',
+            'APP_STORE_API_KEY_PATH=',
+            'APP_STORE_API_KEY_ID=',
+            'APP_STORE_API_ISSUER_ID=',
+            'IOS_DISTRIBUTION_CERTIFICATE_PATH=',
+            'IOS_DISTRIBUTION_CERTIFICATE_PASSWORD=',
+            'IOS_DISTRIBUTION_PROVISIONING_PROFILE_PATH=',
+            'IOS_TEAM_ID=',
+        )
+        ->and(Artisan::all())->toHaveKeys([
+            'native:check-build-number',
+            'native:credentials',
+            'native:package',
+            'native:release',
+        ])
+        ->and($packageDefinition->getOption('build-type')->getDefault())->toBe('release')
+        ->and($packageDefinition->getOption('export-method')->getDefault())->toBe('app-store')
+        ->and($packageDefinition->getOption('play-store-track')->getDefault())->toBe('internal')
+        ->and($packageDefinition->hasOption('no-tty'))->toBeTrue()
+        ->and($packageDefinition->hasOption('upload-to-app-store'))->toBeTrue()
+        ->and($packageDefinition->hasOption('upload-to-play-store'))->toBeTrue();
+});
+
+test('deployment credentials are removed from the bundled environment', function () {
+    $environmentPath = tempnam(sys_get_temp_dir(), 'nativephp-env-');
+
+    expect($environmentPath)->not->toBeFalse();
+
+    File::put($environmentPath, implode(PHP_EOL, [
+        'NATIVEPHP_APP_ID=com.goleaf.xiaomimimo',
+        'NATIVEPHP_APP_VERSION=1.0.0',
+        'DB_CONNECTION=sqlite',
+        'ANDROID_KEYSTORE_FILE=credentials/release.jks',
+        'ANDROID_KEYSTORE_PASSWORD=keystore-password',
+        'ANDROID_KEY_ALIAS=xiaomi-mimo',
+        'ANDROID_KEY_PASSWORD=key-password',
+        'FCM_SERVER_KEY=fcm-secret',
+        'GOOGLE_SERVICE_ACCOUNT_KEY=credentials/google-service.json',
+        'APP_STORE_API_KEY_PATH=credentials/AuthKey.p8',
+        'APP_STORE_API_KEY_ID=KEY123',
+        'APP_STORE_API_ISSUER_ID=issuer-id',
+        'IOS_DISTRIBUTION_CERTIFICATE_PASSWORD=certificate-password',
+        'IOS_TEAM_ID=TEAM123',
+    ]));
+
+    $environmentCleaner = new class
+    {
+        use CleansEnvFile;
+
+        public function clean(string $path): void
+        {
+            $this->cleanEnvFile($path);
+        }
+    };
+
+    try {
+        $environmentCleaner->clean($environmentPath);
+
+        expect(File::get($environmentPath))
+            ->toContain(
+                'NATIVEPHP_APP_ID=com.goleaf.xiaomimimo',
+                'NATIVEPHP_APP_VERSION=1.0.0',
+                'DB_CONNECTION=sqlite',
+            )
+            ->not->toContain(
+                'ANDROID_KEYSTORE_FILE',
+                'ANDROID_KEYSTORE_PASSWORD',
+                'ANDROID_KEY_ALIAS',
+                'ANDROID_KEY_PASSWORD',
+                'FCM_SERVER_KEY',
+                'GOOGLE_SERVICE_ACCOUNT_KEY',
+                'APP_STORE_API_KEY_PATH',
+                'APP_STORE_API_KEY_ID',
+                'APP_STORE_API_ISSUER_ID',
+                'IOS_DISTRIBUTION_CERTIFICATE_PASSWORD',
+                'IOS_TEAM_ID',
+                'keystore-password',
+                'certificate-password',
+            );
+    } finally {
+        File::delete($environmentPath);
+    }
 });
 
 test('the NativePHP installer values are configured', function () {

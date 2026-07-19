@@ -157,6 +157,10 @@ return [
     */
 
     'cleanup_env_keys' => [
+        'ANDROID_EMULATOR',
+        'ANDROID_KEYSTORE_*',
+        'ANDROID_KEY_ALIAS',
+        'ANDROID_KEY_PASSWORD',
         'APP_DEBUG',
         'APP_ENV',
         'APP_KEY',
@@ -168,13 +172,20 @@ return [
         'DB_USERNAME',
         'DB_PASSWORD',
         'DO_SPACES_*',
+        'FCM_SERVER_KEY',
         'GITHUB_*',
         'FILESYSTEM_DISK',
+        'GOOGLE_SERVICE_ACCOUNT_KEY',
+        'IOS_*',
         'MAIL_HOST',
         'MAIL_PASSWORD',
         'MAIL_PORT',
         'MAIL_USERNAME',
         'MEMCACHED_*',
+        'NATIVEPHP_7ZIP_LOCATION',
+        'NATIVEPHP_ANDROID_SDK_LOCATION',
+        'NATIVEPHP_DEVELOPMENT_TEAM',
+        'NATIVEPHP_GRADLE_PATH',
         'REDIS_*',
         '*_SECRET',
     ],
@@ -403,6 +414,7 @@ return [
     */
     'app_store_connect' => [
         'api_key' => env('APP_STORE_API_KEY'),
+        'api_key_path' => env('APP_STORE_API_KEY_PATH'),
         'api_key_id' => env('APP_STORE_API_KEY_ID'),
         'api_issuer_id' => env('APP_STORE_API_ISSUER_ID'),
         'app_name' => env('APP_STORE_APP_NAME'),

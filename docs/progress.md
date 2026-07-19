@@ -400,6 +400,63 @@ No migration or Composer/npm package was added, removed, or upgraded. NativePHP 
 - Commit `825197b` (`chore: reconcile NativePHP configuration guide`) contains only the example environment, NativePHP configuration, focused test, and phase progress files.
 - Push to `origin main` succeeded (`65dc904..825197b`).
 - Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+## NativePHP Mobile 3 Deployment Guide Reconciliation
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Reconciled the installed NativePHP Mobile 3 release, signing, packaging, and store-upload contracts with the official deployment guide and NativePHP 3.3.6 command implementation.
+- Documented the exact Android keystore, FCM, Google Play service-account, App Store Connect, iOS certificate, provisioning-profile, and team environment variables as empty placeholders without generating or committing release credentials.
+- Replaced the legacy example `APP_STORE_API_KEY` variable with the current file-based `APP_STORE_API_KEY_PATH` contract while retaining the package's legacy configuration fallback.
+- Added the App Store API key path to `nativephp.app_store_connect` and confirmed the valid app ID plus integer build-code contract.
+- Added Android, iOS, store, and workstation-only variables to `cleanup_env_keys`, preventing signing passwords, credential paths, service-account data, team IDs, SDK paths, and FCM server keys from entering the embedded Laravel environment.
+- Exercised NativePHP's real environment-cleanup trait and confirmed it removes representative deployment credentials while preserving the app ID, release version, and SQLite runtime configuration.
+- Added `/credentials` to the root ignore rules; the generated `/nativephp` tree and its credentials/artifacts remain ignored separately.
+- Confirmed `native:release`, `native:credentials`, `native:package`, and `native:check-build-number`, including release APK/AAB, App Store export, internal Play track, upload, and `--no-tty` contracts.
+- Preserved `DEBUG` for local development; semantic release version selection, credential generation, signed packaging, and external store uploads remain explicit owner actions.
+- Preserved the on-device architecture without introducing a deployment server.
+
+### Changed Files
+
+- `.env.example`
+- `.gitignore`
+- `config/nativephp.php`
+- `tests/Feature/NativePhpMobileTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package was added, removed, or upgraded. NativePHP remains at 3.3.6.
+
+### Verification
+
+- The focused deployment tests failed first on the missing App Store API key path and Android secret cleanup, then `php artisan test --compact tests/Feature/NativePhpMobileTest.php` passed with 10 tests and 155 assertions.
+- The cleanup regression exercised `Native\Mobile\Traits\CleansEnvFile` against representative Android, Google, App Store, and iOS credentials and confirmed no tested secret or password remained.
+- `php artisan help native:release`, `native:credentials`, `native:package`, and `native:version` with JSON formatting confirmed the installed command contracts without mutating the release version, generating credentials, packaging, or uploading.
+- `php artisan config:show nativephp.app_store_connect` confirmed the file-based API key path and other store values are unset until real credentials are supplied.
+- `zsh -lic 'php artisan native:debug --json --no-interaction'` passed with NativePHP 3.3.6, embedded PHP 8.4.23, Android Studio 2026.1.2, Gradle 8.13, Java 17.0.16, CocoaPods 1.17.0, and no Xcode; plugin validation passed with no installed plugins.
+- Scoped Pint and Larastan for the NativePHP configuration files passed with zero errors.
+- `composer validate --strict --no-check-publish`, `composer audit --no-interaction`, and `npm audit --omit=dev` passed with no known dependency vulnerabilities.
+- `php artisan test --compact` passed with 152 tests and 773 assertions.
+- `npm run build` passed; Vite emitted only the existing optional `fontaine` notice.
+- Scoped `git diff --check` passed.
+- Full Larastan remains red with 364 existing application errors; the NativePHP configuration file is clean.
+- Full Vue type checking remains red with 9 existing errors, full ESLint with 72 existing errors, and full resource Prettier verification with 13 existing files; none is in a deployment-phase file.
+
+### Known Limitations
+
+- No Android keystore, Google service-account key, Apple certificate, provisioning profile, App Store API key, team ID, or store application access was supplied; signed packages and uploads therefore remain intentionally unavailable.
+- The public semantic version is not yet selected and local development remains on `DEBUG`; `native:release` must be run deliberately when cutting the first release.
+- iOS packaging remains unavailable on this Intel Mac because full Xcode and Apple silicon are absent.
+- Release builds, credential generation, signed packaging, profile validation, build-number synchronization, and store uploads were not auto-run, per the installed NativePHP project guidance and because they have persistent external consequences.
+
+### Git Delivery
+
+Commit and push results are pending. Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+
 ## NativePHP Mobile 3 Development Guide Reconciliation
 
 ### Status
