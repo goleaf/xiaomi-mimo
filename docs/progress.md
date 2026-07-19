@@ -663,4 +663,6 @@ No migration or Composer/npm dependency was added, removed, or upgraded. The exi
 
 ### Git Delivery
 
-Commit and push results will be recorded after delivery. Unrelated staged and unstaged application work remains untouched and excluded.
+- Commit `6916a9f` (`chore: integrate NativePHP Jump workflow`) contains only the Jump script, focused NativePHP contracts, and phase progress files.
+- Push to `origin main` succeeded (`32c0cd5..6916a9f`).
+- Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
