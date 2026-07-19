@@ -38,9 +38,15 @@ defineProps<{
     <Form
         v-bind="send.form()"
         class="space-y-6 text-center"
+        disable-while-processing
         v-slot="{ processing }"
     >
-        <Button :disabled="processing" variant="secondary">
+        <Button
+            :disabled="processing"
+            variant="secondary"
+            size="lg"
+            class="w-full"
+        >
             <Spinner v-if="processing" />
             {{ t('auth.verify_email.resend') }}
         </Button>

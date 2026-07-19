@@ -215,6 +215,40 @@ test('shared authentication controls use the warm precision interaction contract
         ->toContain('motion-reduce:animate-none');
 });
 
+test('authentication submissions share the large projects action rhythm', function (string $page) {
+    expect(File::get(resource_path("js/pages/auth/{$page}.vue")))
+        ->toContain('disable-while-processing')
+        ->toContain('size="lg"')
+        ->toContain('<Spinner v-if="processing" />');
+})->with([
+    'login' => 'Login',
+    'registration' => 'Register',
+    'forgot password' => 'ForgotPassword',
+    'reset password' => 'ResetPassword',
+    'password confirmation' => 'ConfirmPassword',
+    'email verification' => 'VerifyEmail',
+    'two factor challenge' => 'TwoFactorChallenge',
+]);
+
+test('authentication credential controls expose invalid state', function (string $page) {
+    expect(File::get(resource_path("js/pages/auth/{$page}.vue")))
+        ->toContain(':aria-invalid="Boolean(errors.');
+})->with([
+    'login' => 'Login',
+    'registration' => 'Register',
+    'forgot password' => 'ForgotPassword',
+    'reset password' => 'ResetPassword',
+    'password confirmation' => 'ConfirmPassword',
+    'two factor challenge' => 'TwoFactorChallenge',
+]);
+
+test('passkey verification uses the shared large loading action', function () {
+    expect(File::get(resource_path('js/components/PasskeyVerify.vue')))
+        ->toContain('size="lg"')
+        ->toContain('<Spinner v-if="isLoading" />')
+        ->toContain(':disabled="isLoading"');
+});
+
 test('shared navigation feedback uses localized labels and the projects orange accent', function () {
     expect(File::get(resource_path('js/app.ts')))
         ->toContain("color: '#ea580c'")

@@ -9,6 +9,7 @@ import {
     InputOTPGroup,
     InputOTPSlot,
 } from '@/components/ui/input-otp';
+import { Spinner } from '@/components/ui/spinner';
 import { useUi } from '@/composables/useUi';
 import { store } from '@/routes/two-factor/login';
 import type { TwoFactorConfigContent } from '@/types';
@@ -56,6 +57,7 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
                 v-bind="store.form()"
                 class="space-y-4"
                 reset-on-error
+                disable-while-processing
                 @error="code = ''"
                 #default="{ errors, processing, clearErrors }"
             >
@@ -69,6 +71,7 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
                             v-model="code"
                             :maxlength="6"
                             :disabled="processing"
+                            :aria-invalid="Boolean(errors.code)"
                             autofocus
                         >
                             <InputOTPGroup>
@@ -82,9 +85,15 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
                     </div>
                     <InputError :message="errors.code" />
                 </div>
-                <Button type="submit" class="w-full" :disabled="processing">{{
-                    t('auth.two_factor.continue')
-                }}</Button>
+                <Button
+                    type="submit"
+                    size="lg"
+                    class="w-full"
+                    :disabled="processing"
+                >
+                    <Spinner v-if="processing" />
+                    {{ t('auth.two_factor.continue') }}
+                </Button>
                 <div class="text-center text-sm text-muted-foreground">
                     <span>{{ t('auth.two_factor.or_you_can') }} </span>
                     <button
@@ -103,6 +112,7 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
                 v-bind="store.form()"
                 class="space-y-4"
                 reset-on-error
+                disable-while-processing
                 #default="{ errors, processing, clearErrors }"
             >
                 <Input
@@ -111,11 +121,18 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
                     :placeholder="t('auth.two_factor.recovery_placeholder')"
                     :autofocus="showRecoveryInput"
                     required
+                    :aria-invalid="Boolean(errors.recovery_code)"
                 />
                 <InputError :message="errors.recovery_code" />
-                <Button type="submit" class="w-full" :disabled="processing">{{
-                    t('auth.two_factor.continue')
-                }}</Button>
+                <Button
+                    type="submit"
+                    size="lg"
+                    class="w-full"
+                    :disabled="processing"
+                >
+                    <Spinner v-if="processing" />
+                    {{ t('auth.two_factor.continue') }}
+                </Button>
 
                 <div class="text-center text-sm text-muted-foreground">
                     <span>{{ t('auth.two_factor.or_you_can') }} </span>

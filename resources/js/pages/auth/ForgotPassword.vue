@@ -35,7 +35,11 @@ defineProps<{
     </Alert>
 
     <div class="space-y-6">
-        <Form v-bind="email.form()" v-slot="{ errors, processing }">
+        <Form
+            v-bind="email.form()"
+            disable-while-processing
+            v-slot="{ errors, processing }"
+        >
             <div class="grid gap-2">
                 <Label for="email">{{ t('auth.common.email') }}</Label>
                 <Input
@@ -45,12 +49,14 @@ defineProps<{
                     autocomplete="off"
                     autofocus
                     :placeholder="t('auth.common.email_placeholder')"
+                    :aria-invalid="Boolean(errors.email)"
                 />
                 <InputError :message="errors.email" />
             </div>
 
             <div class="my-6 flex items-center justify-start">
                 <Button
+                    size="lg"
                     class="w-full"
                     :disabled="processing"
                     data-test="email-password-reset-link-button"

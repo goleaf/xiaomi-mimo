@@ -37,6 +37,7 @@ setLayoutProps({
     <Form
         v-bind="store.form()"
         reset-on-success
+        disable-while-processing
         v-slot="{ errors, processing }"
     >
         <div class="space-y-6">
@@ -51,6 +52,7 @@ setLayoutProps({
                     required
                     autocomplete="current-password"
                     autofocus
+                    :aria-invalid="Boolean(errors.password)"
                 />
 
                 <InputError :message="errors.password" />
@@ -58,6 +60,7 @@ setLayoutProps({
 
             <div class="flex items-center">
                 <Button
+                    size="lg"
                     class="w-full"
                     :disabled="processing"
                     data-test="confirm-password-button"

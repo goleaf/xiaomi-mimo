@@ -29,6 +29,7 @@ setLayoutProps({
     <Form
         v-bind="store.form()"
         :reset-on-success="['password', 'password_confirmation']"
+        disable-while-processing
         v-slot="{ errors, processing }"
         class="flex flex-col gap-6"
     >
@@ -43,6 +44,7 @@ setLayoutProps({
                     autocomplete="name"
                     name="name"
                     :placeholder="t('auth.common.name_placeholder')"
+                    :aria-invalid="Boolean(errors.name)"
                 />
                 <InputError :message="errors.name" />
             </div>
@@ -56,6 +58,7 @@ setLayoutProps({
                     autocomplete="email"
                     name="email"
                     :placeholder="t('auth.common.email_placeholder')"
+                    :aria-invalid="Boolean(errors.email)"
                 />
                 <InputError :message="errors.email" />
             </div>
@@ -69,6 +72,7 @@ setLayoutProps({
                     name="password"
                     :placeholder="t('auth.common.password')"
                     :passwordrules="passwordRules"
+                    :aria-invalid="Boolean(errors.password)"
                 />
                 <InputError :message="errors.password" />
             </div>
@@ -84,12 +88,14 @@ setLayoutProps({
                     name="password_confirmation"
                     :placeholder="t('auth.common.confirm_password')"
                     :passwordrules="passwordRules"
+                    :aria-invalid="Boolean(errors.password_confirmation)"
                 />
                 <InputError :message="errors.password_confirmation" />
             </div>
 
             <Button
                 type="submit"
+                size="lg"
                 class="mt-2 w-full"
                 :disabled="processing"
                 data-test="register-user-button"

@@ -33,6 +33,7 @@ const inputEmail = ref(props.email);
         v-bind="update.form()"
         :transform="(data) => ({ ...data, token, email })"
         :reset-on-success="['password', 'password_confirmation']"
+        disable-while-processing
         v-slot="{ errors, processing }"
     >
         <div class="grid gap-6">
@@ -46,6 +47,7 @@ const inputEmail = ref(props.email);
                     v-model="inputEmail"
                     class="mt-1 block w-full"
                     readonly
+                    :aria-invalid="Boolean(errors.email)"
                 />
                 <InputError :message="errors.email" class="mt-2" />
             </div>
@@ -60,6 +62,7 @@ const inputEmail = ref(props.email);
                     autofocus
                     :placeholder="t('auth.common.password')"
                     :passwordrules="passwordRules"
+                    :aria-invalid="Boolean(errors.password)"
                 />
                 <InputError :message="errors.password" />
             </div>
@@ -75,12 +78,14 @@ const inputEmail = ref(props.email);
                     class="mt-1 block w-full"
                     :placeholder="t('auth.common.confirm_password')"
                     :passwordrules="passwordRules"
+                    :aria-invalid="Boolean(errors.password_confirmation)"
                 />
                 <InputError :message="errors.password_confirmation" />
             </div>
 
             <Button
                 type="submit"
+                size="lg"
                 class="mt-4 w-full"
                 :disabled="processing"
                 data-test="reset-password-button"
