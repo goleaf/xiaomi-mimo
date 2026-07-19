@@ -9,21 +9,13 @@ import {
     Palette,
     Rocket,
     Star,
-    X,
 } from '@lucide/vue';
 import { computed, watch } from 'vue';
 import type { Component } from 'vue';
 import InputError from '@/components/InputError.vue';
+import WorkspaceDialogContent from '@/components/shared/WorkspaceDialogContent.vue';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/composables/useToast';
@@ -156,33 +148,12 @@ async function submit(): Promise<void> {
 
 <template>
     <Dialog :open="open" @update:open="emit('close')">
-        <DialogContent
-            :show-close-button="false"
-            class="overflow-hidden rounded-[1.75rem] border-border/80 p-0 sm:max-w-xl"
+        <WorkspaceDialogContent
+            :title="copy.projects.create_title"
+            :description="copy.projects.create_description"
+            :close-label="copy.projects.cancel"
+            max-width-class="sm:max-w-xl"
         >
-            <div
-                class="relative border-b border-border/70 bg-muted/30 px-6 py-6 sm:px-8"
-            >
-                <div
-                    class="absolute inset-y-0 left-0 w-1.5 bg-orange-500"
-                    aria-hidden="true"
-                />
-                <DialogHeader class="pr-10 text-left">
-                    <DialogTitle class="text-xl tracking-tight">
-                        {{ copy.projects.create_title }}
-                    </DialogTitle>
-                    <DialogDescription class="max-w-md leading-6">
-                        {{ copy.projects.create_description }}
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogClose
-                    class="absolute top-5 right-5 flex size-11 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
-                >
-                    <X class="size-4.5" aria-hidden="true" />
-                    <span class="sr-only">{{ copy.projects.cancel }}</span>
-                </DialogClose>
-            </div>
-
             <form class="space-y-6 px-6 py-6 sm:px-8" @submit.prevent="submit">
                 <div class="space-y-2">
                     <Label for="project-name">{{ copy.projects.name }}</Label>
@@ -296,6 +267,6 @@ async function submit(): Promise<void> {
                     </Button>
                 </DialogFooter>
             </form>
-        </DialogContent>
+        </WorkspaceDialogContent>
     </Dialog>
 </template>

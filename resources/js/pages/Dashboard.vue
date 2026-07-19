@@ -32,8 +32,8 @@ function priorityColor(priority: string): string {
             high: 'bg-orange-500',
             medium: 'bg-yellow-500',
             low: 'bg-blue-500',
-            none: 'bg-gray-300',
-        }[priority] ?? 'bg-gray-300'
+            none: 'bg-muted-foreground/35',
+        }[priority] ?? 'bg-muted-foreground/35'
     );
 }
 

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, setLayoutProps, useForm } from '@inertiajs/vue3';
 import { Shield } from '@lucide/vue';
+import { ref } from 'vue';
+import WorkspaceConfirmDialog from '@/components/shared/WorkspaceConfirmDialog.vue';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -37,6 +39,7 @@ const passwordForm = useForm({
 });
 
 const twoFactorForm = useForm({});
+const showDisableDialog = ref(false);
 
 function updatePassword() {
     passwordForm.put(updatePasswordRoute.url(), {
@@ -53,12 +56,14 @@ function enable2FA() {
     });
 }
 
-function disable2FA() {
-    if (confirm(t('settings.security.disable_2fa_confirm'))) {
-        twoFactorForm.delete(disable.url(), {
-            onSuccess: () => toast.success(t('settings.security.disabled_2fa')),
-        });
-    }
+function disable2FA(): void {
+    twoFactorForm.delete(disable.url(), {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success(t('settings.security.disabled_2fa'));
+            showDisableDialog.value = false;
+        },
+    });
 }
 </script>
 
@@ -87,6 +92,7 @@ function disable2FA() {
                             id="current_password"
                             v-model="passwordForm.current_password"
                             type="password"
+                            class="h-11 rounded-xl"
                             required
                         />
                         <p
@@ -104,6 +110,7 @@ function disable2FA() {
                             id="password"
                             v-model="passwordForm.password"
                             type="password"
+                            class="h-11 rounded-xl"
                             required
                         />
                         <p
@@ -121,12 +128,17 @@ function disable2FA() {
                             id="password_confirmation"
                             v-model="passwordForm.password_confirmation"
                             type="password"
+                            class="h-11 rounded-xl"
                             required
                         />
                     </div>
-                    <Button type="submit" :disabled="passwordForm.processing">{{
-                        t('settings.security.update_password')
-                    }}</Button>
+                    <Button
+                        type="submit"
+                        class="min-h-11 rounded-xl bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-orange-500"
+                        :disabled="passwordForm.processing"
+                    >
+                        {{ t('settings.security.update_password') }}
+                    </Button>
                 </form>
             </CardContent>
         </Card>
@@ -154,7 +166,8 @@ function disable2FA() {
                     <Button
                         variant="destructive"
                         size="sm"
-                        @click="disable2FA"
+                        class="min-h-10 rounded-xl"
+                        @click="showDisableDialog = true"
                         >{{ t('common.actions.disable') }}</Button
                     >
                 </div>
@@ -162,11 +175,30 @@ function disable2FA() {
                     <p class="text-sm text-muted-foreground">
                         {{ t('settings.security.not_enabled_state') }}
                     </p>
-                    <Button size="sm" @click="enable2FA">{{
-                        t('common.actions.enable')
-                    }}</Button>
+                    <Button
+                        size="sm"
+                        class="min-h-10 rounded-xl bg-orange-600 text-white hover:bg-orange-700"
+                        :disabled="twoFactorForm.processing"
+                        @click="enable2FA"
+                        >{{ t('common.actions.enable') }}</Button
+                    >
                 </div>
             </CardContent>
         </Card>
+
+        <WorkspaceConfirmDialog
+            :open="showDisableDialog"
+            :title="t('settings.security.disable_2fa_title')"
+            :description="t('settings.security.disable_2fa_confirm')"
+            :confirm-label="t('common.actions.disable')"
+            :cancel-label="t('common.actions.cancel')"
+            :processing="twoFactorForm.processing"
+            @update:open="showDisableDialog = $event"
+            @confirm="disable2FA"
+        >
+            <template #icon>
+                <Shield class="size-5" aria-hidden="true" />
+            </template>
+        </WorkspaceConfirmDialog>
     </div>
 </template>

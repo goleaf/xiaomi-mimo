@@ -15,6 +15,7 @@ import {
 import { computed, ref } from 'vue';
 import type { Component } from 'vue';
 import ProjectCreateDialog from '@/components/project/ProjectCreateDialog.vue';
+import EmptyState from '@/components/shared/EmptyState.vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { Button } from '@/components/ui/button';
@@ -292,37 +293,21 @@ function openCreateDialog(): void {
                         </Link>
                     </div>
 
-                    <div
+                    <EmptyState
                         v-else
-                        class="flex min-h-[28rem] flex-col items-center justify-center px-6 text-center"
+                        :title="copy.projects.empty_title"
+                        :description="copy.projects.empty_description"
+                        :action-label="
+                            activeFilter === 'all'
+                                ? copy.projects.create_first
+                                : undefined
+                        "
+                        @action="openCreateDialog"
                     >
-                        <div
-                            class="relative flex size-20 items-center justify-center rounded-[1.6rem] border border-orange-500/15 bg-orange-500/[0.07] text-orange-700 dark:text-orange-300"
-                        >
+                        <template #icon>
                             <FolderKanban class="size-8" aria-hidden="true" />
-                            <span
-                                class="absolute -top-1 -right-1 size-3 rounded-full bg-orange-500 ring-4 ring-card"
-                                aria-hidden="true"
-                            />
-                        </div>
-                        <h2 class="mt-6 text-xl font-semibold tracking-tight">
-                            {{ copy.projects.empty_title }}
-                        </h2>
-                        <p
-                            class="mt-2 max-w-md text-sm leading-6 text-muted-foreground"
-                        >
-                            {{ copy.projects.empty_description }}
-                        </p>
-                        <Button
-                            v-if="activeFilter === 'all'"
-                            class="mt-6 min-h-11 cursor-pointer rounded-xl bg-orange-600 text-white hover:bg-orange-700"
-                            :disabled="!workspace.id"
-                            @click="openCreateDialog"
-                        >
-                            <Plus class="size-4" aria-hidden="true" />
-                            {{ copy.projects.create_first }}
-                        </Button>
-                    </div>
+                        </template>
+                    </EmptyState>
                 </section>
             </div>
         </main>

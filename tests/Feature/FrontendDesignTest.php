@@ -47,3 +47,78 @@ test('shared shells carry the projects page visual language', function () {
         ->toContain('rounded-[1.5rem]')
         ->toContain('border-border/80');
 });
+
+test('workspace dialogs preserve the projects visual contract on every viewport', function () {
+    expect(File::get(resource_path('js/components/shared/WorkspaceDialogContent.vue')))
+        ->toContain('rounded-[1.75rem]')
+        ->toContain('max-h-[calc(100svh-1.5rem)]')
+        ->toContain('overflow-y-auto')
+        ->toContain('inset-y-0 left-0 w-1.5')
+        ->toContain('border-orange-500/20')
+        ->and(File::get(resource_path('js/components/shared/WorkspaceConfirmDialog.vue')))
+        ->toContain('WorkspaceDialogContent')
+        ->toContain("accent=\"destructive ? 'red' : 'orange'\"");
+});
+
+test('feature dialogs use the shared projects style dialog surface', function (string $file) {
+    expect(File::get(resource_path("js/{$file}")))
+        ->toContain('WorkspaceDialogContent')
+        ->not->toContain('<DialogContent');
+})->with([
+    'project create' => 'components/project/ProjectCreateDialog.vue',
+    'task create' => 'components/task/TaskCreateDialog.vue',
+    'workspace create' => 'pages/workspaces/Index.vue',
+    'delete account' => 'components/DeleteUser.vue',
+    'remove passkey' => 'components/PasskeyItem.vue',
+    'two factor setup' => 'components/TwoFactorSetupModal.vue',
+    'remove member' => 'pages/settings/Members.vue',
+]);
+
+test('destructive actions use application confirmations instead of browser dialogs', function (string $file) {
+    expect(File::get(resource_path("js/{$file}")))
+        ->toContain('WorkspaceConfirmDialog')
+        ->not->toContain('confirm(');
+})->with([
+    'task list' => 'pages/tasks/Index.vue',
+    'project task list' => 'pages/projects/Show.vue',
+    'task drawer' => 'components/task/TaskDetail.vue',
+    'backup restore' => 'pages/settings/Backup.vue',
+    'two factor disable' => 'pages/settings/Security.vue',
+]);
+
+test('task interfaces use accessible application controls', function () {
+    expect(File::get(resource_path('js/components/task/TaskDetail.vue')))
+        ->toContain('<Sheet')
+        ->toContain('<Checkbox')
+        ->not->toContain('<Teleport')
+        ->not->toContain('type="checkbox"')
+        ->and(File::get(resource_path('js/components/task/TaskCreateDialog.vue')))
+        ->toContain('<Checkbox')
+        ->not->toContain('type="checkbox"')
+        ->and(File::get(resource_path('js/pages/tasks/Index.vue')))
+        ->toContain('<Checkbox')
+        ->not->toContain('type="checkbox"')
+        ->and(File::get(resource_path('js/pages/projects/Show.vue')))
+        ->toContain('<Checkbox')
+        ->not->toContain('type="checkbox"');
+});
+
+test('list pages share the warm precision empty state', function (string $page) {
+    expect(File::get(resource_path("js/pages/{$page}")))
+        ->toContain('EmptyState');
+})->with([
+    'activity' => 'activity/Index.vue',
+    'notifications' => 'notifications/Index.vue',
+    'projects' => 'projects/Index.vue',
+    'project detail' => 'projects/Show.vue',
+    'tasks' => 'tasks/Index.vue',
+    'workspaces' => 'workspaces/Index.vue',
+    'backups' => 'settings/Backup.vue',
+]);
+
+test('guest authentication uses the same left rail hierarchy as projects', function () {
+    expect(File::get(resource_path('js/layouts/auth/AuthSimpleLayout.vue')))
+        ->toContain('inset-y-0 left-0 w-1.5 bg-orange-500')
+        ->toContain('tracking-[0.16em]')
+        ->not->toContain('inset-x-0 top-0 h-1.5');
+});

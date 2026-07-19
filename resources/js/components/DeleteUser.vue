@@ -5,15 +5,12 @@ import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileCo
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
+import WorkspaceDialogContent from '@/components/shared/WorkspaceDialogContent.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogClose,
-    DialogContent,
-    DialogDescription,
     DialogFooter,
-    DialogHeader,
-    DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -59,7 +56,12 @@ const passwordInput = useTemplateRef('passwordInput');
                         >{{ labels.trigger }}</Button
                     >
                 </DialogTrigger>
-                <DialogContent>
+                <WorkspaceDialogContent
+                    :title="labels.dialog_title"
+                    :description="labels.dialog_description"
+                    :close-label="labels.cancel"
+                    accent="red"
+                >
                     <Form
                         v-bind="ProfileController.destroy.form()"
                         reset-on-success
@@ -67,16 +69,9 @@ const passwordInput = useTemplateRef('passwordInput');
                         :options="{
                             preserveScroll: true,
                         }"
-                        class="space-y-6"
+                        class="space-y-6 px-6 py-6 sm:px-8"
                         v-slot="{ errors, processing, reset, clearErrors }"
                     >
-                        <DialogHeader class="space-y-3">
-                            <DialogTitle>{{ labels.dialog_title }}</DialogTitle>
-                            <DialogDescription>
-                                {{ labels.dialog_description }}
-                            </DialogDescription>
-                        </DialogHeader>
-
                         <div class="grid gap-2">
                             <Label for="password" class="sr-only">{{
                                 labels.password
@@ -86,15 +81,19 @@ const passwordInput = useTemplateRef('passwordInput');
                                 name="password"
                                 ref="passwordInput"
                                 :placeholder="labels.password_placeholder"
+                                class="h-11 rounded-xl"
                             />
                             <InputError :message="errors.password" />
                         </div>
 
-                        <DialogFooter class="gap-2">
+                        <DialogFooter
+                            class="gap-2 border-t border-border/70 pt-5 sm:gap-2"
+                        >
                             <DialogClose as-child>
                                 <Button
                                     type="button"
-                                    variant="secondary"
+                                    variant="outline"
+                                    class="min-h-11 cursor-pointer rounded-xl"
                                     @click="
                                         () => {
                                             clearErrors();
@@ -109,6 +108,7 @@ const passwordInput = useTemplateRef('passwordInput');
                             <Button
                                 type="submit"
                                 variant="destructive"
+                                class="min-h-11 cursor-pointer rounded-xl"
                                 :disabled="processing"
                                 data-test="confirm-delete-user-button"
                             >
@@ -116,7 +116,7 @@ const passwordInput = useTemplateRef('passwordInput');
                             </Button>
                         </DialogFooter>
                     </Form>
-                </DialogContent>
+                </WorkspaceDialogContent>
             </Dialog>
         </div>
     </div>

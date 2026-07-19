@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { Calendar, User, X } from '@lucide/vue';
+import { Calendar, CheckCircle2, Trash2, User } from '@lucide/vue';
+import { ref } from 'vue';
+import WorkspaceConfirmDialog from '@/components/shared/WorkspaceConfirmDialog.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 import { useTaskDetailState } from '@/composables/useTaskDetailState';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
@@ -18,6 +27,8 @@ const props = defineProps<{ todo: Todo; open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 const toast = useToast();
 const { formatDate, t } = useUi();
+const showDeleteDialog = ref(false);
+const deletingTodo = ref(false);
 const { checklistItemDrafts, checklistName, comment, editingTitle, form } =
     useTaskDetailState(() => props.todo);
 
@@ -105,11 +116,16 @@ function toggleChecklistItem(itemId: string) {
 }
 
 function deleteTodo() {
+    deletingTodo.value = true;
     router.delete(destroy(props.todo).url, {
         preserveScroll: true,
         onSuccess: () => {
+            showDeleteDialog.value = false;
             emit('close');
             toast.success(t('tasks.detail.deleted'));
+        },
+        onFinish: () => {
+            deletingTodo.value = false;
         },
     });
 }
@@ -131,123 +147,160 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
 </script>
 
 <template>
-    <Teleport to="body">
-        <Transition name="slide">
-            <div
-                v-if="open"
-                class="fixed inset-y-0 right-0 z-50 w-full max-w-lg overflow-y-auto border-l bg-background shadow-xl"
+    <Sheet :open="open" @update:open="!$event && emit('close')">
+        <SheetContent
+            side="right"
+            :close-label="t('common.actions.close')"
+            class="w-full max-w-none gap-0 overflow-y-auto border-border/80 p-0 sm:max-w-xl"
+        >
+            <SheetHeader
+                class="relative overflow-hidden border-b border-border/70 bg-muted/30 px-6 py-6 text-left sm:px-8"
             >
-                <div
-                    class="sticky top-0 z-10 flex items-center justify-between border-b bg-background p-4"
-                >
-                    <div class="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            :checked="todo.status === 'completed'"
-                            class="h-4 w-4"
-                            @change="toggleComplete"
-                        />
-                        <span class="text-sm text-muted-foreground">{{
-                            t('tasks.detail.title')
-                        }}</span>
+                <span
+                    class="absolute inset-y-0 left-0 w-1.5 bg-orange-500"
+                    aria-hidden="true"
+                />
+                <span
+                    class="absolute -right-9 -bottom-16 size-36 rounded-full border-[18px] border-orange-500/20 bg-orange-500/[0.05]"
+                    aria-hidden="true"
+                />
+                <div class="relative flex items-center gap-3 pr-10">
+                    <Checkbox
+                        :model-value="todo.status === 'completed'"
+                        class="size-5 data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
+                        :aria-label="todo.title"
+                        @update:model-value="toggleComplete"
+                    />
+                    <div class="min-w-0">
+                        <SheetTitle class="truncate text-xl tracking-tight">
+                            {{ t('tasks.detail.title') }}
+                        </SheetTitle>
+                        <SheetDescription class="truncate">
+                            {{ todo.project?.name ?? todo.title }}
+                        </SheetDescription>
                     </div>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        :aria-label="t('common.actions.close')"
-                        @click="emit('close')"
-                        ><X class="h-4 w-4"
-                    /></Button>
                 </div>
+            </SheetHeader>
 
-                <div class="space-y-6 p-6">
-                    <!-- Title -->
-                    <div>
-                        <input
-                            v-if="editingTitle"
-                            v-model="form.title"
-                            class="w-full border-b border-primary pb-1 text-lg font-semibold outline-none"
-                            @blur="updateTitle"
-                            @keyup.enter="updateTitle"
-                            autofocus
-                        />
-                        <h2
-                            v-else
-                            class="cursor-pointer text-lg font-semibold hover:underline"
-                            @click="editingTitle = true"
+            <div class="space-y-5 bg-muted/20 p-4 sm:p-6">
+                <section
+                    class="rounded-[1.5rem] border border-border/80 bg-card p-5 shadow-[0_20px_60px_-52px_rgba(15,23,42,0.6)]"
+                >
+                    <Input
+                        v-if="editingTitle"
+                        v-model="form.title"
+                        class="h-11 rounded-xl text-lg font-semibold"
+                        autofocus
+                        @blur="updateTitle"
+                        @keyup.enter="updateTitle"
+                    />
+                    <button
+                        v-else
+                        type="button"
+                        class="w-full cursor-pointer rounded-lg text-left text-lg font-semibold tracking-tight hover:text-orange-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none dark:hover:text-orange-300"
+                        @click="editingTitle = true"
+                    >
+                        {{ todo.title }}
+                    </button>
+
+                    <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <p
+                                class="mb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase"
+                            >
+                                {{ t('tasks.filters.status') }}
+                            </p>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button
+                                    v-for="status in statusOptions"
+                                    :key="status"
+                                    type="button"
+                                    class="cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
+                                    :aria-pressed="todo.status === status"
+                                    @click="setStatus(status)"
+                                >
+                                    <Badge
+                                        :variant="
+                                            todo.status === status
+                                                ? 'default'
+                                                : 'outline'
+                                        "
+                                    >
+                                        {{ t(`tasks.statuses.${status}`) }}
+                                    </Badge>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <p
+                                class="mb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase"
+                            >
+                                {{ t('tasks.filters.priority') }}
+                            </p>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button
+                                    v-for="priority in priorityOptions"
+                                    :key="priority"
+                                    type="button"
+                                    class="cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
+                                    :aria-pressed="todo.priority === priority"
+                                    @click="setPriority(priority)"
+                                >
+                                    <Badge
+                                        :variant="
+                                            todo.priority === priority
+                                                ? 'default'
+                                                : 'outline'
+                                        "
+                                    >
+                                        {{ t(`tasks.priorities.${priority}`) }}
+                                    </Badge>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                        <div
+                            class="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/25 p-3"
                         >
-                            {{ todo.title }}
-                        </h2>
-                    </div>
-
-                    <!-- Status -->
-                    <div class="flex items-center gap-2">
-                        <span class="w-24 text-sm text-muted-foreground">{{
-                            t('tasks.filters.status')
-                        }}</span>
-                        <div class="flex gap-1">
-                            <Badge
-                                v-for="s in statusOptions"
-                                :key="s"
-                                :variant="
-                                    todo.status === s ? 'default' : 'outline'
-                                "
-                                class="cursor-pointer"
-                                @click="setStatus(s)"
-                                >{{ t(`tasks.statuses.${s}`) }}</Badge
-                            >
+                            <Calendar
+                                class="size-4 text-orange-700 dark:text-orange-300"
+                                aria-hidden="true"
+                            />
+                            <span class="text-sm">{{
+                                t('tasks.detail.due', {
+                                    date: displayDate(todo.due_date),
+                                })
+                            }}</span>
+                        </div>
+                        <div
+                            class="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/25 p-3"
+                        >
+                            <User
+                                class="size-4 text-orange-700 dark:text-orange-300"
+                                aria-hidden="true"
+                            />
+                            <span class="truncate text-sm">{{
+                                t('tasks.detail.assigned', {
+                                    name:
+                                        todo.assignee?.name ??
+                                        t('common.states.unassigned'),
+                                })
+                            }}</span>
                         </div>
                     </div>
+                </section>
 
-                    <!-- Priority -->
-                    <div class="flex items-center gap-2">
-                        <span class="w-24 text-sm text-muted-foreground">{{
-                            t('tasks.filters.priority')
-                        }}</span>
-                        <div class="flex gap-1">
-                            <Badge
-                                v-for="p in priorityOptions"
-                                :key="p"
-                                :variant="
-                                    todo.priority === p ? 'default' : 'outline'
-                                "
-                                class="cursor-pointer"
-                                @click="setPriority(p)"
-                                >{{ t(`tasks.priorities.${p}`) }}</Badge
-                            >
-                        </div>
-                    </div>
-
-                    <!-- Due Date -->
-                    <div class="flex items-center gap-2">
-                        <Calendar class="h-4 w-4 text-muted-foreground" />
-                        <span class="text-sm">{{
-                            t('tasks.detail.due', {
-                                date: displayDate(todo.due_date),
-                            })
-                        }}</span>
-                    </div>
-
-                    <!-- Assignee -->
-                    <div class="flex items-center gap-2">
-                        <User class="h-4 w-4 text-muted-foreground" />
-                        <span class="text-sm">{{
-                            t('tasks.detail.assigned', {
-                                name:
-                                    todo.assignee?.name ??
-                                    t('common.states.unassigned'),
-                            })
-                        }}</span>
-                    </div>
-
-                    <Separator />
-
-                    <!-- Labels -->
+                <section
+                    v-if="todo.labels?.length || todo.tags?.length"
+                    class="rounded-[1.5rem] border border-border/80 bg-card p-5"
+                >
                     <div v-if="todo.labels?.length">
                         <h3 class="mb-2 text-sm font-medium">
                             {{ t('tasks.detail.labels') }}
                         </h3>
-                        <div class="flex flex-wrap gap-1">
+                        <div class="flex flex-wrap gap-1.5">
                             <Badge
                                 v-for="label in todo.labels"
                                 :key="label.id"
@@ -259,13 +312,14 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                             >
                         </div>
                     </div>
-
-                    <!-- Tags -->
-                    <div v-if="todo.tags?.length">
+                    <div
+                        v-if="todo.tags?.length"
+                        :class="todo.labels?.length ? 'mt-4' : ''"
+                    >
                         <h3 class="mb-2 text-sm font-medium">
                             {{ t('tasks.detail.tags') }}
                         </h3>
-                        <div class="flex flex-wrap gap-1">
+                        <div class="flex flex-wrap gap-1.5">
                             <Badge
                                 v-for="tag in todo.tags"
                                 :key="tag.id"
@@ -274,154 +328,161 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                             >
                         </div>
                     </div>
+                </section>
 
-                    <Separator />
+                <section
+                    class="rounded-[1.5rem] border border-border/80 bg-card p-5"
+                >
+                    <h3 class="text-sm font-medium">
+                        {{ t('tasks.detail.description') }}
+                    </h3>
+                    <p
+                        class="mt-2 text-sm leading-6 whitespace-pre-wrap text-muted-foreground"
+                    >
+                        {{
+                            todo.description ?? t('tasks.detail.no_description')
+                        }}
+                    </p>
+                </section>
 
-                    <!-- Description -->
-                    <div>
-                        <h3 class="mb-2 text-sm font-medium">
-                            {{ t('tasks.detail.description') }}
-                        </h3>
-                        <p
-                            class="text-sm whitespace-pre-wrap text-muted-foreground"
-                        >
-                            {{
-                                todo.description ??
-                                t('tasks.detail.no_description')
-                            }}
-                        </p>
-                    </div>
-
-                    <Separator />
-
-                    <!-- Checklists -->
-                    <div>
-                        <h3 class="mb-2 text-sm font-medium">
+                <section
+                    class="rounded-[1.5rem] border border-border/80 bg-card p-5"
+                >
+                    <div class="mb-4 flex items-center gap-2">
+                        <CheckCircle2
+                            class="size-4 text-orange-700 dark:text-orange-300"
+                            aria-hidden="true"
+                        />
+                        <h3 class="text-sm font-medium">
                             {{ t('tasks.detail.checklists') }}
                         </h3>
-                        <div
-                            v-for="checklist in todo.checklists ?? []"
-                            :key="checklist.id"
-                            class="mb-3 rounded-lg border p-3"
-                        >
-                            <p class="mb-2 text-sm font-medium">
-                                {{ checklist.name }}
-                            </p>
-                            <div
-                                v-for="item in checklist.items ?? []"
-                                :key="item.id"
-                                class="flex items-center gap-2 py-1"
-                            >
-                                <input
-                                    type="checkbox"
-                                    :checked="item.is_checked"
-                                    class="h-3 w-3"
-                                    @change="toggleChecklistItem(item.id)"
-                                />
-                                <span
-                                    :class="[
-                                        'text-sm',
-                                        item.is_checked
-                                            ? 'text-muted-foreground line-through'
-                                            : '',
-                                    ]"
-                                    >{{ item.content }}</span
-                                >
-                            </div>
-                            <div class="mt-2 flex gap-2">
-                                <Input
-                                    v-model="checklistItemDrafts[checklist.id]"
-                                    :placeholder="t('tasks.detail.add_item')"
-                                    class="h-8 text-xs"
-                                    @keyup.enter="
-                                        addChecklistItem(checklist.id)
-                                    "
-                                />
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <Input
-                                v-model="checklistName"
-                                :placeholder="t('tasks.detail.checklist_name')"
-                                class="h-8 text-xs"
-                                @keyup.enter="addChecklist"
-                            />
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                @click="addChecklist"
-                                >{{ t('common.actions.add') }}</Button
-                            >
-                        </div>
                     </div>
-
-                    <Separator />
-
-                    <!-- Comments -->
-                    <div>
-                        <h3 class="mb-2 text-sm font-medium">
-                            {{ t('tasks.detail.comments') }}
-                        </h3>
+                    <div
+                        v-for="checklist in todo.checklists ?? []"
+                        :key="checklist.id"
+                        class="mb-3 rounded-2xl border border-border/70 bg-muted/20 p-4"
+                    >
+                        <p class="mb-2 text-sm font-medium">
+                            {{ checklist.name }}
+                        </p>
                         <div
-                            v-for="comment in todo.comments ?? []"
-                            :key="comment.id"
-                            class="mb-3 rounded-lg border p-3"
+                            v-for="item in checklist.items ?? []"
+                            :key="item.id"
+                            class="flex items-center gap-3 py-1.5"
                         >
-                            <div class="mb-1 flex items-center gap-2">
-                                <span class="text-sm font-medium">{{
-                                    comment.user?.name ??
-                                    t('common.states.unknown')
-                                }}</span>
-                                <span class="text-xs text-muted-foreground">{{
-                                    displayDate(comment.created_at)
-                                }}</span>
-                            </div>
-                            <p class="text-sm whitespace-pre-wrap">
-                                {{ comment.body }}
-                            </p>
-                        </div>
-                        <div class="flex gap-2">
-                            <Input
-                                v-model="comment"
-                                :placeholder="
-                                    t('tasks.detail.comment_placeholder')
+                            <Checkbox
+                                :model-value="item.is_checked"
+                                class="data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
+                                :aria-label="item.content"
+                                @update:model-value="
+                                    toggleChecklistItem(item.id)
                                 "
-                                class="h-8 text-xs"
-                                @keyup.enter="addComment"
                             />
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                @click="addComment"
-                                >{{ t('common.actions.post') }}</Button
+                            <span
+                                :class="[
+                                    'text-sm',
+                                    item.is_checked
+                                        ? 'text-muted-foreground line-through'
+                                        : '',
+                                ]"
+                                >{{ item.content }}</span
                             >
                         </div>
+                        <Input
+                            v-model="checklistItemDrafts[checklist.id]"
+                            :placeholder="t('tasks.detail.add_item')"
+                            class="mt-2 h-10 rounded-xl text-sm"
+                            @keyup.enter="addChecklistItem(checklist.id)"
+                        />
                     </div>
-
-                    <Separator />
-
-                    <!-- Danger Zone -->
-                    <div class="pt-4">
+                    <div class="flex flex-col gap-2 sm:flex-row">
+                        <Input
+                            v-model="checklistName"
+                            :placeholder="t('tasks.detail.checklist_name')"
+                            class="h-10 rounded-xl text-sm"
+                            @keyup.enter="addChecklist"
+                        />
                         <Button
-                            variant="destructive"
-                            size="sm"
-                            @click="deleteTodo"
-                            >{{ t('tasks.detail.delete') }}</Button
+                            variant="outline"
+                            class="rounded-xl"
+                            @click="addChecklist"
                         >
+                            {{ t('common.actions.add') }}
+                        </Button>
                     </div>
-                </div>
-            </div>
-        </Transition>
-    </Teleport>
-</template>
+                </section>
 
-<style scoped>
-.slide-enter-active,
-.slide-leave-active {
-    transition: transform 0.3s ease;
-}
-.slide-enter-from,
-.slide-leave-to {
-    transform: translateX(100%);
-}
-</style>
+                <section
+                    class="rounded-[1.5rem] border border-border/80 bg-card p-5"
+                >
+                    <h3 class="mb-4 text-sm font-medium">
+                        {{ t('tasks.detail.comments') }}
+                    </h3>
+                    <div
+                        v-for="taskComment in todo.comments ?? []"
+                        :key="taskComment.id"
+                        class="mb-3 rounded-2xl border border-border/70 bg-muted/20 p-4"
+                    >
+                        <div
+                            class="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1"
+                        >
+                            <span class="text-sm font-medium">{{
+                                taskComment.user?.name ??
+                                t('common.states.unknown')
+                            }}</span>
+                            <span class="text-xs text-muted-foreground">{{
+                                displayDate(taskComment.created_at)
+                            }}</span>
+                        </div>
+                        <p class="text-sm leading-6 whitespace-pre-wrap">
+                            {{ taskComment.body }}
+                        </p>
+                    </div>
+                    <div class="flex flex-col gap-2 sm:flex-row">
+                        <Input
+                            v-model="comment"
+                            :placeholder="t('tasks.detail.comment_placeholder')"
+                            class="h-10 rounded-xl text-sm"
+                            @keyup.enter="addComment"
+                        />
+                        <Button
+                            variant="outline"
+                            class="rounded-xl"
+                            @click="addComment"
+                        >
+                            {{ t('common.actions.post') }}
+                        </Button>
+                    </div>
+                </section>
+
+                <section
+                    class="rounded-[1.5rem] border border-destructive/20 bg-destructive/[0.04] p-5"
+                >
+                    <Button
+                        variant="destructive"
+                        class="min-h-11 rounded-xl"
+                        @click="showDeleteDialog = true"
+                    >
+                        <Trash2 class="size-4" aria-hidden="true" />
+                        {{ t('tasks.detail.delete') }}
+                    </Button>
+                </section>
+            </div>
+        </SheetContent>
+    </Sheet>
+
+    <WorkspaceConfirmDialog
+        :open="showDeleteDialog"
+        :title="t('tasks.detail.delete_confirm_title')"
+        :description="t('tasks.detail.delete_confirm_description')"
+        :confirm-label="t('tasks.detail.delete')"
+        :cancel-label="t('common.actions.cancel')"
+        :processing="deletingTodo"
+        @update:open="showDeleteDialog = $event"
+        @confirm="deleteTodo"
+    >
+        <template #icon>
+            <Trash2 class="size-5" aria-hidden="true" />
+        </template>
+    </WorkspaceConfirmDialog>
+</template>

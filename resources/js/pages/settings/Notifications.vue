@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { Head, setLayoutProps, useForm } from '@inertiajs/vue3';
+import { BellRing, Mail, Monitor } from '@lucide/vue';
+import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
@@ -25,6 +34,27 @@ const form = useForm({
     notification_in_app: props.preferences.notification_in_app,
 });
 
+const notificationOptions = computed(() => [
+    {
+        key: 'notification_email' as const,
+        label: t('settings.notifications.email'),
+        description: t('settings.notifications.email_description'),
+        icon: Mail,
+    },
+    {
+        key: 'notification_browser' as const,
+        label: t('settings.notifications.browser'),
+        description: t('settings.notifications.browser_description'),
+        icon: Monitor,
+    },
+    {
+        key: 'notification_in_app' as const,
+        label: t('settings.notifications.in_app'),
+        description: t('settings.notifications.in_app_description'),
+        icon: BellRing,
+    },
+]);
+
 function submit() {
     form.put(update.url(), {
         onSuccess: () => toast.success(t('settings.notifications.saved')),
@@ -37,35 +67,61 @@ function submit() {
     <div class="space-y-6">
         <form @submit.prevent="submit">
             <Card>
-                <CardContent class="space-y-4 pt-6">
+                <CardHeader>
+                    <CardTitle>{{
+                        t('settings.notifications.channels_title')
+                    }}</CardTitle>
+                    <CardDescription>
+                        {{ t('settings.notifications.channels_description') }}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent class="space-y-3">
                     <div
-                        v-for="(field, key) in {
-                            notification_email: t(
-                                'settings.notifications.email',
-                            ),
-                            notification_browser: t(
-                                'settings.notifications.browser',
-                            ),
-                            notification_in_app: t(
-                                'settings.notifications.in_app',
-                            ),
-                        }"
-                        :key="key"
-                        class="flex items-center justify-between"
+                        v-for="option in notificationOptions"
+                        :key="option.key"
+                        class="flex min-h-20 items-center gap-4 rounded-2xl border border-border/70 bg-muted/20 p-4 transition-colors hover:bg-muted/35"
                     >
-                        <Label>{{ field }}</Label>
-                        <input
-                            type="checkbox"
-                            v-model="form[key as keyof typeof form]"
-                            class="h-4 w-4 rounded border-gray-300"
+                        <div
+                            class="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-orange-500/15 bg-orange-500/[0.08] text-orange-700 dark:text-orange-300"
+                        >
+                            <component
+                                :is="option.icon"
+                                class="size-5"
+                                aria-hidden="true"
+                            />
+                        </div>
+                        <Label
+                            :for="option.key"
+                            class="min-w-0 flex-1 cursor-pointer"
+                        >
+                            <span class="block font-medium text-foreground">
+                                {{ option.label }}
+                            </span>
+                            <span
+                                class="mt-1 block text-sm leading-5 font-normal text-muted-foreground"
+                            >
+                                {{ option.description }}
+                            </span>
+                        </Label>
+                        <Checkbox
+                            :id="option.key"
+                            :model-value="form[option.key]"
+                            class="size-5 data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
+                            @update:model-value="
+                                form[option.key] = Boolean($event)
+                            "
                         />
                     </div>
                 </CardContent>
             </Card>
             <div class="mt-4 flex justify-end">
-                <Button type="submit" :disabled="form.processing">{{
-                    t('common.actions.save')
-                }}</Button>
+                <Button
+                    type="submit"
+                    class="min-h-11 rounded-xl bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-orange-500"
+                    :disabled="form.processing"
+                >
+                    {{ t('common.actions.save') }}
+                </Button>
             </div>
         </form>
     </div>

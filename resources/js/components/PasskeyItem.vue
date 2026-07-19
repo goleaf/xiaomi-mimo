@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { KeyRound, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
+import WorkspaceDialogContent from '@/components/shared/WorkspaceDialogContent.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogClose,
-    DialogContent,
-    DialogDescription,
     DialogFooter,
-    DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { useUi } from '@/composables/useUi';
@@ -77,25 +75,28 @@ const handleDelete = () => {
                 </Button>
             </DialogTrigger>
 
-            <DialogContent>
-                <DialogTitle>{{
-                    t('account.passkeys.remove_title')
-                }}</DialogTitle>
-                <DialogDescription>
-                    {{
-                        t('account.passkeys.remove_description', {
-                            name: passkey.name,
-                        })
-                    }}
-                </DialogDescription>
-                <DialogFooter class="gap-2">
+            <WorkspaceDialogContent
+                :title="t('account.passkeys.remove_title')"
+                :description="
+                    t('account.passkeys.remove_description', {
+                        name: passkey.name,
+                    })
+                "
+                :close-label="t('common.actions.cancel')"
+                accent="red"
+            >
+                <DialogFooter class="gap-2 px-6 py-6 sm:gap-2 sm:px-8">
                     <DialogClose as-child>
-                        <Button variant="secondary">{{
-                            t('common.actions.cancel')
-                        }}</Button>
+                        <Button
+                            variant="outline"
+                            class="min-h-11 cursor-pointer rounded-xl"
+                        >
+                            {{ t('common.actions.cancel') }}
+                        </Button>
                     </DialogClose>
                     <Button
                         variant="destructive"
+                        class="min-h-11 cursor-pointer rounded-xl"
                         :disabled="isDeleting"
                         @click="handleDelete"
                     >
@@ -106,7 +107,7 @@ const handleDelete = () => {
                         }}
                     </Button>
                 </DialogFooter>
-            </DialogContent>
+            </WorkspaceDialogContent>
         </Dialog>
     </div>
 </template>

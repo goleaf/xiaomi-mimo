@@ -2,6 +2,8 @@
 import { Head, router, setLayoutProps } from '@inertiajs/vue3';
 import { Download, RotateCcw } from '@lucide/vue';
 import { ref } from 'vue';
+import EmptyState from '@/components/shared/EmptyState.vue';
+import WorkspaceConfirmDialog from '@/components/shared/WorkspaceConfirmDialog.vue';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -23,6 +25,8 @@ import type { SettingsLayoutProps } from '@/types';
 const toast = useToast();
 const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
 const creating = ref(false);
+const restoring = ref(false);
+const selectedBackup = ref<string | null>(null);
 
 setLayoutProps<SettingsLayoutProps>({
     settingsEyebrow: t('account.menu.settings'),
@@ -57,17 +61,31 @@ function createBackup() {
     );
 }
 
-function restoreBackup(filename: string) {
-    if (confirm(t('settings.backup.restore_confirm', { filename }))) {
-        router.post(
-            restore(filename).url,
-            {},
-            {
-                preserveScroll: true,
-                onSuccess: () => toast.success(t('settings.backup.restored')),
-            },
-        );
+function restoreBackup(filename: string): void {
+    selectedBackup.value = filename;
+}
+
+function confirmRestore(): void {
+    if (!selectedBackup.value) {
+        return;
     }
+
+    restoring.value = true;
+    router.post(
+        restore(selectedBackup.value).url,
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success(t('settings.backup.restored'));
+                selectedBackup.value = null;
+            },
+            onError: () => toast.error(t('settings.backup.restore_failed')),
+            onFinish: () => {
+                restoring.value = false;
+            },
+        },
+    );
 }
 
 function downloadBackup(filename: string) {
@@ -117,17 +135,21 @@ function formatDate(timestamp: number): string {
                 </CardAction>
             </CardHeader>
             <CardContent>
-                <div
+                <EmptyState
                     v-if="backups.length === 0"
-                    class="py-8 text-center text-muted-foreground"
+                    compact
+                    :title="t('settings.backup.empty')"
+                    :description="t('settings.backup.empty_description')"
                 >
-                    {{ t('settings.backup.empty') }}
-                </div>
+                    <template #icon>
+                        <Download class="size-7" aria-hidden="true" />
+                    </template>
+                </EmptyState>
                 <div v-else class="space-y-3">
                     <div
                         v-for="backup in backups"
                         :key="backup.filename"
-                        class="flex items-center justify-between rounded-lg border p-4"
+                        class="flex flex-col gap-4 rounded-2xl border border-border/70 bg-background p-4 sm:flex-row sm:items-center sm:justify-between"
                     >
                         <div>
                             <p class="text-sm font-medium">
@@ -160,5 +182,28 @@ function formatDate(timestamp: number): string {
                 </div>
             </CardContent>
         </Card>
+
+        <WorkspaceConfirmDialog
+            :open="selectedBackup !== null"
+            :title="t('settings.backup.restore_title')"
+            :description="
+                t('settings.backup.restore_confirm', {
+                    filename: selectedBackup ?? '',
+                })
+            "
+            :confirm-label="
+                restoring
+                    ? t('settings.backup.restoring')
+                    : t('settings.backup.restore')
+            "
+            :cancel-label="t('common.actions.cancel')"
+            :processing="restoring"
+            @update:open="!$event && !restoring && (selectedBackup = null)"
+            @confirm="confirmRestore"
+        >
+            <template #icon>
+                <RotateCcw class="size-5" aria-hidden="true" />
+            </template>
+        </WorkspaceConfirmDialog>
     </div>
 </template>

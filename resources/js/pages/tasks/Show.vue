@@ -15,6 +15,7 @@ import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -532,7 +533,7 @@ function priorityBadge(
                         <div
                             v-for="cl in todo.checklists"
                             :key="cl.id"
-                            class="rounded-lg border p-3"
+                            class="rounded-2xl border border-border/70 bg-muted/20 p-4"
                         >
                             <p class="mb-2 text-sm font-medium">
                                 {{ cl.name }}
@@ -542,11 +543,13 @@ function priorityBadge(
                                 :key="item.id"
                                 class="flex items-center gap-2 py-1"
                             >
-                                <input
-                                    type="checkbox"
-                                    :checked="item.is_checked"
-                                    class="h-3 w-3"
-                                    @change="toggleChecklistItem(item.id)"
+                                <Checkbox
+                                    :model-value="item.is_checked"
+                                    class="data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
+                                    :aria-label="item.content"
+                                    @update:model-value="
+                                        toggleChecklistItem(item.id)
+                                    "
                                 />
                                 <span
                                     :class="[
@@ -598,7 +601,7 @@ function priorityBadge(
                         <div
                             v-for="comment in todo.comments ?? []"
                             :key="comment.id"
-                            class="rounded-lg border p-3"
+                            class="rounded-2xl border border-border/70 bg-muted/20 p-4"
                         >
                             <div class="mb-1 flex items-center gap-2">
                                 <span class="text-sm font-medium">{{

@@ -15,6 +15,7 @@ import {
     invite as inviteWorkspaceMember,
     removeMember as removeWorkspaceMember,
 } from '@/actions/App/Http/Controllers/WorkspaceController';
+import WorkspaceDialogContent from '@/components/shared/WorkspaceDialogContent.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,14 +26,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -491,50 +485,57 @@ function removeMember(): void {
             :open="memberToRemove !== null"
             @update:open="handleRemoveDialogOpen"
         >
-            <DialogContent class="sm:max-w-md">
-                <DialogHeader>
+            <WorkspaceDialogContent
+                :title="copy.remove_title"
+                :description="
+                    memberToRemove
+                        ? `${memberToRemove.name} — ${copy.remove_description}`
+                        : copy.remove_description
+                "
+                :close-label="copy.cancel"
+                accent="red"
+                max-width-class="sm:max-w-md"
+            >
+                <div class="space-y-6 px-6 py-6 sm:px-8">
                     <div
-                        class="mb-2 flex size-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive"
+                        class="flex size-11 items-center justify-center rounded-2xl border border-destructive/15 bg-destructive/10 text-destructive"
                     >
                         <UserCog class="size-5" aria-hidden="true" />
                     </div>
-                    <DialogTitle>{{ copy.remove_title }}</DialogTitle>
-                    <DialogDescription>
-                        <span class="font-medium text-foreground">
-                            {{ memberToRemove?.name }}
-                        </span>
-                        — {{ copy.remove_description }}
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter class="gap-2 sm:gap-0">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        :disabled="removeForm.processing"
-                        @click="memberToRemove = null"
+                    <DialogFooter
+                        class="gap-2 border-t border-border/70 pt-5 sm:gap-2"
                     >
-                        {{ copy.cancel }}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="destructive"
-                        :disabled="removeForm.processing"
-                        @click="removeMember"
-                    >
-                        <LoaderCircle
-                            v-if="removeForm.processing"
-                            class="animate-spin"
-                            aria-hidden="true"
-                        />
-                        <Trash2 v-else aria-hidden="true" />
-                        {{
-                            removeForm.processing
-                                ? copy.removing
-                                : copy.remove_action
-                        }}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            class="min-h-11 cursor-pointer rounded-xl"
+                            :disabled="removeForm.processing"
+                            @click="memberToRemove = null"
+                        >
+                            {{ copy.cancel }}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            class="min-h-11 cursor-pointer rounded-xl"
+                            :disabled="removeForm.processing"
+                            @click="removeMember"
+                        >
+                            <LoaderCircle
+                                v-if="removeForm.processing"
+                                class="animate-spin"
+                                aria-hidden="true"
+                            />
+                            <Trash2 v-else aria-hidden="true" />
+                            {{
+                                removeForm.processing
+                                    ? copy.removing
+                                    : copy.remove_action
+                            }}
+                        </Button>
+                    </DialogFooter>
+                </div>
+            </WorkspaceDialogContent>
         </Dialog>
     </div>
 </template>

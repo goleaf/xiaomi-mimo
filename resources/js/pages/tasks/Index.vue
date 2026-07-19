@@ -9,12 +9,15 @@ import {
     Trash2,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import EmptyState from '@/components/shared/EmptyState.vue';
+import WorkspaceConfirmDialog from '@/components/shared/WorkspaceConfirmDialog.vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import TaskCreateDialog from '@/components/task/TaskCreateDialog.vue';
 import TaskDetail from '@/components/task/TaskDetail.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -51,6 +54,8 @@ const statusFilter = ref(props.filters.status ?? 'all');
 const priorityFilter = ref(props.filters.priority ?? 'all');
 const selectedTodo = ref<Todo | null>(null);
 const showCreateDialog = ref(false);
+const todoToDelete = ref<Todo | null>(null);
+const deletingTodo = ref(false);
 
 const allTodos = computed(() => props.todos.data);
 const totalCount = computed(
@@ -86,15 +91,25 @@ function toggleComplete(todo: Todo): void {
     router.post(target.url, {}, { preserveScroll: true });
 }
 
-function deleteTodo(todo: Todo): void {
+function deleteTodo(): void {
+    if (!todoToDelete.value) {
+        return;
+    }
+
+    const todo = todoToDelete.value;
+    deletingTodo.value = true;
     router.delete(destroy(todo).url, {
         preserveScroll: true,
         onSuccess: () => {
             toast.success(t('tasks.index.deleted'));
+            todoToDelete.value = null;
 
             if (selectedTodo.value?.id === todo.id) {
                 selectedTodo.value = null;
             }
+        },
+        onFinish: () => {
+            deletingTodo.value = false;
         },
     });
 }
@@ -288,12 +303,12 @@ function formatDate(date: string | null): string {
                             class="group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border/80 bg-background p-3.5 transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-orange-500/25 hover:shadow-[0_16px_36px_-30px_rgba(234,88,12,0.55)] motion-reduce:transform-none sm:gap-4 sm:p-4"
                             @click="selectTodo(todo)"
                         >
-                            <input
-                                type="checkbox"
-                                :checked="todo.status === 'completed'"
-                                class="size-4 rounded border-gray-300 accent-orange-600"
+                            <Checkbox
+                                :model-value="todo.status === 'completed'"
+                                class="size-4.5 data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
                                 :aria-label="todo.title"
-                                @change.stop="toggleComplete(todo)"
+                                @click.stop
+                                @update:model-value="toggleComplete(todo)"
                             />
                             <div class="min-w-0">
                                 <p
@@ -347,7 +362,7 @@ function formatDate(date: string | null): string {
                                     size="icon-sm"
                                     class="text-muted-foreground opacity-70 hover:text-destructive sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
                                     :aria-label="t('common.actions.delete')"
-                                    @click.stop="deleteTodo(todo)"
+                                    @click.stop="todoToDelete = todo"
                                 >
                                     <Trash2 class="size-4" aria-hidden="true" />
                                 </Button>
@@ -355,22 +370,18 @@ function formatDate(date: string | null): string {
                         </div>
                     </div>
 
-                    <div
+                    <EmptyState
                         v-else
-                        class="flex min-h-72 flex-col items-center justify-center px-6 text-center"
+                        compact
+                        :title="t('tasks.index.empty_title')"
+                        :description="t('tasks.index.empty_description')"
+                        :action-label="t('tasks.create.new_task')"
+                        @action="showCreateDialog = true"
                     >
-                        <div
-                            class="flex size-16 items-center justify-center rounded-2xl bg-orange-500/[0.08] text-orange-700 dark:text-orange-300"
-                        >
+                        <template #icon>
                             <ListChecks class="size-7" aria-hidden="true" />
-                        </div>
-                        <p class="mt-5 text-lg font-semibold">
-                            {{ t('tasks.index.empty_title') }}
-                        </p>
-                        <p class="mt-1 text-sm text-muted-foreground">
-                            {{ t('tasks.index.empty_description') }}
-                        </p>
-                    </div>
+                        </template>
+                    </EmptyState>
                 </section>
             </div>
         </main>
@@ -388,6 +399,21 @@ function formatDate(date: string | null): string {
             :workspace-id="workspace.id"
             @close="showCreateDialog = false"
             @created="applyFilters"
+        />
+
+        <WorkspaceConfirmDialog
+            :open="todoToDelete !== null"
+            :title="t('tasks.index.delete_confirm_title')"
+            :description="
+                t('tasks.index.delete_confirm_description', {
+                    title: todoToDelete?.title ?? '',
+                })
+            "
+            :confirm-label="t('common.actions.delete')"
+            :cancel-label="t('common.actions.cancel')"
+            :processing="deletingTodo"
+            @update:open="!$event && (todoToDelete = null)"
+            @confirm="deleteTodo"
         />
     </div>
 </template>

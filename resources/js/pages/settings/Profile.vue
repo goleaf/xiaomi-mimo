@@ -4,7 +4,6 @@ import { BadgeCheck, Camera, CircleAlert, ImageUp, Trash2 } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, useTemplateRef } from 'vue';
 import {
     destroyAvatar,
-    edit,
     update,
     updateAvatar,
 } from '@/actions/App/Http/Controllers/Settings/ProfileController';
@@ -26,7 +25,7 @@ import { useInitials } from '@/composables/useInitials';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { send as sendVerification } from '@/routes/verification';
-import type { BreadcrumbItem, SettingsLayoutProps } from '@/types';
+import type { SettingsLayoutProps } from '@/types';
 
 type ProfileLabels = {
     title: string;
@@ -87,17 +86,7 @@ const props = defineProps<{
 
 const { t } = useUi();
 
-setLayoutProps<
-    SettingsLayoutProps & {
-        breadcrumbs: BreadcrumbItem[];
-    }
->({
-    breadcrumbs: [
-        {
-            title: props.labels.title,
-            href: edit(),
-        },
-    ],
+setLayoutProps<SettingsLayoutProps>({
     navigationLabel: props.labels.navigation_label,
     settingsEyebrow: t('account.menu.settings'),
     settingsTitle: props.labels.title,

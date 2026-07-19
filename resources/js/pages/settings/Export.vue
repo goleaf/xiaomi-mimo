@@ -61,16 +61,21 @@ function handleImport(event: Event, format: string) {
                     t('settings.export.export_description')
                 }}</CardDescription>
             </CardHeader>
-            <CardContent class="flex gap-3">
-                <Button variant="outline" @click="exportData('json')"
-                    ><Download class="mr-2 h-4 w-4" />JSON</Button
+            <CardContent class="grid gap-3 sm:grid-cols-3">
+                <Button
+                    v-for="format in ['json', 'csv', 'markdown']"
+                    :key="format"
+                    variant="outline"
+                    class="min-h-20 justify-start rounded-2xl bg-muted/20 px-4 hover:border-orange-500/25 hover:bg-orange-500/[0.05]"
+                    @click="exportData(format)"
                 >
-                <Button variant="outline" @click="exportData('csv')"
-                    ><Download class="mr-2 h-4 w-4" />CSV</Button
-                >
-                <Button variant="outline" @click="exportData('markdown')"
-                    ><Download class="mr-2 h-4 w-4" />Markdown</Button
-                >
+                    <span
+                        class="flex size-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-700 dark:text-orange-300"
+                    >
+                        <Download class="size-4" aria-hidden="true" />
+                    </span>
+                    <span class="font-semibold uppercase">{{ format }}</span>
+                </Button>
             </CardContent>
         </Card>
 
@@ -81,32 +86,38 @@ function handleImport(event: Event, format: string) {
                     t('settings.export.import_description')
                 }}</CardDescription>
             </CardHeader>
-            <CardContent class="flex gap-3">
-                <label class="inline-flex cursor-pointer items-center gap-2">
+            <CardContent class="grid gap-3 sm:grid-cols-2">
+                <label
+                    class="inline-flex min-h-20 cursor-pointer items-center gap-3 rounded-2xl border border-border bg-muted/20 px-4 text-sm font-medium transition-colors focus-within:ring-2 focus-within:ring-orange-500 hover:border-orange-500/25 hover:bg-orange-500/[0.05]"
+                >
                     <input
                         type="file"
                         accept=".json"
                         class="hidden"
                         @change="handleImport($event, 'json')"
                     />
-                    <Button variant="outline"
-                        ><Upload class="mr-2 h-4 w-4" />{{
-                            t('settings.export.import_json')
-                        }}</Button
+                    <span
+                        class="flex size-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-700 dark:text-orange-300"
                     >
+                        <Upload class="size-4" aria-hidden="true" />
+                    </span>
+                    {{ t('settings.export.import_json') }}
                 </label>
-                <label class="inline-flex cursor-pointer items-center gap-2">
+                <label
+                    class="inline-flex min-h-20 cursor-pointer items-center gap-3 rounded-2xl border border-border bg-muted/20 px-4 text-sm font-medium transition-colors focus-within:ring-2 focus-within:ring-orange-500 hover:border-orange-500/25 hover:bg-orange-500/[0.05]"
+                >
                     <input
                         type="file"
                         accept=".csv"
                         class="hidden"
                         @change="handleImport($event, 'csv')"
                     />
-                    <Button variant="outline"
-                        ><Upload class="mr-2 h-4 w-4" />{{
-                            t('settings.export.import_csv')
-                        }}</Button
+                    <span
+                        class="flex size-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-700 dark:text-orange-300"
                     >
+                        <Upload class="size-4" aria-hidden="true" />
+                    </span>
+                    {{ t('settings.export.import_csv') }}
                 </label>
             </CardContent>
         </Card>

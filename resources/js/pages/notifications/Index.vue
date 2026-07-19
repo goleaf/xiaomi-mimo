@@ -14,6 +14,7 @@ import {
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import type { Component } from 'vue';
+import EmptyState from '@/components/shared/EmptyState.vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { Button } from '@/components/ui/button';
@@ -365,32 +366,23 @@ function notificationTone(notification: NotificationItem): string {
                     </article>
                 </div>
 
-                <div
+                <EmptyState
                     v-else
-                    class="flex min-h-[28rem] flex-col items-center justify-center px-6 text-center"
+                    :title="
+                        activeTab === 'unread'
+                            ? copy.notifications.empty_unread_title
+                            : copy.notifications.empty_title
+                    "
+                    :description="
+                        activeTab === 'unread'
+                            ? copy.notifications.empty_unread_description
+                            : copy.notifications.empty_description
+                    "
                 >
-                    <div
-                        class="flex size-16 items-center justify-center rounded-[1.4rem] bg-orange-500/10 text-orange-700 dark:text-orange-300"
-                    >
+                    <template #icon>
                         <BellOff class="size-7" aria-hidden="true" />
-                    </div>
-                    <h2 class="mt-5 text-lg font-semibold">
-                        {{
-                            activeTab === 'unread'
-                                ? copy.notifications.empty_unread_title
-                                : copy.notifications.empty_title
-                        }}
-                    </h2>
-                    <p
-                        class="mt-2 max-w-md text-sm leading-6 text-muted-foreground"
-                    >
-                        {{
-                            activeTab === 'unread'
-                                ? copy.notifications.empty_unread_description
-                                : copy.notifications.empty_description
-                        }}
-                    </p>
-                </div>
+                    </template>
+                </EmptyState>
             </section>
         </div>
     </main>
