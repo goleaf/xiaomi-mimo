@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, useForm } from '@inertiajs/vue3';
+import { Form, Head, setLayoutProps, useForm } from '@inertiajs/vue3';
 import { BadgeCheck, Camera, CircleAlert, ImageUp, Trash2 } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, useTemplateRef } from 'vue';
 import {
@@ -26,6 +26,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useInitials } from '@/composables/useInitials';
 import { useToast } from '@/composables/useToast';
 import { send as sendVerification } from '@/routes/verification';
+import type { BreadcrumbItem } from '@/types';
 
 type ProfileLabels = {
     title: string;
@@ -83,15 +84,13 @@ const props = defineProps<{
     labels: ProfileLabels;
 }>();
 
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            {
-                title: 'Profile',
-                href: edit(),
-            },
-        ],
-    },
+setLayoutProps<{ breadcrumbs: BreadcrumbItem[] }>({
+    breadcrumbs: [
+        {
+            title: props.labels.title,
+            href: edit(),
+        },
+    ],
 });
 
 const toast = useToast();

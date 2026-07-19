@@ -4,6 +4,8 @@ namespace App\Actions;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
+use Throwable;
 
 class DeleteProfileAvatar
 {
@@ -16,13 +18,31 @@ class DeleteProfileAvatar
         }
 
         $user->forceFill(['avatar_path' => null])->save();
-        Storage::disk($this->diskName())->delete($path);
+
+        try {
+            $this->deleteStoredFile($path);
+        } catch (Throwable $exception) {
+            try {
+                $user->forceFill(['avatar_path' => $path])->save();
+            } catch (Throwable $rollbackException) {
+                report($rollbackException);
+            }
+
+            throw $exception;
+        }
+    }
+
+    public function deleteStoredFile(string $path): void
+    {
+        if (! Storage::disk($this->diskName())->delete($path)) {
+            throw new RuntimeException('The profile avatar could not be deleted.');
+        }
     }
 
     private function diskName(): string
     {
-        $diskName = config('filesystems.attachment_disk', 'public');
+        $diskName = config('filesystems.avatar_disk', 'profile_avatars');
 
-        return is_string($diskName) && $diskName !== '' ? $diskName : 'public';
+        return is_string($diskName) && $diskName !== '' ? $diskName : 'profile_avatars';
     }
 }

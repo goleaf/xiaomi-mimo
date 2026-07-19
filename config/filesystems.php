@@ -23,6 +23,8 @@ return [
         env('NATIVEPHP_RUNNING', false) ? 'mobile_public' : 'public',
     ),
 
+    'avatar_disk' => env('AVATAR_FILESYSTEM_DISK', 'profile_avatars'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
@@ -44,6 +46,13 @@ return [
             'serve' => true,
             'throw' => false,
             'report' => false,
+        ],
+
+        'profile_avatars' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/profile-avatars'),
+            'throw' => true,
+            'report' => true,
         ],
 
         'public' => [

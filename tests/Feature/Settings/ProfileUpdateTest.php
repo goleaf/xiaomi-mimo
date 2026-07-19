@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -84,8 +86,8 @@ test('email verification status is unchanged when the email address is unchanged
 });
 
 test('user can upload and view their avatar', function () {
-    Storage::fake('public');
-    config(['filesystems.attachment_disk' => 'public']);
+    Storage::fake('profile_avatars');
+    config(['filesystems.avatar_disk' => 'profile_avatars']);
 
     $user = User::factory()->create();
     $avatar = UploadedFile::fake()->image('avatar.jpg', 800, 800)->size(100);
@@ -99,7 +101,7 @@ test('user can upload and view their avatar', function () {
     $avatarPath = $user->refresh()->getRawOriginal('avatar_path');
 
     expect($avatarPath)->toBeString();
-    Storage::disk('public')->assertExists($avatarPath);
+    Storage::disk('profile_avatars')->assertExists($avatarPath);
 
     $this->actingAs($user)
         ->get(route('profile.avatar.show'))
@@ -116,12 +118,12 @@ test('avatar routes require authentication', function () {
 });
 
 test('one user cannot view another user avatar', function () {
-    Storage::fake('public');
-    config(['filesystems.attachment_disk' => 'public']);
+    Storage::fake('profile_avatars');
+    config(['filesystems.avatar_disk' => 'profile_avatars']);
 
     $avatarOwner = User::factory()->create();
     $avatarPath = 'avatars/'.$avatarOwner->id.'/avatar.jpg';
-    Storage::disk('public')->put($avatarPath, 'avatar');
+    Storage::disk('profile_avatars')->put($avatarPath, 'avatar');
     $avatarOwner->forceFill(['avatar_path' => $avatarPath])->save();
 
     $this->actingAs(User::factory()->create())
@@ -130,12 +132,12 @@ test('one user cannot view another user avatar', function () {
 });
 
 test('uploading a new avatar removes the previous file', function () {
-    Storage::fake('public');
-    config(['filesystems.attachment_disk' => 'public']);
+    Storage::fake('profile_avatars');
+    config(['filesystems.avatar_disk' => 'profile_avatars']);
 
     $user = User::factory()->create();
     $previousPath = 'avatars/'.$user->id.'/previous.jpg';
-    Storage::disk('public')->put($previousPath, 'previous-avatar');
+    Storage::disk('profile_avatars')->put($previousPath, 'previous-avatar');
     $user->forceFill(['avatar_path' => $previousPath])->save();
 
     $this->actingAs($user)
@@ -147,17 +149,17 @@ test('uploading a new avatar removes the previous file', function () {
     $avatarPath = $user->refresh()->getRawOriginal('avatar_path');
 
     expect($avatarPath)->toBeString()->not->toBe($previousPath);
-    Storage::disk('public')->assertMissing($previousPath);
-    Storage::disk('public')->assertExists($avatarPath);
+    Storage::disk('profile_avatars')->assertMissing($previousPath);
+    Storage::disk('profile_avatars')->assertExists($avatarPath);
 });
 
 test('user can remove their avatar', function () {
-    Storage::fake('public');
-    config(['filesystems.attachment_disk' => 'public']);
+    Storage::fake('profile_avatars');
+    config(['filesystems.avatar_disk' => 'profile_avatars']);
 
     $user = User::factory()->create();
     $avatarPath = 'avatars/'.$user->id.'/avatar.png';
-    Storage::disk('public')->put($avatarPath, 'avatar');
+    Storage::disk('profile_avatars')->put($avatarPath, 'avatar');
     $user->forceFill(['avatar_path' => $avatarPath])->save();
 
     $this->actingAs($user)
@@ -167,12 +169,32 @@ test('user can remove their avatar', function () {
         ->assertRedirect(route('profile.edit'));
 
     expect($user->refresh()->getRawOriginal('avatar_path'))->toBeNull();
-    Storage::disk('public')->assertMissing($avatarPath);
+    Storage::disk('profile_avatars')->assertMissing($avatarPath);
+});
+
+test('avatar removal failure restores the stored avatar path', function () {
+    config(['filesystems.avatar_disk' => 'profile_avatars']);
+
+    $user = User::factory()->create();
+    $avatarPath = 'avatars/'.$user->id.'/avatar.png';
+    $user->forceFill(['avatar_path' => $avatarPath])->save();
+
+    $disk = Mockery::mock(Filesystem::class);
+    $disk->shouldReceive('delete')->once()->with($avatarPath)->andReturnFalse();
+    Storage::shouldReceive('disk')->once()->with('profile_avatars')->andReturn($disk);
+    Exceptions::fake();
+
+    $this->actingAs($user)
+        ->delete(route('profile.avatar.destroy'))
+        ->assertServerError();
+
+    expect($user->refresh()->getRawOriginal('avatar_path'))->toBe($avatarPath);
+    Exceptions::assertReported(RuntimeException::class);
 });
 
 test('avatar upload validates image type size and dimensions', function (Closure $avatar): void {
-    Storage::fake('public');
-    config(['filesystems.attachment_disk' => 'public']);
+    Storage::fake('profile_avatars');
+    config(['filesystems.avatar_disk' => 'profile_avatars']);
 
     $user = User::factory()->create();
 
@@ -191,12 +213,12 @@ test('avatar upload validates image type size and dimensions', function (Closure
 ]);
 
 test('user can delete their account', function () {
-    Storage::fake('public');
-    config(['filesystems.attachment_disk' => 'public']);
+    Storage::fake('profile_avatars');
+    config(['filesystems.avatar_disk' => 'profile_avatars']);
 
     $user = User::factory()->create();
     $avatarPath = 'avatars/'.$user->id.'/avatar.jpg';
-    Storage::disk('public')->put($avatarPath, 'avatar');
+    Storage::disk('profile_avatars')->put($avatarPath, 'avatar');
     $user->forceFill(['avatar_path' => $avatarPath])->save();
 
     $response = $this
@@ -210,8 +232,32 @@ test('user can delete their account', function () {
         ->assertRedirect(route('home'));
 
     $this->assertGuest();
-    expect($user->fresh())->toBeNull();
-    Storage::disk('public')->assertMissing($avatarPath);
+    $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    Storage::disk('profile_avatars')->assertMissing($avatarPath);
+});
+
+test('account deletion is rolled back when avatar cleanup fails', function () {
+    config(['filesystems.avatar_disk' => 'profile_avatars']);
+
+    $user = User::factory()->create();
+    $avatarPath = 'avatars/'.$user->id.'/avatar.jpg';
+    $user->forceFill(['avatar_path' => $avatarPath])->save();
+
+    $disk = Mockery::mock(Filesystem::class);
+    $disk->shouldReceive('delete')->once()->with($avatarPath)->andReturnFalse();
+    Storage::shouldReceive('disk')->once()->with('profile_avatars')->andReturn($disk);
+    Exceptions::fake();
+
+    $this->actingAs($user)
+        ->delete(route('profile.destroy'), ['password' => 'password'])
+        ->assertServerError();
+
+    $this->assertGuest();
+    $this->assertDatabaseHas('users', [
+        'id' => $user->id,
+        'avatar_path' => $avatarPath,
+    ]);
+    Exceptions::assertReported(RuntimeException::class);
 });
 
 test('correct password must be provided to delete account', function () {

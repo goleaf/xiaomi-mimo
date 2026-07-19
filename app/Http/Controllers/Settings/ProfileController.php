@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -100,9 +101,17 @@ class ProfileController extends Controller
         DeleteProfileAvatar $deleteProfileAvatar,
     ): RedirectResponse {
         $user = $this->authenticatedUser($request);
-        $deleteProfileAvatar->handle($user);
+        $avatarPath = $user->getRawOriginal('avatar_path');
         Auth::logout();
-        $user->delete();
+
+        DB::transaction(function () use ($avatarPath, $deleteProfileAvatar, $user): void {
+            $user->delete();
+
+            if (is_string($avatarPath) && $avatarPath !== '') {
+                $deleteProfileAvatar->deleteStoredFile($avatarPath);
+            }
+        });
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
@@ -120,9 +129,9 @@ class ProfileController extends Controller
 
     private function avatarDiskName(): string
     {
-        $diskName = config('filesystems.attachment_disk', 'public');
+        $diskName = config('filesystems.avatar_disk', 'profile_avatars');
 
-        return is_string($diskName) && $diskName !== '' ? $diskName : 'public';
+        return is_string($diskName) && $diskName !== '' ? $diskName : 'profile_avatars';
     }
 
     /** @return array<string, mixed> */
