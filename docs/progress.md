@@ -1642,3 +1642,44 @@ No migration or Composer/npm package change is planned.
 
 - Commit `3b09177` (`fix: close frontend visual baseline`) was pushed successfully to `origin main`.
 - This final phase record will be committed separately while preserving unrelated pre-existing progress changes.
+
+## Static Analysis Phase: Typed Eloquent Foundation
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Treat the 327-error Larastan report as a set of shared typing defects rather than suppressing individual findings.
+- Start with model relationship generics, factory generics, typed local scopes, cast-aware properties, and the incorrect morph relation return type because these defects propagate into actions, policies, resources, factories, and seeders.
+- Preserve runtime queries and domain behavior; add PHPDoc only where native PHP cannot express Laravel's generic relationship and factory types.
+- Re-run focused model tests and the complete Larastan report to measure the reduction before selecting the next batch.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change is planned.
+
+### Changed Files
+
+- Typed models: `ActivityLog`, `Checklist`, `ChecklistItem`, `Comment`, `Label`, `Project`, `Reminder`, `Tag`, `Todo`, `User`, `UserPreference`, `Workspace`, and `WorkspaceMember`.
+- `tests/Feature/ModelRelationsTest.php`
+- `docs/progress.md`
+
+### Verification
+
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `php artisan test --compact tests/Feature/ModelRelationsTest.php`: passed, 47 tests and 47 assertions across every declared relation plus membership-role behavior.
+- `php artisan test --compact`: passed, 279 tests and 1,331 assertions.
+- `vendor/bin/phpstan analyse --no-progress -v`: reduced the baseline from 327 errors across 104 files to 196 errors across 75 files. All findings under `app/Models` are resolved.
+- `git diff --check`: passed.
+- No frontend files changed, so Vue type checking, ESLint, Prettier, and the Vite build were not repeated in this backend-only batch.
+
+### Known Limitations
+
+- 196 Larastan findings remain in downstream resources, actions, services, controllers, policies, factories, seeders, migrations, configuration, and routes for later batches.
+
+### Git Delivery
+
+- Commit `a1a076c` (`fix: type eloquent model contracts`) was pushed successfully to `origin main`.
+- This final phase record will be committed separately while preserving unrelated pre-existing progress changes.
