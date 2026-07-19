@@ -4,26 +4,31 @@ namespace App\Http\Controllers;
 
 use App\Models\Workspace;
 use App\Services\ExportService;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportController extends Controller
 {
-    public function export(Request $request, Workspace $workspace, string $format, ExportService $service): Response
-    {
+    public function export(
+        Workspace $workspace,
+        string $format,
+        ExportService $service,
+    ): StreamedResponse {
         $this->authorize('view', $workspace);
 
-        return match ($format) {
-            'json' => response($service->exportToJson($workspace))
-                ->header('Content-Type', 'application/json')
-                ->header('Content-Disposition', 'attachment; filename="workspace-export.json"'),
-            'csv' => response($service->exportToCsv($workspace))
-                ->header('Content-Type', 'text/csv')
-                ->header('Content-Disposition', 'attachment; filename="workspace-export.csv"'),
-            'markdown' => response($service->exportToMarkdown($workspace))
-                ->header('Content-Type', 'text/markdown')
-                ->header('Content-Disposition', 'attachment; filename="workspace-export.md"'),
-            default => abort(400, 'Unsupported format'),
+        [$filename, $contentType] = match ($format) {
+            'json' => ['workspace-export.json', 'application/json; charset=UTF-8'],
+            'csv' => ['workspace-export.csv', 'text/csv; charset=UTF-8'],
+            'markdown' => ['workspace-export.md', 'text/markdown; charset=UTF-8'],
+            default => abort(400, __('data_transfer.export.unsupported_format')),
         };
+
+        return response()->streamDownload(
+            fn () => $service->stream($workspace, $format),
+            $filename,
+            [
+                'Content-Type' => $contentType,
+                'X-Content-Type-Options' => 'nosniff',
+            ],
+        );
     }
 }

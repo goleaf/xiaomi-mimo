@@ -1,0 +1,40 @@
+<?php
+
+return [
+    'import' => [
+        'file_too_large' => 'Importuojami failai negali viršyti 5 MiB.',
+        'content_type' => 'Importuojamo failo turinio tipas neatitinka pasirinkto formato.',
+        'extension' => 'Importuojamo failo plėtinys neatitinka pasirinkto formato.',
+        'utf8' => 'Importuojami failai turi būti UTF-8 koduotės.',
+        'invalid_json' => 'JSON importo failas netinkamas: :message',
+        'json_object' => 'JSON importe turi būti darbo srities eksporto objektas.',
+        'unsupported_top_level' => 'JSON importe yra nepalaikomų aukščiausio lygio laukų.',
+        'workspace_object' => 'JSON darbo srities metaduomenys turi būti objektas.',
+        'record_limit' => 'Importe gali būti daugiausia 1 000 projektų ir užduočių įrašų kartu.',
+        'section_list' => 'JSON laukas „:section“ turi būti sąrašas.',
+        'record_object' => ':record turi būti objektas.',
+        'unsupported_fields' => ':record turi nepalaikomų laukų.',
+        'invalid_record' => ':record: :detail',
+        'project_outside_workspace' => ':record nurodo projektą, nepriklausantį importuojamai darbo sričiai.',
+        'project_record' => 'Projekto įrašas Nr. :number',
+        'task_record' => 'Užduoties įrašas Nr. :number',
+        'workspace_metadata' => 'Darbo srities metaduomenys',
+        'csv_unreadable' => 'CSV importo failo nepavyko perskaityti.',
+        'csv_header_required' => 'CSV importe turi būti antraščių eilutė.',
+        'csv_duplicate_headers' => 'CSV importe yra pasikartojančių antraščių.',
+        'csv_title_required' => 'CSV importe turi būti stulpelis „Title“.',
+        'csv_unsupported_columns' => 'CSV importe yra nepalaikomų stulpelių.',
+        'csv_record_limit' => 'CSV importe gali būti daugiausia 1 000 užduočių įrašų.',
+        'csv_column_count' => 'CSV eilutės Nr. :number stulpelių skaičius neatitinka antraštės.',
+        'csv_row' => 'CSV eilutė Nr. :number',
+        'invalid_record_fallback' => 'Įrašas netinkamas.',
+    ],
+    'attachment' => [
+        'file_too_large' => 'Priedai negali viršyti 10 MiB.',
+        'content_type' => 'Priedas turi būti JPEG, PNG, WebP, PDF, paprastojo teksto, CSV arba JSON failas.',
+        'extension' => 'Priedo plėtinys turi būti jpg, jpeg, png, webp, pdf, txt, csv arba json.',
+    ],
+    'export' => [
+        'unsupported_format' => 'Nepalaikomas eksporto formatas.',
+    ],
+];

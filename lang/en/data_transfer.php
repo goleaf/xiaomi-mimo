@@ -1,0 +1,40 @@
+<?php
+
+return [
+    'import' => [
+        'file_too_large' => 'Import files may not exceed 5 MiB.',
+        'content_type' => 'The import file content type does not match the selected format.',
+        'extension' => 'The import file extension does not match the selected format.',
+        'utf8' => 'Import files must use UTF-8 encoding.',
+        'invalid_json' => 'The JSON import is invalid: :message',
+        'json_object' => 'The JSON import must contain a workspace export object.',
+        'unsupported_top_level' => 'The JSON import contains unsupported top-level fields.',
+        'workspace_object' => 'The JSON workspace metadata must be an object.',
+        'record_limit' => 'An import may contain at most 1,000 project and task records combined.',
+        'section_list' => 'The JSON :section field must be a list.',
+        'record_object' => ':record must be an object.',
+        'unsupported_fields' => ':record contains unsupported fields.',
+        'invalid_record' => ':record: :detail',
+        'project_outside_workspace' => ':record references a project outside the imported workspace.',
+        'project_record' => 'Project record :number',
+        'task_record' => 'Task record :number',
+        'workspace_metadata' => 'Workspace metadata',
+        'csv_unreadable' => 'The CSV import could not be read.',
+        'csv_header_required' => 'The CSV import must contain a header row.',
+        'csv_duplicate_headers' => 'The CSV import contains duplicate headers.',
+        'csv_title_required' => 'The CSV import must contain a Title column.',
+        'csv_unsupported_columns' => 'The CSV import contains unsupported columns.',
+        'csv_record_limit' => 'A CSV import may contain at most 1,000 task records.',
+        'csv_column_count' => 'CSV row :number does not match the header column count.',
+        'csv_row' => 'CSV row :number',
+        'invalid_record_fallback' => 'The record is invalid.',
+    ],
+    'attachment' => [
+        'file_too_large' => 'Attachments may not exceed 10 MiB.',
+        'content_type' => 'Attachments must be a JPEG, PNG, WebP, PDF, plain text, CSV, or JSON file.',
+        'extension' => 'Attachments must use a jpg, jpeg, png, webp, pdf, txt, csv, or json extension.',
+    ],
+    'export' => [
+        'unsupported_format' => 'Unsupported export format.',
+    ],
+];

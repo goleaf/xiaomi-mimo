@@ -12,7 +12,7 @@ class UploadAttachment
 {
     public function handle(Todo $todo, User $user, UploadedFile $file): Attachment
     {
-        $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
+        $filename = Str::uuid().'.'.$file->extension();
         $path = $file->storeAs(
             'attachments',
             $filename,

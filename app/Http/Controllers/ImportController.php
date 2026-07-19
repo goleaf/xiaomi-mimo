@@ -2,27 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ImportWorkspaceRequest;
 use App\Models\Workspace;
 use App\Services\ImportService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ImportController extends Controller
 {
-    public function import(Request $request, Workspace $workspace, ImportService $service): JsonResponse
-    {
-        $this->authorize('update', $workspace);
+    public function import(
+        ImportWorkspaceRequest $request,
+        Workspace $workspace,
+        ImportService $service,
+    ): JsonResponse {
+        $content = $request->uploadedFile()->getContent();
 
-        $request->validate([
-            'file' => 'required|file|max:10240',
-            'format' => 'required|string|in:json,csv',
-        ]);
-
-        $content = file_get_contents($request->file('file')->getRealPath());
-
-        $result = match ($request->format) {
+        $result = match ($request->importFormat()) {
             'json' => $service->importFromJson($workspace, $content),
             'csv' => ['todos_imported' => $service->importFromCsv($workspace, $content)],
+            default => throw new \LogicException('Validated import format was not supported.'),
         };
 
         return response()->json(['imported' => $result]);

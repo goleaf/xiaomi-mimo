@@ -1222,6 +1222,67 @@ No migration or Composer/npm package change is planned.
 
 Commit message: `fix: clean board and keyboard guards`. Push to `origin main` will be attempted immediately after the isolated commit. Unrelated worktree changes remain excluded.
 
+## Data Transfer And Upload Boundaries
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Limit workspace imports to 5 MiB and 1,000 combined project/task records, with selected-format MIME, extension, structure, field, enum, date, and workspace-reference validation.
+- Keep task attachments at 10 MiB while allowing only explicitly supported raster image, PDF, plain-text, CSV, and JSON MIME/extension pairs; preserve the existing 2 MiB image-only avatar contract.
+- Authorize both web and API attachment uploads through the bound task before storing content.
+- Execute every JSON and CSV import inside a database transaction so any later record failure rolls back the complete batch.
+- Stream JSON, CSV, and Markdown exports with bounded lazy queries scoped through the authorized workspace; do not materialize complete datasets or payload strings.
+- Escape spreadsheet-formula prefixes in CSV cells while preserving round-trip-compatible headers.
+
+### Changed Files
+
+- `app/Actions/UploadAttachment.php`
+- `app/Http/Controllers/Api/AttachmentController.php`
+- `app/Http/Controllers/AttachmentController.php`
+- `app/Http/Controllers/ExportController.php`
+- `app/Http/Controllers/ImportController.php`
+- `app/Http/Requests/ImportWorkspaceRequest.php`
+- `app/Http/Requests/StoreAttachmentRequest.php`
+- `app/Services/ExportService.php`
+- `app/Services/ImportService.php`
+- `lang/en/data_transfer.php`
+- `lang/lt/data_transfer.php`
+- `lang/ru/data_transfer.php`
+- `tests/Feature/DataTransferTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was needed.
+
+### Verification
+
+- The focused test matrix first failed all 14 cases against the original implementation, demonstrating the missing size, type, row-count, rollback, authorization, streaming, scope, and formula protections.
+- `php artisan test --compact tests/Feature/DataTransferTest.php`: passed, 16 tests and 62 assertions.
+- The wider focused attachment/avatar/data-transfer run passed 53 tests and 513 assertions.
+- Pint with `--format agent` passed for every PHP file changed by this phase.
+- Scoped Larastan analysis for every changed application PHP file passed with zero errors.
+- Full Larastan remains blocked by 327 pre-existing errors in unrelated actions, controllers, models, and resources.
+- Full Pest passed all 195 tests with 1,178 assertions.
+- `npm run test:frontend`: passed, one test.
+- `npm run lint:check`: passed with zero errors or warnings.
+- `npm run types:check`: remains blocked by two unrelated errors in `useAutosave.ts` and `projects/Show.vue`.
+- `npm run format:check`: remains blocked by one unrelated file, `resources/js/pages/tasks/Show.vue`.
+- `npm run build`: passed; Vite transformed 3,358 modules and emitted only the existing optional `fontaine` notice.
+
+### Known Limitations
+
+- Production PHP must allow enough multipart request overhead for the documented 10 MiB attachment and 5 MiB import limits; the local Herd runtime is configured separately.
+- CSV import intentionally ignores the human-readable `Assigned To` column because names are not stable workspace-scoped identifiers.
+- JSON import validates exported label, tag, and checklist structures but preserves the existing import behavior of creating projects and tasks only.
+
+### Git Delivery
+
+Commit message: `fix: harden data transfer boundaries`. Push to `origin main` will be attempted immediately after the isolated commit. Existing unrelated localization, workspace UI, calendar, notification, and frontend cleanup changes remain excluded and preserved.
+
 ## ESLint Cleanup Final Verification
 
 ### Status
