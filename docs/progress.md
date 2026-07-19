@@ -1436,7 +1436,7 @@ Completed with every requested verification command passing.
 | Command | Exit | Current status |
 | --- | ---: | --- |
 | `vendor/bin/pint --dirty --format agent` | 0 | Passed with no reported findings. |
-| `php artisan test --compact` | 0 | Passed: 328 tests and 1,423 assertions. |
+| `php artisan test --compact` | 0 | Passed: 332 tests and 1,442 assertions. |
 | `vendor/bin/phpstan analyse --no-progress` | 0 | Passed with zero errors. |
 | `npm run types:check` | 0 | Passed with zero Vue/TypeScript errors. |
 | `npm run lint:check` | 0 | Passed with zero ESLint errors or warnings. |
