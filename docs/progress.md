@@ -2426,3 +2426,58 @@ No migration or Composer/npm package change was made.
 - Documentation commit: `f6989cd` (`docs: record active form action unification`).
 - Documentation push: successful to `origin/main`.
 - This final delivery record is committed and pushed separately so the phase commits remain focused.
+
+## Final Async Action State Unification
+
+### Status
+
+- Completed.
+
+### Scope And Decisions
+
+- Complete the shared `/projects` action-state contract for confirmations, profile and security forms, backup creation, account deletion, and task editing.
+- Use the shared 44px button size and Spinner component for primary form and dialog actions.
+- Prevent mutable fields from changing while an Inertia form is processing, including `disable-while-processing` for the account deletion Form component.
+- Preserve all routes, payloads, permissions, translations, and success behavior.
+
+### Changed Files
+
+- `resources/js/components/shared/WorkspaceConfirmDialog.vue`
+- `resources/js/components/DeleteUser.vue`
+- `resources/js/pages/settings/Backup.vue`
+- `resources/js/pages/settings/Profile.vue`
+- `resources/js/pages/settings/Security.vue`
+- `resources/js/pages/tasks/Show.vue`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Verification
+
+- The focused RED run produced four expected failures for missing shared confirmation loading, inert account deletion, incomplete settings processing states, and the local task-edit loader.
+- Focused frontend-design coverage passed after implementation with 104 tests and 434 assertions.
+- Full Pest coverage passed with 394 tests and 1,758 assertions.
+- PHPStan passed with 0 errors.
+- Vue TypeScript checking, ESLint, Prettier verification, and the frontend Node test passed.
+- Production build passed after transforming 3,369 modules.
+- Mobile dark browser QA confirmed the Profile delete dialog and Task edit form use 44px controls, readable responsive surfaces, and zero horizontal overflow.
+- Desktop light browser QA confirmed the Security password and two-factor actions, Backup create action, and shared restore confirmation use the same 44px action rhythm with zero horizontal overflow.
+- Live measurement confirmed 44px profile, security, backup, confirmation, and task-edit actions plus 44px task inputs/selects and account-confirmation inputs.
+- The security route's existing password-confirmation guard was completed with the demo password solely to inspect the page; no settings or data were changed.
+- The final browser interactions produced no console errors or page errors; the Boost browser log contained only historical entries dated 2026-07-19.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+
+### Known Limitations And Next Work
+
+- Vite continues to report the existing optional `fontaine` optimization notice; the production build succeeds.
+- Compact toolbar and icon actions intentionally retain their smaller semantic sizes; primary form and dialog actions now share the `/projects` 44px contract.
+
+### Git Delivery
+
+- Implementation commit: `aedd8bf` (`fix: unify final asynchronous action states`).
+- Implementation push: successful to `origin/main`.
+- Documentation commit: pending.
+- Documentation push: pending.
