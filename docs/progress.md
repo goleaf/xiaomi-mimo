@@ -2648,3 +2648,51 @@ No migration or Composer/npm package change is planned.
 - Documentation push: successful to `origin/main`.
 - Unrelated user-authored progress entries remain preserved outside this phase's staged changes.
 - This final delivery record is committed and pushed separately so the phase commits remain focused.
+
+## Dashboard Information Correctness Repair
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Correct dashboard totals, completion metrics, overdue tasks, upcoming tasks, and weekly activity that were accidentally inheriting the first `due_date = today` constraint from a shared mutable builder.
+- Move the complex read into `DashboardQuery`, keep every task query scoped to the selected workspace, and keep `DashboardController` limited to authenticated context and response assembly.
+- Count all overdue tasks independently from the ten-item display list and collapse the previous per-day weekly count loop into one conditional aggregate query.
+- Calculate calendar and timestamp boundaries in the authenticated user's configured timezone, with UTC boundaries for stored timestamps.
+- Serialize `due_date` as the date-only `Y-m-d` value so negative-offset timezones cannot shift a displayed deadline to the previous day.
+- Preserve the existing Inertia component and prop names, archived-task exclusion, empty-workspace response, and SQLite-only architecture.
+
+### Changed Files
+
+- `app/Http/Controllers/DashboardController.php`
+- `app/Models/Todo.php`
+- `app/Services/DashboardQuery.php`
+- `tests/Feature/DashboardTest.php`
+- `docs/progress.md`.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Verification
+
+- The focused RED run failed because `stats.overdue_count` was `0` instead of `1`; the date-only RED run failed because `2026-07-19` serialized as `2026-07-19T00:00:00.000000Z`.
+- Focused dashboard coverage passed with 3 tests and 49 assertions.
+- Full Pest coverage passed with 407 tests and 1,875 assertions.
+- Full PHPStan passed with 0 errors.
+- Vue TypeScript checking, ESLint, resource Prettier verification, and the frontend Node test passed.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+- The production build passed after transforming 3,373 modules; only the existing optional `fontaine` optimization notice remains.
+- Live desktop browser QA at `https://xiaomi-mimo.test/dashboard` confirmed totals of 27 tasks, 8 completed, and 3 overdue against SQLite, correct deadline dates such as `Jul 21`, and no console or page errors.
+
+### Known Limitations And Next Work
+
+- The optional `fontaine` notice remains non-blocking and outside this dependency-free repair.
+- The dashboard keeps the existing ten-item overdue/upcoming display limits; aggregate overdue totals are no longer capped by those lists.
+
+### Git Delivery
+
+- Implementation commit `275d364` (`fix: correct dashboard information`) was pushed successfully to `origin/main`.
+- This final delivery record will be committed and pushed separately. Existing unrelated `docs/progress.md` changes remain preserved and excluded.
