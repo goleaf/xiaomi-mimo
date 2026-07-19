@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 test('primary workspace pages use the shared warm precision header', function (string $page) {
     expect(File::get(resource_path("js/pages/{$page}")))
@@ -18,6 +19,48 @@ test('primary workspace pages use the shared warm precision header', function (s
     'project detail' => 'projects/Show.vue',
     'workspaces' => 'workspaces/Index.vue',
 ]);
+
+test('every active page header action uses the shared large button contract', function (string $page, int $actionCount) {
+    $source = File::get(resource_path("js/pages/{$page}"));
+    $actions = Str::betweenFirst(
+        $source,
+        '<template #actions>',
+        '</template>',
+    );
+
+    expect(substr_count($actions, 'size="lg"'))
+        ->toBe($actionCount)
+        ->and($actions)
+        ->not->toContain('min-h-11')
+        ->not->toContain('bg-orange-600')
+        ->not->toContain('rounded-xl');
+})->with([
+    'notifications' => ['notifications/Index.vue', 1],
+    'projects' => ['projects/Index.vue', 1],
+    'project detail' => ['projects/Show.vue', 5],
+    'tasks' => ['tasks/Index.vue', 1],
+    'task detail' => ['tasks/Show.vue', 3],
+    'workspaces' => ['workspaces/Index.vue', 1],
+]);
+
+test('header mutations expose shared inert loading states', function () {
+    $notifications = File::get(resource_path('js/pages/notifications/Index.vue'));
+    $project = File::get(resource_path('js/pages/projects/Show.vue'));
+    $task = File::get(resource_path('js/pages/tasks/Show.vue'));
+
+    expect($notifications)
+        ->toContain("import { Spinner } from '@/components/ui/spinner'")
+        ->toContain('<Spinner v-if="markingAll" />')
+        ->and($project)
+        ->toContain("type ProjectHeaderAction = 'duplicate' | 'archive' | 'restore'")
+        ->toContain('const processingProjectAction = ref<ProjectHeaderAction | null>(null)')
+        ->toContain('v-if="processingProjectAction ===')
+        ->toContain('onFinish: () =>')
+        ->and($task)
+        ->toContain('const updatingCompletion = ref(false)')
+        ->toContain('<Spinner v-if="updatingCompletion" />')
+        ->toContain('onFinish: () =>');
+});
 
 test('every settings page configures the shared projects style header', function (string $page) {
     expect(File::get(resource_path("js/pages/settings/{$page}.vue")))

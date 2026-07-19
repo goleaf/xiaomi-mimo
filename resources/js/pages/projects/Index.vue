@@ -108,7 +108,7 @@ function openCreateDialog(): void {
                 >
                     <template #actions>
                         <Button
-                            class="min-h-11 cursor-pointer rounded-xl bg-orange-600 px-4 text-white shadow-sm hover:bg-orange-700 focus-visible:ring-orange-500"
+                            size="lg"
                             :disabled="!workspace.id"
                             @click="openCreateDialog"
                         >

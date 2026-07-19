@@ -18,6 +18,7 @@ import EmptyState from '@/components/shared/EmptyState.vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useWorkspaceUi } from '@/composables/useWorkspaceUi';
 import {
@@ -187,11 +188,12 @@ function notificationTone(notification: NotificationItem): string {
             >
                 <template #actions>
                     <Button
-                        class="min-h-11 cursor-pointer rounded-xl bg-orange-600 px-4 text-white shadow-sm hover:bg-orange-700 focus-visible:ring-orange-500"
+                        size="lg"
                         :disabled="markingAll || unreadCount === 0"
                         @click="markAllRead"
                     >
-                        <CheckCheck class="size-4" aria-hidden="true" />
+                        <Spinner v-if="markingAll" />
+                        <CheckCheck v-else class="size-4" aria-hidden="true" />
                         {{ copy.notifications.mark_all }}
                     </Button>
                 </template>

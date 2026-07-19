@@ -88,7 +88,7 @@ async function createWorkspace(): Promise<void> {
                     :description="t('workspaces.page_description')"
                 >
                     <template #actions>
-                        <Button @click="setCreateDialog(true)">
+                        <Button size="lg" @click="setCreateDialog(true)">
                             <Plus class="size-4" aria-hidden="true" />
                             {{ t('workspaces.new') }}
                         </Button>

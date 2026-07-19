@@ -22,12 +22,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { projects } from '@/routes';
 import { archive, duplicate, restore } from '@/routes/projects';
 import { complete, destroy, show, uncomplete } from '@/routes/todos';
 import type { Project, Todo } from '@/types/models';
+
+type ProjectHeaderAction = 'duplicate' | 'archive' | 'restore';
 
 const props = defineProps<{
     project: { data: Project };
@@ -43,6 +46,7 @@ const selectedTodo = ref<Todo | null>(null);
 const showCreateDialog = ref(false);
 const todoToDelete = ref<Todo | null>(null);
 const deletingTodo = ref(false);
+const processingProjectAction = ref<ProjectHeaderAction | null>(null);
 
 const filteredTodos = computed(() => {
     if (!searchQuery.value) {
@@ -94,34 +98,48 @@ function deleteTodo(): void {
 }
 
 function archiveProject(): void {
-    router.post(
+    submitProjectAction(
+        'archive',
         archive([props.workspace.id, project.value.id]).url,
-        {},
-        {
-            preserveScroll: true,
-            onSuccess: () => toast.success(t('projects.show.archived')),
-        },
+        t('projects.show.archived'),
     );
 }
 
 function restoreProject(): void {
-    router.post(
+    submitProjectAction(
+        'restore',
         restore([props.workspace.id, project.value.id]).url,
-        {},
-        {
-            preserveScroll: true,
-            onSuccess: () => toast.success(t('projects.show.restored')),
-        },
+        t('projects.show.restored'),
     );
 }
 
 function duplicateProject(): void {
-    router.post(
+    submitProjectAction(
+        'duplicate',
         duplicate([props.workspace.id, project.value.id]).url,
+        t('projects.show.duplicated'),
+    );
+}
+
+function submitProjectAction(
+    action: ProjectHeaderAction,
+    url: string,
+    successMessage: string,
+): void {
+    if (processingProjectAction.value) {
+        return;
+    }
+
+    processingProjectAction.value = action;
+    router.post(
+        url,
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success(t('projects.show.duplicated')),
+            onSuccess: () => toast.success(successMessage),
+            onFinish: () => {
+                processingProjectAction.value = null;
+            },
         },
     );
 }
@@ -203,31 +221,59 @@ const taskGroups = computed(() => [
                     <template #actions>
                         <Button
                             variant="outline"
+                            size="lg"
+                            :disabled="Boolean(processingProjectAction)"
                             @click="router.visit(projects())"
                         >
                             <ArrowLeft class="size-4" aria-hidden="true" />
                             {{ t('common.actions.back') }}
                         </Button>
-                        <Button variant="outline" @click="duplicateProject">
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            :disabled="Boolean(processingProjectAction)"
+                            @click="duplicateProject"
+                        >
+                            <Spinner
+                                v-if="processingProjectAction === 'duplicate'"
+                            />
                             {{ t('common.actions.duplicate') }}
                         </Button>
                         <Button
                             v-if="!project.is_archived"
                             variant="outline"
+                            size="lg"
+                            :disabled="Boolean(processingProjectAction)"
                             @click="archiveProject"
                         >
-                            <Archive class="size-4" aria-hidden="true" />
+                            <Spinner
+                                v-if="processingProjectAction === 'archive'"
+                            />
+                            <Archive v-else class="size-4" aria-hidden="true" />
                             {{ t('common.actions.archive') }}
                         </Button>
                         <Button
                             v-else
                             variant="outline"
+                            size="lg"
+                            :disabled="Boolean(processingProjectAction)"
                             @click="restoreProject"
                         >
-                            <RotateCcw class="size-4" aria-hidden="true" />
+                            <Spinner
+                                v-if="processingProjectAction === 'restore'"
+                            />
+                            <RotateCcw
+                                v-else
+                                class="size-4"
+                                aria-hidden="true"
+                            />
                             {{ t('common.actions.restore') }}
                         </Button>
-                        <Button @click="showCreateDialog = true">
+                        <Button
+                            size="lg"
+                            :disabled="Boolean(processingProjectAction)"
+                            @click="showCreateDialog = true"
+                        >
                             <Plus class="size-4" aria-hidden="true" />
                             {{ t('projects.show.task') }}
                         </Button>

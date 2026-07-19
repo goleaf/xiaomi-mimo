@@ -171,10 +171,7 @@ function formatDate(date: string | null): string {
                     "
                 >
                     <template #actions>
-                        <Button
-                            class="min-h-11 px-4"
-                            @click="showCreateDialog = true"
-                        >
+                        <Button size="lg" @click="showCreateDialog = true">
                             <Plus class="size-4" aria-hidden="true" />
                             {{ t('tasks.create.new_task') }}
                         </Button>

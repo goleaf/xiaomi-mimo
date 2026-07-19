@@ -79,6 +79,7 @@ const todo = computed(() => props.todo.data);
 const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
 
 const editing = ref(false);
+const updatingCompletion = ref(false);
 const { checklistItemDrafts, checklistName, comment } =
     useTaskDetailState(todo);
 const editForm = useForm({
@@ -165,9 +166,23 @@ function submitEdit() {
 }
 
 function toggleComplete() {
+    if (updatingCompletion.value) {
+        return;
+    }
+
     const target = todo.value.status === 'completed' ? uncomplete : complete;
 
-    router.post(target(todo.value).url, {}, { preserveScroll: true });
+    updatingCompletion.value = true;
+    router.post(
+        target(todo.value).url,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                updatingCompletion.value = false;
+            },
+        },
+    );
 }
 
 function addComment() {
@@ -266,26 +281,36 @@ function priorityBadge(
                     "
                 >
                     <template #actions>
-                        <Button variant="outline" @click="goBack">
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            :disabled="updatingCompletion"
+                            @click="goBack"
+                        >
                             <ArrowLeft class="size-4" aria-hidden="true" />
                             {{ t('common.actions.back') }}
                         </Button>
                         <Button
                             v-if="!editing"
                             variant="outline"
+                            size="lg"
+                            :disabled="updatingCompletion"
                             @click="startEditing"
                         >
                             <Pencil class="size-4" aria-hidden="true" />
                             {{ labels.editTask }}
                         </Button>
                         <Button
+                            size="lg"
                             :variant="
                                 todo.status === 'completed'
                                     ? 'outline'
                                     : 'default'
                             "
+                            :disabled="updatingCompletion"
                             @click="toggleComplete"
                         >
+                            <Spinner v-if="updatingCompletion" />
                             {{
                                 todo.status === 'completed'
                                     ? t('common.actions.reopen')
