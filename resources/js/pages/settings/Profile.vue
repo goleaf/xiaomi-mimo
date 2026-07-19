@@ -1,105 +1,129 @@
 <script setup lang="ts">
-import { Form, Head, usePage } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import DeleteUser from '@/components/DeleteUser.vue';
-import Heading from '@/components/Heading.vue';
-import InputError from '@/components/InputError.vue';
+import { Head, useForm } from '@inertiajs/vue3';
+import { useToast } from '@/composables/useToast';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/profile';
-import { send } from '@/routes/verification';
+import { Separator } from '@/components/ui/separator';
+import { User, Mail, Trash2 } from '@lucide/vue';
 
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            {
-                title: 'Profile settings',
-                href: edit(),
-            },
-        ],
-    },
+const props = defineProps<{
+    user: { id: string; name: string; email: string; email_verified_at: string | null };
+}>();
+
+const toast = useToast();
+
+const profileForm = useForm({
+    name: props.user.name,
+    email: props.user.email,
 });
 
-const page = usePage();
-const user = computed(() => page.props.auth.user);
+const passwordForm = useForm({
+    current_password: '',
+    password: '',
+    password_confirmation: '',
+});
+
+const deleteForm = useForm({});
+
+function updateProfile() {
+    profileForm.patch(route('profile.update'), {
+        onSuccess: () => toast.success('Profile updated'),
+    });
+}
+
+function updatePassword() {
+    passwordForm.put(route('user-password.update'), {
+        onSuccess: () => { toast.success('Password updated'); passwordForm.reset(); },
+    });
+}
+
+function deleteAccount() {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        deleteForm.delete(route('profile.destroy'), {
+            onSuccess: () => toast.success('Account deleted'),
+        });
+    }
+}
 </script>
 
 <template>
-    <Head title="Profile settings" />
+    <Head title="Profile" />
+    <div class="space-y-6">
+        <div>
+            <h2 class="text-lg font-semibold">Profile</h2>
+            <p class="text-sm text-muted-foreground">Manage your account settings</p>
+        </div>
 
-    <h1 class="sr-only">Profile settings</h1>
+        <!-- Profile Info -->
+        <Card>
+            <CardHeader>
+                <CardTitle>Personal Information</CardTitle>
+                <CardDescription>Update your name and email address</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form @submit.prevent="updateProfile" class="space-y-4 max-w-md">
+                    <div class="space-y-2">
+                        <Label for="name">Name</Label>
+                        <div class="flex items-center gap-2">
+                            <User class="h-4 w-4 text-muted-foreground" />
+                            <Input id="name" v-model="profileForm.name" required />
+                        </div>
+                        <p v-if="profileForm.errors.name" class="text-sm text-destructive">{{ profileForm.errors.name }}</p>
+                    </div>
+                    <div class="space-y-2">
+                        <Label for="email">Email</Label>
+                        <div class="flex items-center gap-2">
+                            <Mail class="h-4 w-4 text-muted-foreground" />
+                            <Input id="email" v-model="profileForm.email" type="email" required />
+                        </div>
+                        <p v-if="profileForm.errors.email" class="text-sm text-destructive">{{ profileForm.errors.email }}</p>
+                        <p v-if="!user.email_verified_at" class="text-sm text-yellow-600">Your email is not verified.</p>
+                    </div>
+                    <Button type="submit" :disabled="profileForm.processing">Save Changes</Button>
+                </form>
+            </CardContent>
+        </Card>
 
-    <div class="flex flex-col space-y-6">
-        <Heading
-            variant="small"
-            title="Profile"
-            description="Update your name and email address"
-        />
+        <!-- Password -->
+        <Card>
+            <CardHeader>
+                <CardTitle>Update Password</CardTitle>
+                <CardDescription>Ensure your account is using a long, random password</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form @submit.prevent="updatePassword" class="space-y-4 max-w-md">
+                    <div class="space-y-2">
+                        <Label for="current_password">Current Password</Label>
+                        <Input id="current_password" v-model="passwordForm.current_password" type="password" required />
+                        <p v-if="passwordForm.errors.current_password" class="text-sm text-destructive">{{ passwordForm.errors.current_password }}</p>
+                    </div>
+                    <div class="space-y-2">
+                        <Label for="password">New Password</Label>
+                        <Input id="password" v-model="passwordForm.password" type="password" required />
+                        <p v-if="passwordForm.errors.password" class="text-sm text-destructive">{{ passwordForm.errors.password }}</p>
+                    </div>
+                    <div class="space-y-2">
+                        <Label for="password_confirmation">Confirm Password</Label>
+                        <Input id="password_confirmation" v-model="passwordForm.password_confirmation" type="password" required />
+                    </div>
+                    <Button type="submit" :disabled="passwordForm.processing">Update Password</Button>
+                </form>
+            </CardContent>
+        </Card>
 
-        <Form
-            v-bind="ProfileController.update.form()"
-            class="space-y-6"
-            v-slot="{ errors, processing }"
-        >
-            <div class="grid gap-2">
-                <Label for="name">Name</Label>
-                <Input
-                    id="name"
-                    class="mt-1 block w-full"
-                    name="name"
-                    :default-value="user.name"
-                    required
-                    autocomplete="name"
-                    placeholder="Full name"
-                />
-                <InputError class="mt-2" :message="errors.name" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="email">Email address</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    name="email"
-                    :default-value="user.email"
-                    required
-                    autocomplete="username"
-                    placeholder="Email address"
-                />
-                <InputError class="mt-2" :message="errors.email" />
-            </div>
-
-            <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">
-                <p class="-mt-4 text-sm text-muted-foreground">
-                    Your email address is unverified.
-                    <Link
-                        :href="send()"
-                        as="button"
-                        class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                    >
-                        Click here to re-send the verification email.
-                    </Link>
-                </p>
-
-                <div
-                    v-if="page.props.status === 'verification-link-sent'"
-                    class="mt-2 text-sm font-medium text-green-600"
-                >
-                    A new verification link has been sent to your email address.
-                </div>
-            </div>
-
-            <div class="flex items-center gap-4">
-                <Button :disabled="processing" data-test="update-profile-button"
-                    >Save</Button
-                >
-            </div>
-        </Form>
+        <!-- Danger Zone -->
+        <Card class="border-destructive">
+            <CardHeader>
+                <CardTitle class="text-destructive">Danger Zone</CardTitle>
+                <CardDescription>Permanently delete your account</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button variant="destructive" @click="deleteAccount" :disabled="deleteForm.processing">
+                    <Trash2 class="mr-2 h-4 w-4" />Delete Account
+                </Button>
+            </CardContent>
+        </Card>
     </div>
-
-    <DeleteUser />
 </template>

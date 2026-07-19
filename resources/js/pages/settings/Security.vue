@@ -1,119 +1,99 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
-import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
-import Heading from '@/components/Heading.vue';
-import InputError from '@/components/InputError.vue';
-import type { Props as ManagePasskeysProps } from '@/components/ManagePasskeys.vue';
-import ManagePasskeys from '@/components/ManagePasskeys.vue';
-import type { Props as ManageTwoFactorProps } from '@/components/ManageTwoFactor.vue';
-import ManageTwoFactor from '@/components/ManageTwoFactor.vue';
-import PasswordInput from '@/components/PasswordInput.vue';
+import { Head, useForm } from '@inertiajs/vue3';
+import { useToast } from '@/composables/useToast';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/security';
+import { Shield } from '@lucide/vue';
 
-type Props = {
-    passwordRules: string;
-} & ManagePasskeysProps &
-    ManageTwoFactorProps;
+const props = defineProps<{
+    user: { id: string; two_factor_enabled?: boolean };
+}>();
 
-const props = defineProps<Props>();
+const toast = useToast();
 
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            {
-                title: 'Security settings',
-                href: edit(),
-            },
-        ],
-    },
+const passwordForm = useForm({
+    current_password: '',
+    password: '',
+    password_confirmation: '',
 });
+
+const twoFactorForm = useForm({});
+
+function updatePassword() {
+    passwordForm.put(route('user-password.update'), {
+        onSuccess: () => { toast.success('Password updated'); passwordForm.reset(); },
+    });
+}
+
+function enable2FA() {
+    twoFactorForm.post(route('two-factor.enable'), {
+        onSuccess: () => toast.success('Two-factor authentication enabled'),
+    });
+}
+
+function disable2FA() {
+    if (confirm('Disable two-factor authentication?')) {
+        twoFactorForm.delete(route('two-factor.disable'), {
+            onSuccess: () => toast.success('Two-factor authentication disabled'),
+        });
+    }
+}
 </script>
 
 <template>
-    <Head title="Security settings" />
-
-    <h1 class="sr-only">Security settings</h1>
-
+    <Head title="Security" />
     <div class="space-y-6">
-        <Heading
-            variant="small"
-            title="Update password"
-            description="Ensure your account is using a long, random password to stay secure"
-        />
+        <div>
+            <h2 class="text-lg font-semibold">Security</h2>
+            <p class="text-sm text-muted-foreground">Manage your account security</p>
+        </div>
 
-        <Form
-            v-bind="SecurityController.update.form()"
-            :options="{
-                preserveScroll: true,
-            }"
-            reset-on-success
-            :reset-on-error="[
-                'password',
-                'password_confirmation',
-                'current_password',
-            ]"
-            class="space-y-6"
-            v-slot="{ errors, processing }"
-        >
-            <div class="grid gap-2">
-                <Label for="current_password">Current password</Label>
-                <PasswordInput
-                    id="current_password"
-                    name="current_password"
-                    class="mt-1 block w-full"
-                    autocomplete="current-password"
-                    placeholder="Current password"
-                />
-                <InputError :message="errors.current_password" />
-            </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Update Password</CardTitle>
+                <CardDescription>Ensure your account is using a long, random password</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form @submit.prevent="updatePassword" class="space-y-4 max-w-md">
+                    <div class="space-y-2">
+                        <Label for="current_password">Current Password</Label>
+                        <Input id="current_password" v-model="passwordForm.current_password" type="password" required />
+                        <p v-if="passwordForm.errors.current_password" class="text-sm text-destructive">{{ passwordForm.errors.current_password }}</p>
+                    </div>
+                    <div class="space-y-2">
+                        <Label for="password">New Password</Label>
+                        <Input id="password" v-model="passwordForm.password" type="password" required />
+                        <p v-if="passwordForm.errors.password" class="text-sm text-destructive">{{ passwordForm.errors.password }}</p>
+                    </div>
+                    <div class="space-y-2">
+                        <Label for="password_confirmation">Confirm Password</Label>
+                        <Input id="password_confirmation" v-model="passwordForm.password_confirmation" type="password" required />
+                    </div>
+                    <Button type="submit" :disabled="passwordForm.processing">Update Password</Button>
+                </form>
+            </CardContent>
+        </Card>
 
-            <div class="grid gap-2">
-                <Label for="password">New password</Label>
-                <PasswordInput
-                    id="password"
-                    name="password"
-                    class="mt-1 block w-full"
-                    autocomplete="new-password"
-                    placeholder="New password"
-                    :passwordrules="props.passwordRules"
-                />
-                <InputError :message="errors.password" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="password_confirmation">Confirm password</Label>
-                <PasswordInput
-                    id="password_confirmation"
-                    name="password_confirmation"
-                    class="mt-1 block w-full"
-                    autocomplete="new-password"
-                    placeholder="Confirm password"
-                    :passwordrules="props.passwordRules"
-                />
-                <InputError :message="errors.password_confirmation" />
-            </div>
-
-            <div class="flex items-center gap-4">
-                <Button
-                    :disabled="processing"
-                    data-test="update-password-button"
-                >
-                    Save
-                </Button>
-            </div>
-        </Form>
+        <Card>
+            <CardHeader>
+                <div class="flex items-center gap-2">
+                    <Shield class="h-5 w-5" />
+                    <CardTitle>Two-Factor Authentication</CardTitle>
+                </div>
+                <CardDescription>Add additional security with 2FA</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div v-if="user.two_factor_enabled" class="flex items-center gap-4">
+                    <p class="text-sm text-green-600 font-medium">Two-factor authentication is enabled</p>
+                    <Button variant="destructive" size="sm" @click="disable2FA">Disable</Button>
+                </div>
+                <div v-else class="flex items-center gap-4">
+                    <p class="text-sm text-muted-foreground">Two-factor authentication is not enabled</p>
+                    <Button size="sm" @click="enable2FA">Enable</Button>
+                </div>
+            </CardContent>
+        </Card>
     </div>
-
-    <ManageTwoFactor
-        :canManageTwoFactor="canManageTwoFactor"
-        :requiresConfirmation="requiresConfirmation"
-        :twoFactorEnabled="twoFactorEnabled"
-    />
-
-    <ManagePasskeys
-        :canManagePasskeys="canManagePasskeys"
-        :passkeys="passkeys"
-    />
 </template>
