@@ -31,3 +31,7 @@ declare module 'vue' {
         $headManager: ReturnType<typeof createHeadManager>;
     }
 }
+
+declare global {
+    function route(name: string, params?: string | string[] | Record<string, unknown>, options?: Record<string, unknown>): string;
+}

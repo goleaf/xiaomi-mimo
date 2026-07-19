@@ -1,3 +1,4 @@
+import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { createPinia } from 'pinia';
 import { initializeTheme } from '@/composables/useAppearance';
@@ -5,17 +6,24 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
+import { route } from '@/lib/route';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+// Make route() globally available
+(window as unknown as Record<string, unknown>).route = route;
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     setup({ el, App, props, plugin }) {
         const pinia = createPinia();
-        window.Vue.createApp({ render: () => window.Vue.h(App, props) })
-            .use(plugin)
-            .use(pinia)
-            .mount(el);
+        const app = createApp({ render: () => h(App, props) });
+        app.use(plugin);
+        app.use(pinia);
+        app.config.errorHandler = (err) => {
+            console.error('[VUE ERROR]', err);
+        };
+        app.mount(el);
     },
     layout: (name) => {
         switch (true) {
