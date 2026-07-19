@@ -1779,3 +1779,57 @@ No migration or Composer/npm package change was made.
 
 - Commit `eab814b` (`fix: type application layer contracts`) was pushed successfully to `origin main`.
 - This final phase record will be committed separately while preserving unrelated pre-existing progress changes.
+
+## Static Analysis Phase: Supporting Infrastructure
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Complete the Larastan cleanup in configuration, factories, migrations, seeders, and routes without adding suppressions or a baseline.
+- Bind every Eloquent factory to its concrete model and type iterable factory state explicitly.
+- Separate UUID column creation from a dedicated foreign-key migration so clean installations and the existing SQLite database converge on the same 24 enforced relationships.
+- Finish with the complete backend and frontend verification matrix because this is the final repository-wide static-analysis phase.
+
+### Migrations And Packages
+
+- Added `2026_07_19_185503_add_foreign_keys_to_workspace_tables.php` to apply and reverse the 24 constraints that the previous `uuid()->constrained()` chains did not create.
+- No Composer or npm package change was made.
+
+### Changed Files
+
+- `app/Models/ActivityLog.php`, `Attachment.php`, `UserPreference.php`, and `WorkspaceMember.php`
+- Typed factories under `database/factories/`
+- `config/sanctum.php`
+- Workspace-domain migrations `2026_07_18_000001` through `2026_07_18_000015`
+- `database/migrations/2026_07_19_185503_add_foreign_keys_to_workspace_tables.php`
+- `database/seeders/TodoSeeder.php`
+- `tests/Feature/SupportingInfrastructureContractTest.php`
+- `docs/progress.md`
+
+### Verification
+
+- Pre-migration live orphan audit: passed with zero orphaned identifiers across all 24 intended relationships.
+- Temporary SQLite `migrate` -> `migrate:rollback --step=1` -> `migrate`: passed, including the new reversible foreign-key migration.
+- Created local backup `storage/app/backups/backup_2026-07-19_185715.sqlite`, then applied the migration successfully to the live SQLite database.
+- Live schema verification: 24 foreign keys present and `pragma_foreign_key_check` returned no violations.
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `php artisan test --compact tests/Feature/SupportingInfrastructureContractTest.php`: passed, 32 tests and 42 assertions.
+- `php artisan test --compact`: passed, 328 tests and 1,423 assertions.
+- `vendor/bin/phpstan analyse --no-progress --error-format=json`: passed with zero errors. The complete cleanup reduced the original baseline from 327 errors across 104 files to zero without suppressions or a baseline file.
+- `npm run types:check`: passed.
+- `npm run lint:check`: passed.
+- `npm run format:check`: passed.
+- `npm run build`: passed after transforming 3,362 modules.
+- `git diff --check`: passed.
+
+### Known Limitations
+
+- Vite still reports the existing optional `fontaine` optimization notice; the production build succeeds and no dependency was added without approval.
+
+### Git Delivery
+
+- Commit `d2c6af7` (`fix: complete static analysis contracts`) was pushed successfully to `origin main`.
+- This final phase record will be committed separately while preserving unrelated pre-existing progress changes.
