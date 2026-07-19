@@ -32,7 +32,12 @@ import { store as storeChecklistItem, toggle } from '@/routes/checklistItems';
 import { store as storeChecklist } from '@/routes/checklists';
 import { store as storeComment } from '@/routes/comments';
 import { complete, uncomplete } from '@/routes/todos';
-import type { Todo, TodoPriority, TodoStatus } from '@/types/models';
+import type {
+    Label as TaskLabel,
+    Todo,
+    TodoPriority,
+    TodoStatus,
+} from '@/types/models';
 
 interface TaskShowLabels {
     editTask: string;
@@ -45,6 +50,9 @@ interface TaskShowLabels {
     status: string;
     priority: string;
     dueDate: string;
+    labels: string;
+    labelsHelp: string;
+    noLabelsAvailable: string;
     updated: string;
     statuses: {
         pending: string;
@@ -62,6 +70,7 @@ interface TaskShowLabels {
 
 const props = defineProps<{
     todo: { data: Todo };
+    availableLabels: { data: TaskLabel[] };
     labels: TaskShowLabels;
 }>();
 const toast = useToast();
@@ -77,6 +86,18 @@ const editForm = useForm({
     status: todo.value.status as TodoStatus,
     priority: todo.value.priority as TodoPriority,
     due_date: todo.value.due_date ?? '',
+    label_ids: todo.value.labels?.map((label) => label.id) ?? [],
+});
+
+const labelError = computed(() => {
+    const errors = editForm.errors as Record<string, string>;
+
+    return (
+        errors.label_ids ??
+        Object.entries(errors).find(([key]) =>
+            key.startsWith('label_ids.'),
+        )?.[1]
+    );
 });
 
 watch(
@@ -88,6 +109,7 @@ watch(
             status: todo.value.status,
             priority: todo.value.priority,
             due_date: todo.value.due_date ?? '',
+            label_ids: todo.value.labels?.map((label) => label.id) ?? [],
         });
         editForm.resetAndClearErrors();
         editing.value = false;
@@ -102,6 +124,7 @@ function startEditing() {
         status: todo.value.status,
         priority: todo.value.priority,
         due_date: todo.value.due_date ?? '',
+        label_ids: todo.value.labels?.map((label) => label.id) ?? [],
     });
     editForm.resetAndClearErrors();
     editing.value = true;
@@ -110,6 +133,17 @@ function startEditing() {
 function cancelEditing() {
     editForm.resetAndClearErrors();
     editing.value = false;
+}
+
+function isLabelSelected(labelId: string): boolean {
+    return editForm.label_ids.includes(labelId);
+}
+
+function setLabelSelection(labelId: string, selected: boolean): void {
+    editForm.label_ids = selected
+        ? [...new Set([...editForm.label_ids, labelId])]
+        : editForm.label_ids.filter((id) => id !== labelId);
+    editForm.clearErrors('label_ids');
 }
 
 function submitEdit() {
@@ -402,6 +436,78 @@ function priorityBadge(
                                     </p>
                                 </div>
                             </div>
+
+                            <fieldset class="space-y-3">
+                                <legend class="text-sm font-medium">
+                                    {{ labels.labels }}
+                                </legend>
+                                <p
+                                    id="task-labels-help"
+                                    class="text-sm text-muted-foreground"
+                                >
+                                    {{ labels.labelsHelp }}
+                                </p>
+                                <div
+                                    v-if="availableLabels.data.length"
+                                    class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+                                >
+                                    <div
+                                        v-for="label in availableLabels.data"
+                                        :key="label.id"
+                                        :class="[
+                                            'flex min-h-11 items-center gap-3 rounded-xl border px-3.5 py-2.5 transition-colors',
+                                            isLabelSelected(label.id)
+                                                ? 'border-orange-500/50 bg-orange-500/8'
+                                                : 'border-border/70 bg-muted/20 hover:border-orange-500/30',
+                                        ]"
+                                    >
+                                        <Checkbox
+                                            :id="`task-label-${label.id}`"
+                                            :model-value="
+                                                isLabelSelected(label.id)
+                                            "
+                                            :disabled="editForm.processing"
+                                            aria-describedby="task-labels-help"
+                                            class="data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
+                                            @update:model-value="
+                                                setLabelSelection(
+                                                    label.id,
+                                                    Boolean($event),
+                                                )
+                                            "
+                                        />
+                                        <Label
+                                            :for="`task-label-${label.id}`"
+                                            class="flex min-w-0 flex-1 cursor-pointer items-center gap-2 font-normal"
+                                        >
+                                            <span
+                                                class="size-2.5 shrink-0 rounded-full"
+                                                :style="{
+                                                    backgroundColor:
+                                                        label.color,
+                                                }"
+                                                aria-hidden="true"
+                                            />
+                                            <span class="truncate">{{
+                                                label.name
+                                            }}</span>
+                                        </Label>
+                                    </div>
+                                </div>
+                                <p
+                                    v-else
+                                    class="rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-3 text-sm text-muted-foreground"
+                                >
+                                    {{ labels.noLabelsAvailable }}
+                                </p>
+                                <p
+                                    v-if="labelError"
+                                    role="alert"
+                                    class="text-sm text-destructive"
+                                >
+                                    {{ labelError }}
+                                </p>
+                            </fieldset>
 
                             <div class="flex flex-wrap justify-end gap-2">
                                 <Button

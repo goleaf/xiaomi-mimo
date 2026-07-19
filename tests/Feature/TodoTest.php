@@ -92,6 +92,75 @@ test('task detail page provides localized editing labels', function () {
         );
 });
 
+test('task detail page provides labels from the task workspace', function () {
+    [$user, $workspace] = createAuthenticatedWorkspace();
+    $todo = Todo::factory()->create(['workspace_id' => $workspace->id]);
+    Label::factory()->create(['workspace_id' => $workspace->id, 'name' => 'Feature']);
+    Label::factory()->create(['workspace_id' => $workspace->id, 'name' => 'Bug']);
+
+    $otherUser = User::factory()->create();
+    $otherWorkspace = Workspace::factory()->create(['owner_id' => $otherUser->id]);
+    Label::factory()->create(['workspace_id' => $otherWorkspace->id, 'name' => 'Private']);
+
+    $this->actingAs($user)
+        ->get(route('todos.show', $todo))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('tasks/Show')
+            ->has('availableLabels.data', 2)
+            ->where('availableLabels.data.0.name', 'Bug')
+            ->where('availableLabels.data.1.name', 'Feature')
+        );
+});
+
+test('user can replace and clear task labels', function () {
+    [$user, $workspace] = createAuthenticatedWorkspace();
+    $todo = Todo::factory()->create(['workspace_id' => $workspace->id]);
+    $originalLabel = Label::factory()->create(['workspace_id' => $workspace->id]);
+    $replacementLabel = Label::factory()->create(['workspace_id' => $workspace->id]);
+    $todo->labels()->attach($originalLabel);
+
+    $this->actingAs($user)
+        ->putJson(route('todos.update', $todo), [
+            'label_ids' => [$replacementLabel->id],
+        ])
+        ->assertOk();
+
+    expect($todo->fresh()->labels->modelKeys())->toBe([$replacementLabel->id]);
+
+    $this->actingAs($user)
+        ->putJson(route('todos.update', $todo), [
+            'label_ids' => [],
+        ])
+        ->assertOk();
+
+    expect($todo->fresh()->labels)->toBeEmpty();
+});
+
+test('task label updates reject labels from another workspace atomically', function () {
+    [$user, $workspace] = createAuthenticatedWorkspace();
+    $todo = Todo::factory()->create(['workspace_id' => $workspace->id]);
+    $currentLabel = Label::factory()->create(['workspace_id' => $workspace->id]);
+    $todo->labels()->attach($currentLabel);
+
+    $otherUser = User::factory()->create();
+    $otherWorkspace = Workspace::factory()->create(['owner_id' => $otherUser->id]);
+    $foreignLabel = Label::factory()->create(['workspace_id' => $otherWorkspace->id]);
+
+    $this->actingAs($user)
+        ->putJson(route('todos.update', $todo), [
+            'title' => 'This must not be applied',
+            'label_ids' => [$foreignLabel->id],
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('label_ids.0');
+
+    $todo->refresh();
+
+    expect($todo->title)->not->toBe('This must not be applied')
+        ->and($todo->labels->modelKeys())->toBe([$currentLabel->id]);
+});
+
 test('user can complete todo', function () {
     [$user, $workspace] = createAuthenticatedWorkspace();
     $todo = Todo::factory()->pending()->create(['workspace_id' => $workspace->id]);

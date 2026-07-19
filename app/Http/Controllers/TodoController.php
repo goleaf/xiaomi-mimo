@@ -16,7 +16,9 @@ use App\Actions\UpdateTodo;
 use App\Http\Requests\BulkActionRequest;
 use App\Http\Requests\StoreTodoRequest;
 use App\Http\Requests\UpdateTodoRequest;
+use App\Http\Resources\LabelResource;
 use App\Http\Resources\TodoResource;
+use App\Models\Label;
 use App\Models\Todo;
 use App\Models\Workspace;
 use App\Services\TodoFilterService;
@@ -80,6 +82,12 @@ class TodoController extends Controller
 
         return Inertia::render('tasks/Show', [
             'todo' => new TodoResource($todo),
+            'availableLabels' => LabelResource::collection(
+                Label::query()
+                    ->where('workspace_id', $todo->workspace_id)
+                    ->orderBy('name')
+                    ->get()
+            ),
             'labels' => [
                 'editTask' => __('tasks.edit_task'),
                 'cancel' => __('tasks.cancel'),
@@ -91,6 +99,9 @@ class TodoController extends Controller
                 'status' => __('tasks.status'),
                 'priority' => __('tasks.priority'),
                 'dueDate' => __('tasks.due_date'),
+                'labels' => __('tasks.labels'),
+                'labelsHelp' => __('tasks.labels_help'),
+                'noLabelsAvailable' => __('tasks.no_labels_available'),
                 'updated' => __('tasks.updated'),
                 'statuses' => [
                     'pending' => __('tasks.statuses.pending'),

@@ -2016,3 +2016,55 @@ The Fortify two-factor challenge redirects ordinary guest sessions to Login unle
 - Implementation commit: `2de801c` (`fix: polish shared interaction surfaces`).
 - Implementation push: successful to `origin/main`.
 - Documentation commit and push: pending this record update.
+
+## Task Detail Label Editing
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Reproduced the reported task-detail issue: assigned labels were visible, but the edit form offered no way to change them.
+- Reused the existing task update route and action instead of adding a parallel label-assignment endpoint.
+- Load selectable labels only from the task's workspace and validate every submitted label against that same workspace before synchronizing the pivot table.
+- Keep the label editor accessible with a fieldset, named checkboxes, processing states, validation feedback, and localized English, Lithuanian, and Russian copy.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Changed Files
+
+- `app/Http/Controllers/TodoController.php`
+- `app/Http/Requests/UpdateTodoRequest.php`
+- `resources/js/pages/tasks/Show.vue`
+- `lang/en/tasks.php`
+- `lang/lt/tasks.php`
+- `lang/ru/tasks.php`
+- `tests/Feature/TodoTest.php`
+- `docs/progress.md`
+
+### Verification
+
+- TDD red phase confirmed the detail page did not expose workspace labels and the update request accepted a foreign-workspace label.
+- `php artisan test --compact tests/Feature/TodoTest.php` — passed, 16 tests and 64 assertions.
+- Browser QA on `/tasks/019f7a48-e93e-700c-a984-26341f7ddf06` confirmed all six workspace labels are selectable, Bug and Security are initially checked, and saving Bug plus Feature returned HTTP 303 and updated the detail metadata. The original Bug plus Security assignment was then restored and verified.
+- `vendor/bin/pint --dirty --format agent` — passed.
+- `php artisan test --compact` — passed, 340 tests and 1,519 assertions.
+- `vendor/bin/phpstan analyse --no-progress` — passed with 0 errors.
+- `npm run test:frontend` — passed, 1 test.
+- `npm run types:check` — passed.
+- `npm run lint:check` — passed.
+- `npm run format:check` — passed.
+- `npm run build` — passed after transforming 3,362 modules.
+- `git diff --check` — passed.
+
+### Known Limitations
+
+- This task-detail feature assigns and removes existing workspace labels; label creation and renaming remain in the workspace label-management flow.
+- Vite continues to report the existing optional `fontaine` optimization notice; the production build succeeds.
+
+### Git Delivery
+
+Pending.

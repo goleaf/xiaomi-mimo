@@ -11,6 +11,9 @@ return [
     'status' => 'Būsena',
     'priority' => 'Prioritetas',
     'due_date' => 'Terminas',
+    'labels' => 'Žymos',
+    'labels_help' => 'Pasirinkite šiai užduočiai tinkamas žymas.',
+    'no_labels_available' => 'Šioje darbo srityje dar nėra sukurtų žymų.',
     'updated' => 'Užduotis atnaujinta',
     'statuses' => [
         'pending' => 'Laukiama',
