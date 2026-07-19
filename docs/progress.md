@@ -2592,3 +2592,57 @@ No migration or Composer/npm package change is planned.
 - Documentation commit: `15b9f40` (`docs: record page header action unification`).
 - Documentation push: successful to `origin/main`.
 - This final delivery record is committed and pushed separately so the phase commits remain focused.
+
+## Shared Segmented Filter Unification
+
+### Status
+
+- Completed.
+
+### Scope And Decisions
+
+- Replace the duplicated project, notification, calendar, and activity segmented filters with shared warm-precision components derived from `/projects`.
+- Keep horizontal controls scroll-safe on narrow screens and preserve the activity filter's responsive vertical layout.
+- Preserve each page's existing filter state, counts, translations, routes, and interaction behavior while retaining the correct tablist or button-group semantics.
+- Add a missing accessible label to the calendar view switcher and keep orange focus, reduced-motion, muted inactive, and card-active states consistent.
+
+### Changed Files
+
+- `resources/js/components/shared/WorkspaceSegmentedControl.vue`
+- `resources/js/components/shared/WorkspaceSegmentedButton.vue`
+- `resources/js/pages/activity/Index.vue`
+- `resources/js/pages/calendar/Index.vue`
+- `resources/js/pages/notifications/Index.vue`
+- `resources/js/pages/projects/Index.vue`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change is planned.
+
+### Verification
+
+- The focused RED run produced the expected failures for four consumers without the shared components, the absent shared component files, and the calendar switcher's missing accessible label.
+- Focused segmented-control coverage passed with 11 tests and 37 assertions; the complete frontend-design file passed with 116 tests and 505 assertions.
+- Full Pest coverage passed with 406 tests and 1,829 assertions.
+- PHPStan passed with 0 errors.
+- Vue TypeScript checking, ESLint, Prettier verification, and the frontend Node test passed.
+- Production build passed after transforming 3,373 modules.
+- Desktop light browser QA confirmed Projects uses 40px shared tabs and Activity uses full-width 44px filters; live Archived and Created selections updated both ARIA and visual state with zero page overflow.
+- Mobile dark browser QA confirmed Notifications and Calendar use 40px shared tabs, the calendar switcher now exposes the translated `Filters` label, and local state changes updated both ARIA and visual state.
+- Activity retained 44px horizontal controls on mobile: its 182px excess width remains contained in the filter's intentional horizontal scroller while document overflow stays at zero.
+- Browser QA produced no console errors or page errors; the Boost browser log contained only historical entries dated 2026-07-19.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+
+### Known Limitations And Next Work
+
+- Vite continues to report the existing optional `fontaine` optimization notice; the production build succeeds.
+- Activity intentionally scrolls its four filters horizontally below the desktop breakpoint, preserving 44px targets without forcing the page wider than the viewport.
+
+### Git Delivery
+
+- Implementation commit: `cf518cc` (`fix: unify segmented filters`).
+- Implementation push: successful to `origin/main`.
+- Documentation commit and push are pending.
+- Unrelated user-authored progress entries remain preserved outside this phase's staged changes.
