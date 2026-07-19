@@ -1374,7 +1374,8 @@ No migration or Composer/npm package was added, removed, or upgraded.
 
 ### Git Delivery
 
-Commit message: `feat: extend warm precision design`. Push to `origin main` will be attempted immediately after the isolated phase commit; any failure will be recorded in a follow-up delivery entry.
+- Commit `bf2ed41` (`feat: extend warm precision design`) was pushed successfully to `origin main`.
+- This delivery record will be committed as `docs: record warm precision delivery` and pushed separately.
 
 ## Frontend Formatting Cleanup
 
