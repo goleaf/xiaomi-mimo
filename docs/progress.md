@@ -118,3 +118,68 @@ The production-code failures were not changed in this audit-only phase. No test 
 ### Next Phase
 
 Prompt 2: implement and test the critical/high workspace isolation, role permission, nested validation, bulk/reorder, scoped binding, and Sanctum ability corrections.
+
+## NativePHP Mobile 3 Quick-Start Integration
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Installed NativePHP Mobile 3 and initialized both supported mobile platforms with the embedded PHP 8.4 runtime.
+- Configured `com.goleaf.xiaomimimo` as the Android application ID and iOS bundle identifier, `/` as the local start URL, and the persistent runtime mode.
+- Integrated the NativePHP Vite plugin and hot-file path while retaining the existing Laravel, Inertia, Vue, Pinia, Wayfinder, and browser development workflow.
+- Configured Inertia 3 to use its Axios HTTP adapter so page visits execute against the bundled on-device Laravel runtime.
+- Added full-screen safe-area handling for the Android and iOS WebView.
+- Kept SQLite as the only database and configured attachment upload, URL, download, and deletion behavior to use NativePHP's writable `mobile_public` disk in packaged apps and the existing public disk in browser development.
+- Expanded bundle-time environment cleanup so development credentials and application secrets are not shipped in the mobile bundle.
+- Added focused Pest coverage for the NativePHP command/configuration contract and on-device attachment lifecycle.
+- Added no remote API, synchronization service, client/server split, Redis, or external database requirement.
+
+### Changed Files
+
+- `.env.example`
+- `composer.json`, `composer.lock`
+- `package.json`, `package-lock.json`
+- `config/nativephp.php`, `config/filesystems.php`
+- `native`, `nativephp.lock`
+- `vite.config.ts`, `resources/js/app.ts`, `resources/views/app.blade.php`
+- Attachment action, controller, resource, and model files
+- `tests/Feature/NativePhpMobileTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+- Added `nativephp/mobile` 3.3.6 and its locked Composer dependencies.
+- Added direct runtime dependencies on `@inertiajs/core` 3.6.1 and Axios 1.18.1 for the Inertia 3 mobile HTTP adapter.
+- NativePHP installed embedded PHP 8.4.23 with ICU disabled.
+- No application migration was added or changed. SQLite remains the only relational database.
+
+### Verification
+
+- `php artisan native:install both --no-interaction`: passed; Android and iOS projects and embedded PHP were installed.
+- `php artisan native:plugin:list`: passed; no optional NativePHP plugins are required by this quick-start phase.
+- `php artisan test --compact tests/Feature/NativePhpMobileTest.php`: passed, 2 tests and 18 assertions.
+- Scoped PHPStan analysis for all NativePHP and attachment integration PHP files: passed with zero errors.
+- `php artisan test --compact`: passed at the integration checkpoint with 116 tests and 392 assertions. A final run after concurrent settings/member tests and implementation appeared ran 128 tests, with 120 passing and 8 unrelated failures in that in-progress work; the NativePHP suite still passes independently.
+- `vendor/bin/pint --dirty --format agent`: passed.
+- Targeted ESLint for `resources/js/app.ts`: passed.
+- Targeted Prettier for the NativePHP TypeScript and package files: passed.
+- `npm run build`: passed; the standard production application bundle includes the Axios and NativePHP integration.
+- `composer validate --strict --no-check-publish`, `composer audit --no-interaction`, and `npm audit --omit=dev`: passed with no known dependency vulnerabilities.
+- `git diff --check`: passed.
+- Full PHPStan remains at 365 pre-existing errors, improved from the documented 377-error baseline; NativePHP-touched PHP files are clean.
+- Full Vue type checking remains at 11 errors and full ESLint remains at 85 errors in pre-existing or concurrently edited non-mobile files; the NativePHP application entrypoint is clean.
+- Full resource Prettier verification remains red in 14 unrelated resource files.
+
+### Git Delivery
+
+The phase commit and push result will be recorded after delivery. Existing sidebar, settings, task, translation, and `.mimocode` changes remain outside this phase.
+
+### Known Limitations
+
+- NativePHP's generated Android and iOS source projects remain locally reproducible and intentionally ignored by the generated `nativephp/.gitignore`; the tracked installer configuration, launcher, and lock file are the source of truth.
+- Platform-mode Vite builds and device launch/watch commands were not executed automatically, as required by the installed NativePHP development guidance.
+- This Intel Mac does not satisfy NativePHP's Apple-silicon iOS development requirement and does not have full Xcode, CocoaPods, Android Studio, or an Android SDK available. Device compilation must be completed on a supported workstation.
+- No Apple development team or product-specific icon/splash assets were supplied, so code signing remains unset and the NativePHP defaults remain in use.

@@ -2,11 +2,14 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Attachment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin Attachment */
 class AttachmentResource extends JsonResource
 {
+    /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         return [
@@ -17,7 +20,7 @@ class AttachmentResource extends JsonResource
             'path' => $this->path,
             'mime_type' => $this->mime_type,
             'size' => $this->size,
-            'url' => asset('storage/'.$this->path),
+            'url' => $this->url,
             'user' => new UserResource($this->whenLoaded('user')),
             'created_at' => $this->created_at,
         ];

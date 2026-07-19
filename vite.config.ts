@@ -5,12 +5,17 @@ import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig } from 'vite';
+import {
+    nativephpHotFile,
+    nativephpMobile,
+} from './vendor/nativephp/mobile/resources/js/vite-plugin.js';
 
 export default defineConfig({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             refresh: true,
+            hotFile: nativephpHotFile(),
             fonts: [
                 bunny('Instrument Sans', {
                     weights: [400, 500, 600],
@@ -19,6 +24,7 @@ export default defineConfig({
         }),
         inertia(),
         tailwindcss(),
+        nativephpMobile(),
         vue({
             template: {
                 transformAssetUrls: {

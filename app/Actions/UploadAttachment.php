@@ -13,9 +13,14 @@ class UploadAttachment
     public function handle(Todo $todo, User $user, UploadedFile $file): Attachment
     {
         $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
-        $path = $file->storeAs('attachments', $filename, 'public');
+        $path = $file->storeAs(
+            'attachments',
+            $filename,
+            (string) config('filesystems.attachment_disk'),
+        );
 
-        return $todo->attachments()->create([
+        return Attachment::query()->create([
+            'todo_id' => $todo->id,
             'user_id' => $user->id,
             'filename' => $file->getClientOriginalName(),
             'path' => $path,

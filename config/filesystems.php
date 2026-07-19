@@ -13,7 +13,15 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'local'),
+    'default' => env(
+        'FILESYSTEM_DISK',
+        env('NATIVEPHP_RUNNING', false) ? 'mobile_public' : 'local',
+    ),
+
+    'attachment_disk' => env(
+        'ATTACHMENT_FILESYSTEM_DISK',
+        env('NATIVEPHP_RUNNING', false) ? 'mobile_public' : 'public',
+    ),
 
     /*
     |--------------------------------------------------------------------------

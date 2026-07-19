@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttachmentController extends Controller
 {
@@ -38,10 +39,11 @@ class AttachmentController extends Controller
         return response()->json(null, 204);
     }
 
-    public function download(Attachment $attachment)
+    public function download(Attachment $attachment): StreamedResponse
     {
         $this->authorize('view', $attachment);
 
-        return Storage::disk('public')->download($attachment->path, $attachment->filename);
+        return Storage::disk((string) config('filesystems.attachment_disk'))
+            ->download($attachment->path, $attachment->filename);
     }
 }

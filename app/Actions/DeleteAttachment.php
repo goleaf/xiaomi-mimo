@@ -9,7 +9,7 @@ class DeleteAttachment
 {
     public function handle(Attachment $attachment): bool
     {
-        Storage::disk('public')->delete($attachment->path);
+        Storage::disk((string) config('filesystems.attachment_disk'))->delete($attachment->path);
 
         return $attachment->delete();
     }

@@ -1,3 +1,4 @@
+import { axiosAdapter } from '@inertiajs/core';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { createPinia } from 'pinia';
 import { createApp, h } from 'vue';
@@ -14,8 +15,13 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 (window as unknown as Record<string, unknown>).route = route;
 
 createInertiaApp({
+    http: axiosAdapter(),
     title: (title) => (title ? `${title} - ${appName}` : appName),
     setup({ el, App, props, plugin }) {
+        if (!el) {
+            throw new Error('Inertia root element was not found.');
+        }
+
         const pinia = createPinia();
         const app = createApp({ render: () => h(App, props) });
         app.use(plugin);
