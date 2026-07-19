@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { store } from '@/routes/workspaces';
@@ -248,8 +249,8 @@ async function createWorkspace(): Promise<void> {
                             id="ws-name"
                             v-model="form.name"
                             :placeholder="t('workspaces.name_placeholder')"
-                            class="h-11 rounded-xl"
                             autofocus
+                            :disabled="form.processing"
                             :aria-invalid="Boolean(form.errors.name)"
                             @input="form.clearErrors('name')"
                         />
@@ -265,7 +266,9 @@ async function createWorkspace(): Promise<void> {
                             :placeholder="
                                 t('workspaces.description_placeholder')
                             "
-                            class="h-11 rounded-xl"
+                            :disabled="form.processing"
+                            :aria-invalid="Boolean(form.errors.description)"
+                            @input="form.clearErrors('description')"
                         />
                         <InputError :message="form.errors.description" />
                     </div>
@@ -275,7 +278,7 @@ async function createWorkspace(): Promise<void> {
                         <Button
                             type="button"
                             variant="outline"
-                            class="min-h-11 cursor-pointer rounded-xl"
+                            size="lg"
                             :disabled="form.processing"
                             @click="setCreateDialog(false)"
                         >
@@ -283,9 +286,10 @@ async function createWorkspace(): Promise<void> {
                         </Button>
                         <Button
                             type="submit"
-                            class="min-h-11 cursor-pointer rounded-xl bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-orange-500"
+                            size="lg"
                             :disabled="form.processing"
                         >
+                            <Spinner v-if="form.processing" />
                             {{
                                 form.processing
                                     ? t('workspaces.creating')

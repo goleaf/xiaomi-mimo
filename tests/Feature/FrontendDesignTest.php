@@ -117,6 +117,47 @@ test('active create dialogs reuse shared controls for processing states', functi
     'task create' => 'task/TaskCreateDialog.vue',
 ]);
 
+test('workspace creation reuses shared controls for complete processing states', function () {
+    expect(File::get(resource_path('js/pages/workspaces/Index.vue')))
+        ->toContain("import { Spinner } from '@/components/ui/spinner'")
+        ->toContain('<Spinner v-if="form.processing" />')
+        ->toContain(':aria-invalid="Boolean(form.errors.description)"')
+        ->toContain(':disabled="form.processing"')
+        ->toContain('size="lg"')
+        ->not->toContain('class="h-11 rounded-xl"')
+        ->not->toContain('bg-orange-600 text-white hover:bg-orange-700');
+});
+
+test('settings save forms reuse shared large loading actions', function (string $page) {
+    expect(File::get(resource_path("js/pages/settings/{$page}.vue")))
+        ->toContain("import { Spinner } from '@/components/ui/spinner'")
+        ->toContain('<Spinner v-if="form.processing" />')
+        ->toContain(':disabled="form.processing"')
+        ->toContain('size="lg"')
+        ->not->toContain('bg-orange-600 text-white hover:bg-orange-700');
+})->with([
+    'preferences' => 'Preferences',
+    'notifications' => 'Notifications',
+]);
+
+test('notification option copy keeps a readable mobile hierarchy', function () {
+    expect(File::get(resource_path('js/pages/settings/Notifications.vue')))
+        ->toContain('flex-col items-start gap-0')
+        ->toContain('leading-5')
+        ->toContain('text-muted-foreground');
+});
+
+test('member actions reuse shared loading and large dialog controls', function () {
+    expect(File::get(resource_path('js/pages/settings/Members.vue')))
+        ->toContain("import { Spinner } from '@/components/ui/spinner'")
+        ->toContain('<Spinner v-if="inviteForm.processing" />')
+        ->toContain('<Spinner v-if="removeForm.processing" />')
+        ->toContain(':disabled="inviteForm.processing"')
+        ->toContain('size="lg"')
+        ->not->toContain('LoaderCircle')
+        ->not->toContain('class="min-h-11 cursor-pointer rounded-xl"');
+});
+
 test('project creation selectors expose warm precision interaction states', function () {
     expect(File::get(resource_path('js/components/project/ProjectCreateDialog.vue')))
         ->toContain(':aria-invalid="Boolean(form.errors.description)"')
@@ -380,7 +421,6 @@ test('shared and page loading states respect reduced motion', function (string $
     'empty state' => 'components/shared/EmptyState.vue',
     'workspace switcher' => 'components/workspace/WorkspaceSwitcher.vue',
     'task detail' => 'pages/tasks/Show.vue',
-    'members settings' => 'pages/settings/Members.vue',
     'two factor setup' => 'components/TwoFactorSetupModal.vue',
     'two factor recovery codes' => 'components/TwoFactorRecoveryCodes.vue',
 ]);

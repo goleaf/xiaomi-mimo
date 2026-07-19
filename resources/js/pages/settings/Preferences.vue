@@ -17,6 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { update } from '@/routes/preferences';
@@ -93,7 +94,10 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
                         <Label>{{
                             t('settings.preferences.default_view')
                         }}</Label>
-                        <Select v-model="form.default_view">
+                        <Select
+                            v-model="form.default_view"
+                            :disabled="form.processing"
+                        >
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="list">{{
@@ -119,7 +123,10 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
                             <Label>{{
                                 t('settings.preferences.timezone')
                             }}</Label>
-                            <Select v-model="form.timezone">
+                            <Select
+                                v-model="form.timezone"
+                                :disabled="form.processing"
+                            >
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
@@ -135,7 +142,10 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
                             <Label>{{
                                 t('settings.preferences.date_format')
                             }}</Label>
-                            <Select v-model="form.date_format">
+                            <Select
+                                v-model="form.date_format"
+                                :disabled="form.processing"
+                            >
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
@@ -151,9 +161,10 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
                 </CardContent>
             </Card>
             <div class="flex justify-end">
-                <Button type="submit" :disabled="form.processing">{{
-                    t('settings.preferences.save')
-                }}</Button>
+                <Button type="submit" size="lg" :disabled="form.processing">
+                    <Spinner v-if="form.processing" />
+                    {{ t('settings.preferences.save') }}
+                </Button>
             </div>
         </form>
     </div>

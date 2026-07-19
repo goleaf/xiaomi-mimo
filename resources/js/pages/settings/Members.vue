@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, setLayoutProps, useForm } from '@inertiajs/vue3';
 import {
-    LoaderCircle,
     LockKeyhole,
     Mail,
     Search,
@@ -37,6 +36,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import type { SettingsLayoutProps } from '@/types';
 
@@ -388,10 +388,12 @@ function removeMember(): void {
                                     autocomplete="email"
                                     :placeholder="copy.email_placeholder"
                                     class="pl-9"
+                                    :disabled="inviteForm.processing"
                                     :aria-invalid="
                                         Boolean(inviteForm.errors.email)
                                     "
                                     required
+                                    @input="inviteForm.clearErrors('email')"
                                 />
                             </div>
                             <InputError :message="inviteForm.errors.email" />
@@ -401,7 +403,10 @@ function removeMember(): void {
                             <Label for="invite-role">
                                 {{ copy.role_label }}
                             </Label>
-                            <Select v-model="inviteForm.role">
+                            <Select
+                                v-model="inviteForm.role"
+                                :disabled="inviteForm.processing"
+                            >
                                 <SelectTrigger
                                     id="invite-role"
                                     class="w-full"
@@ -425,14 +430,11 @@ function removeMember(): void {
 
                         <Button
                             type="submit"
+                            size="lg"
                             class="w-full"
                             :disabled="inviteForm.processing"
                         >
-                            <LoaderCircle
-                                v-if="inviteForm.processing"
-                                class="animate-spin motion-reduce:animate-none"
-                                aria-hidden="true"
-                            />
+                            <Spinner v-if="inviteForm.processing" />
                             <UserPlus v-else aria-hidden="true" />
                             {{
                                 inviteForm.processing
@@ -497,7 +499,7 @@ function removeMember(): void {
                         <Button
                             type="button"
                             variant="outline"
-                            class="min-h-11 cursor-pointer rounded-xl"
+                            size="lg"
                             :disabled="removeForm.processing"
                             @click="memberToRemove = null"
                         >
@@ -506,15 +508,11 @@ function removeMember(): void {
                         <Button
                             type="button"
                             variant="destructive"
-                            class="min-h-11 cursor-pointer rounded-xl"
+                            size="lg"
                             :disabled="removeForm.processing"
                             @click="removeMember"
                         >
-                            <LoaderCircle
-                                v-if="removeForm.processing"
-                                class="animate-spin motion-reduce:animate-none"
-                                aria-hidden="true"
-                            />
+                            <Spinner v-if="removeForm.processing" />
                             <Trash2 v-else aria-hidden="true" />
                             {{
                                 removeForm.processing

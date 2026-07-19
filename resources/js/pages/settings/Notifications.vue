@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { update } from '@/routes/preferences';
@@ -92,7 +93,7 @@ function submit() {
                         </div>
                         <Label
                             :for="option.key"
-                            class="min-w-0 flex-1 cursor-pointer"
+                            class="min-w-0 flex-1 cursor-pointer flex-col items-start gap-0"
                         >
                             <span class="block font-medium text-foreground">
                                 {{ option.label }}
@@ -106,7 +107,8 @@ function submit() {
                         <Checkbox
                             :id="option.key"
                             :model-value="form[option.key]"
-                            class="size-5 data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
+                            class="size-5"
+                            :disabled="form.processing"
                             @update:model-value="
                                 form[option.key] = Boolean($event)
                             "
@@ -115,11 +117,8 @@ function submit() {
                 </CardContent>
             </Card>
             <div class="mt-4 flex justify-end">
-                <Button
-                    type="submit"
-                    class="min-h-11 rounded-xl bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-orange-500"
-                    :disabled="form.processing"
-                >
+                <Button type="submit" size="lg" :disabled="form.processing">
+                    <Spinner v-if="form.processing" />
                     {{ t('common.actions.save') }}
                 </Button>
             </div>
