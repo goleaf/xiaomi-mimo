@@ -1,17 +1,41 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { UserPlus, Trash2 } from '@lucide/vue';
-import { ref } from 'vue';
+import { Head, useForm } from '@inertiajs/vue3';
+import {
+    LoaderCircle,
+    LockKeyhole,
+    Mail,
+    Search,
+    ShieldCheck,
+    Trash2,
+    UserCog,
+    UserPlus,
+    UsersRound,
+} from '@lucide/vue';
+import { computed, ref } from 'vue';
+import {
+    invite as inviteWorkspaceMember,
+    removeMember as removeWorkspaceMember,
+} from '@/actions/App/Http/Controllers/WorkspaceController';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
+    CardDescription,
     CardHeader,
     CardTitle,
-    CardDescription,
 } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -20,125 +44,544 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/composables/useToast';
-import type { Workspace, User } from '@/types/models';
+
+type WorkspaceRole = 'owner' | 'admin' | 'member';
+
+interface WorkspaceSummary {
+    id: string;
+    name: string;
+    slug: string;
+    owner_id: string;
+}
+
+interface WorkspaceMember {
+    id: string;
+    name: string;
+    email: string;
+    role: WorkspaceRole;
+    is_current_user: boolean;
+    can_remove: boolean;
+}
+
+interface MembersCopy {
+    page_title: string;
+    eyebrow: string;
+    title: string;
+    description: string;
+    total_members: string;
+    managers: string;
+    roster_title: string;
+    roster_description: string;
+    search_label: string;
+    search_placeholder: string;
+    no_results_title: string;
+    no_results_description: string;
+    current_user: string;
+    invite_title: string;
+    invite_description: string;
+    email_label: string;
+    email_placeholder: string;
+    role_label: string;
+    invite_action: string;
+    inviting: string;
+    invite_success: string;
+    read_only_title: string;
+    read_only_description: string;
+    remove_member: string;
+    remove_title: string;
+    remove_description: string;
+    cancel: string;
+    remove_action: string;
+    removing: string;
+    remove_success: string;
+    roles: Record<WorkspaceRole, string>;
+    role_descriptions: Record<WorkspaceRole, string>;
+}
 
 const props = defineProps<{
-    workspace: Workspace;
-    members: Array<{ id: string; user: User; role: string }>;
+    workspace: WorkspaceSummary;
+    members: WorkspaceMember[];
+    can_manage_members: boolean;
+    locale: string;
+    copy: MembersCopy;
 }>();
 
 const toast = useToast();
-const inviteForm = useForm({ email: '', role: 'member' });
+const searchQuery = ref('');
+const memberToRemove = ref<WorkspaceMember | null>(null);
+const inviteForm = useForm<{ email: string; role: 'admin' | 'member' }>({
+    email: '',
+    role: 'member',
+});
+const removeForm = useForm({});
 
-function invite() {
-    inviteForm.post(route('workspaces.invite', props.workspace.id), {
-        preserveScroll: true,
-        onSuccess: () => {
-            toast.success('Member invited');
-            inviteForm.reset();
-        },
-    });
+const managerCount = computed(
+    () => props.members.filter((member) => member.role !== 'member').length,
+);
+
+const filteredMembers = computed(() => {
+    const query = searchQuery.value.trim().toLocaleLowerCase(props.locale);
+
+    if (!query) {
+        return props.members;
+    }
+
+    return props.members.filter((member) =>
+        `${member.name} ${member.email} ${props.copy.roles[member.role]}`
+            .toLocaleLowerCase(props.locale)
+            .includes(query),
+    );
+});
+
+const avatarTones = [
+    'bg-amber-100 text-amber-950 dark:bg-amber-950/70 dark:text-amber-200',
+    'bg-sky-100 text-sky-950 dark:bg-sky-950/70 dark:text-sky-200',
+    'bg-emerald-100 text-emerald-950 dark:bg-emerald-950/70 dark:text-emerald-200',
+];
+
+const roleClasses: Record<WorkspaceRole, string> = {
+    owner: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200',
+    admin: 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-200',
+    member: 'border-border bg-muted/50 text-muted-foreground',
+};
+
+function initials(name: string): string {
+    return name
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0))
+        .join('')
+        .toLocaleUpperCase(props.locale);
 }
 
-function removeMember(memberId: string) {
-    if (confirm('Remove this member?')) {
-        router.delete(
-            route('workspaces.removeMember', [props.workspace.id, memberId]),
-            {
-                preserveScroll: true,
-                onSuccess: () => toast.success('Member removed'),
+function avatarTone(memberId: string): string {
+    const characterCode = memberId.charCodeAt(memberId.length - 1) || 0;
+
+    return avatarTones[characterCode % avatarTones.length];
+}
+
+function invite(): void {
+    inviteForm.submit(
+        inviteWorkspaceMember({ workspace: props.workspace.id }),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success(props.copy.invite_success);
+                inviteForm.reset('email');
             },
-        );
+        },
+    );
+}
+
+function openRemoveDialog(member: WorkspaceMember): void {
+    memberToRemove.value = member;
+}
+
+function handleRemoveDialogOpen(open: boolean): void {
+    if (!open && !removeForm.processing) {
+        memberToRemove.value = null;
     }
 }
 
-function roleBadge(role: string) {
-    return (
-        { owner: 'default', admin: 'secondary', member: 'outline' }[role] ??
-        'outline'
+function removeMember(): void {
+    if (!memberToRemove.value) {
+        return;
+    }
+
+    removeForm.submit(
+        removeWorkspaceMember({
+            workspace: props.workspace.id,
+            userId: memberToRemove.value.id,
+        }),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success(props.copy.remove_success);
+                memberToRemove.value = null;
+            },
+        },
     );
 }
 </script>
 
 <template>
-    <Head title="Members" />
-    <div class="space-y-6">
-        <div>
-            <h2 class="text-lg font-semibold">Workspace Members</h2>
-            <p class="text-sm text-muted-foreground">
-                Manage who has access to this workspace
-            </p>
-        </div>
+    <Head :title="copy.page_title" />
 
-        <Card>
-            <CardHeader><CardTitle>Invite Member</CardTitle></CardHeader>
-            <CardContent>
-                <form @submit.prevent="invite" class="flex gap-3">
-                    <Input
-                        v-model="inviteForm.email"
-                        type="email"
-                        placeholder="Email address"
-                        class="flex-1"
-                        required
-                    />
-                    <Select v-model="inviteForm.role">
-                        <SelectTrigger class="w-[120px]"
-                            ><SelectValue
-                        /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="member">Member</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Button type="submit" :disabled="inviteForm.processing">
-                        <UserPlus class="mr-2 h-4 w-4" />Invite
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
+    <div class="space-y-6 pb-8">
+        <section
+            class="relative overflow-hidden rounded-2xl border bg-card shadow-sm"
+        >
+            <div
+                class="pointer-events-none absolute -top-20 -right-16 size-56 rounded-full border bg-muted/55"
+                aria-hidden="true"
+            />
+            <div
+                class="pointer-events-none absolute top-8 -right-2 size-24 rounded-full border bg-background/70"
+                aria-hidden="true"
+            />
 
-        <Card>
-            <CardHeader>
-                <CardTitle>Members ({{ members.length }})</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div class="space-y-3">
+            <div
+                class="relative grid gap-6 p-5 sm:p-7 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end"
+            >
+                <div class="max-w-2xl space-y-4">
                     <div
-                        v-for="member in members"
-                        :key="member.id"
-                        class="flex items-center justify-between rounded-lg border p-4"
+                        class="flex size-11 items-center justify-center rounded-xl border bg-background shadow-xs"
                     >
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-medium"
-                            >
-                                {{ member.user.name?.charAt(0) ?? '?' }}
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium">
-                                    {{ member.user.name }}
-                                </p>
-                                <p class="text-xs text-muted-foreground">
-                                    {{ member.user.email }}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <Badge :variant="roleBadge(member.role)">{{
-                                member.role
-                            }}</Badge>
-                            <Button
-                                v-if="member.role !== 'owner'"
-                                variant="ghost"
-                                size="sm"
-                                @click="removeMember(member.id)"
-                            >
-                                <Trash2 class="h-4 w-4 text-destructive" />
-                            </Button>
-                        </div>
+                        <UsersRound class="size-5" aria-hidden="true" />
+                    </div>
+                    <div class="space-y-2">
+                        <p
+                            class="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase"
+                        >
+                            {{ copy.eyebrow }}
+                        </p>
+                        <h1
+                            class="max-w-xl text-2xl font-semibold tracking-tight sm:text-3xl"
+                        >
+                            {{
+                                copy.title.replace(':workspace', workspace.name)
+                            }}
+                        </h1>
+                        <p
+                            class="max-w-xl text-sm leading-6 text-muted-foreground sm:text-base"
+                        >
+                            {{ copy.description }}
+                        </p>
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+
+                <dl class="grid grid-cols-2 gap-2 sm:min-w-72">
+                    <div
+                        class="rounded-xl border bg-background/80 p-4 backdrop-blur-sm"
+                    >
+                        <dt class="text-xs text-muted-foreground">
+                            {{ copy.total_members }}
+                        </dt>
+                        <dd class="mt-1 text-2xl font-semibold tabular-nums">
+                            {{ members.length }}
+                        </dd>
+                    </div>
+                    <div
+                        class="rounded-xl border bg-background/80 p-4 backdrop-blur-sm"
+                    >
+                        <dt class="text-xs text-muted-foreground">
+                            {{ copy.managers }}
+                        </dt>
+                        <dd class="mt-1 text-2xl font-semibold tabular-nums">
+                            {{ managerCount }}
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </section>
+
+        <div
+            class="grid items-start gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.75fr)]"
+        >
+            <Card class="gap-0 overflow-hidden py-0">
+                <CardHeader class="gap-5 border-b py-5 sm:py-6">
+                    <div class="space-y-1.5">
+                        <CardTitle>{{ copy.roster_title }}</CardTitle>
+                        <CardDescription>
+                            {{ copy.roster_description }}
+                        </CardDescription>
+                    </div>
+
+                    <div class="relative sm:max-w-sm">
+                        <Label for="member-search" class="sr-only">
+                            {{ copy.search_label }}
+                        </Label>
+                        <Search
+                            class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                            aria-hidden="true"
+                        />
+                        <Input
+                            id="member-search"
+                            v-model="searchQuery"
+                            type="search"
+                            :placeholder="copy.search_placeholder"
+                            class="pl-9"
+                        />
+                    </div>
+                </CardHeader>
+
+                <CardContent class="p-0">
+                    <ul
+                        v-if="filteredMembers.length"
+                        class="divide-y"
+                        role="list"
+                    >
+                        <li
+                            v-for="member in filteredMembers"
+                            :key="member.id"
+                            class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-3 px-5 py-4 transition-colors hover:bg-muted/35 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:px-6"
+                        >
+                            <Avatar class="size-11 border shadow-xs">
+                                <AvatarFallback
+                                    :class="[
+                                        'text-sm font-semibold',
+                                        avatarTone(member.id),
+                                    ]"
+                                >
+                                    {{ initials(member.name) }}
+                                </AvatarFallback>
+                            </Avatar>
+
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <p class="truncate text-sm font-semibold">
+                                        {{ member.name }}
+                                    </p>
+                                    <Badge
+                                        v-if="member.is_current_user"
+                                        variant="secondary"
+                                        class="px-1.5 py-0 text-[10px]"
+                                    >
+                                        {{ copy.current_user }}
+                                    </Badge>
+                                </div>
+                                <a
+                                    :href="`mailto:${member.email}`"
+                                    class="mt-0.5 block truncate text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                >
+                                    {{ member.email }}
+                                </a>
+                            </div>
+
+                            <div
+                                class="col-span-2 flex items-center justify-between gap-3 pl-14 sm:col-span-1 sm:justify-end sm:pl-0"
+                            >
+                                <div class="min-w-0 text-right">
+                                    <Badge
+                                        variant="outline"
+                                        :class="roleClasses[member.role]"
+                                    >
+                                        {{ copy.roles[member.role] }}
+                                    </Badge>
+                                    <p
+                                        class="mt-1 hidden max-w-40 truncate text-xs text-muted-foreground lg:block"
+                                    >
+                                        {{
+                                            copy.role_descriptions[member.role]
+                                        }}
+                                    </p>
+                                </div>
+
+                                <Button
+                                    v-if="member.can_remove"
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    class="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                    :aria-label="
+                                        copy.remove_member.replace(
+                                            ':name',
+                                            member.name,
+                                        )
+                                    "
+                                    @click="openRemoveDialog(member)"
+                                >
+                                    <Trash2 aria-hidden="true" />
+                                </Button>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div
+                        v-else
+                        class="flex min-h-56 flex-col items-center justify-center px-6 py-12 text-center"
+                    >
+                        <div
+                            class="flex size-11 items-center justify-center rounded-full bg-muted"
+                        >
+                            <Search
+                                class="size-5 text-muted-foreground"
+                                aria-hidden="true"
+                            />
+                        </div>
+                        <p class="mt-4 text-sm font-semibold">
+                            {{ copy.no_results_title }}
+                        </p>
+                        <p class="mt-1 max-w-sm text-sm text-muted-foreground">
+                            {{ copy.no_results_description }}
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card v-if="can_manage_members" class="xl:sticky xl:top-6">
+                <CardHeader>
+                    <div
+                        class="mb-2 flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground"
+                    >
+                        <UserPlus class="size-5" aria-hidden="true" />
+                    </div>
+                    <CardTitle>{{ copy.invite_title }}</CardTitle>
+                    <CardDescription>
+                        {{ copy.invite_description }}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form class="space-y-4" @submit.prevent="invite">
+                        <div class="space-y-2">
+                            <Label for="invite-email">
+                                {{ copy.email_label }}
+                            </Label>
+                            <div class="relative">
+                                <Mail
+                                    class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                                    aria-hidden="true"
+                                />
+                                <Input
+                                    id="invite-email"
+                                    v-model="inviteForm.email"
+                                    type="email"
+                                    autocomplete="email"
+                                    :placeholder="copy.email_placeholder"
+                                    class="pl-9"
+                                    :aria-invalid="
+                                        Boolean(inviteForm.errors.email)
+                                    "
+                                    required
+                                />
+                            </div>
+                            <p
+                                v-if="inviteForm.errors.email"
+                                class="text-sm text-destructive"
+                                role="alert"
+                            >
+                                {{ inviteForm.errors.email }}
+                            </p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label for="invite-role">
+                                {{ copy.role_label }}
+                            </Label>
+                            <Select v-model="inviteForm.role">
+                                <SelectTrigger
+                                    id="invite-role"
+                                    class="w-full"
+                                    :aria-invalid="
+                                        Boolean(inviteForm.errors.role)
+                                    "
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="member">
+                                        {{ copy.roles.member }}
+                                    </SelectItem>
+                                    <SelectItem value="admin">
+                                        {{ copy.roles.admin }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <p
+                                v-if="inviteForm.errors.role"
+                                class="text-sm text-destructive"
+                                role="alert"
+                            >
+                                {{ inviteForm.errors.role }}
+                            </p>
+                        </div>
+
+                        <Button
+                            type="submit"
+                            class="w-full"
+                            :disabled="inviteForm.processing"
+                        >
+                            <LoaderCircle
+                                v-if="inviteForm.processing"
+                                class="animate-spin"
+                                aria-hidden="true"
+                            />
+                            <UserPlus v-else aria-hidden="true" />
+                            {{
+                                inviteForm.processing
+                                    ? copy.inviting
+                                    : copy.invite_action
+                            }}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+
+            <Card v-else class="bg-muted/25 xl:sticky xl:top-6">
+                <CardHeader>
+                    <div
+                        class="mb-2 flex size-10 items-center justify-center rounded-xl border bg-background"
+                    >
+                        <LockKeyhole class="size-5" aria-hidden="true" />
+                    </div>
+                    <CardTitle>{{ copy.read_only_title }}</CardTitle>
+                    <CardDescription>
+                        {{ copy.read_only_description }}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div
+                        class="flex items-center gap-3 rounded-xl border bg-background p-3 text-sm"
+                    >
+                        <ShieldCheck
+                            class="size-5 shrink-0 text-muted-foreground"
+                            aria-hidden="true"
+                        />
+                        <span>{{ workspace.name }}</span>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+
+        <Dialog
+            :open="memberToRemove !== null"
+            @update:open="handleRemoveDialogOpen"
+        >
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader>
+                    <div
+                        class="mb-2 flex size-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive"
+                    >
+                        <UserCog class="size-5" aria-hidden="true" />
+                    </div>
+                    <DialogTitle>{{ copy.remove_title }}</DialogTitle>
+                    <DialogDescription>
+                        <span class="font-medium text-foreground">
+                            {{ memberToRemove?.name }}
+                        </span>
+                        — {{ copy.remove_description }}
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter class="gap-2 sm:gap-0">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        :disabled="removeForm.processing"
+                        @click="memberToRemove = null"
+                    >
+                        {{ copy.cancel }}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        :disabled="removeForm.processing"
+                        @click="removeMember"
+                    >
+                        <LoaderCircle
+                            v-if="removeForm.processing"
+                            class="animate-spin"
+                            aria-hidden="true"
+                        />
+                        <Trash2 v-else aria-hidden="true" />
+                        {{
+                            removeForm.processing
+                                ? copy.removing
+                                : copy.remove_action
+                        }}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

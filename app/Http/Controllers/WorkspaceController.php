@@ -13,6 +13,7 @@ use App\Http\Requests\UpdateWorkspaceRequest;
 use App\Http\Resources\WorkspaceResource;
 use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -61,19 +62,26 @@ class WorkspaceController extends Controller
         return response()->json(['workspace' => new WorkspaceResource($workspace)]);
     }
 
-    public function invite(InviteMemberRequest $request, Workspace $workspace, InviteToWorkspace $action): JsonResponse
+    public function invite(InviteMemberRequest $request, Workspace $workspace, InviteToWorkspace $action): RedirectResponse
     {
-        $member = $action->handle($workspace, $request->email, $request->role ?? 'member');
+        $action->handle($workspace, $request->email, $request->role ?? 'member');
 
-        return response()->json(['member' => $member->load('user')], 201);
+        return to_route('members.edit');
     }
 
-    public function removeMember(Workspace $workspace, string $userId, RemoveFromWorkspace $action): JsonResponse
-    {
-        abort_unless($workspace->hasMember($request->user()), 403);
+    public function removeMember(
+        Request $request,
+        Workspace $workspace,
+        string $userId,
+        RemoveFromWorkspace $action,
+    ): RedirectResponse {
+        $this->authorize('manageMembers', $workspace);
+        abort_if($workspace->owner_id === $userId, 422);
+        abort_if((string) $request->user()->getAuthIdentifier() === $userId, 422);
+        abort_unless($workspace->members()->whereKey($userId)->exists(), 404);
 
         $action->handle($workspace, $userId);
 
-        return response()->json(null, 204);
+        return to_route('members.edit');
     }
 }
