@@ -16,6 +16,7 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
+        "test:frontend": "node --experimental-strip-types --test resources/js/**/*.test.ts",
         "types:check": "vue-tsc --noEmit"
     },
     "devDependencies": {

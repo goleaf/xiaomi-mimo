@@ -9,7 +9,7 @@ import {
     LoaderCircle,
     Pencil,
 } from '@lucide/vue';
-import { ref, computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { update as updateTodo } from '@/actions/App/Http/Controllers/TodoController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useTaskDetailState } from '@/composables/useTaskDetailState';
 import { useToast } from '@/composables/useToast';
+import { useUi } from '@/composables/useUi';
+import { store as storeChecklistItem, toggle } from '@/routes/checklistItems';
+import { store as storeChecklist } from '@/routes/checklists';
+import { store as storeComment } from '@/routes/comments';
+import { complete, uncomplete } from '@/routes/todos';
 import type { Todo, TodoPriority, TodoStatus } from '@/types/models';
 
 interface TaskShowLabels {
@@ -58,11 +64,11 @@ const props = defineProps<{
 }>();
 const toast = useToast();
 const todo = computed(() => props.todo.data);
+const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
 
 const editing = ref(false);
-const newComment = ref('');
-const newChecklistName = ref('');
-const newChecklistItemContent = ref('');
+const { checklistItemDrafts, checklistName, comment } =
+    useTaskDetailState(todo);
 const editForm = useForm({
     title: todo.value.title,
     description: todo.value.description ?? '',
@@ -70,6 +76,22 @@ const editForm = useForm({
     priority: todo.value.priority as TodoPriority,
     due_date: todo.value.due_date ?? '',
 });
+
+watch(
+    () => todo.value.id,
+    () => {
+        editForm.defaults({
+            title: todo.value.title,
+            description: todo.value.description ?? '',
+            status: todo.value.status,
+            priority: todo.value.priority,
+            due_date: todo.value.due_date ?? '',
+        });
+        editForm.resetAndClearErrors();
+        editing.value = false;
+    },
+    { flush: 'sync' },
+);
 
 function startEditing() {
     editForm.defaults({
@@ -106,70 +128,66 @@ function submitEdit() {
 }
 
 function toggleComplete() {
-    const routeName =
-        todo.value.status === 'completed'
-            ? 'todos.uncomplete'
-            : 'todos.complete';
-    router.post(route(routeName, todo.value.id), {}, { preserveScroll: true });
+    const target = todo.value.status === 'completed' ? uncomplete : complete;
+
+    router.post(target(todo.value).url, {}, { preserveScroll: true });
 }
 
 function addComment() {
-    if (!newComment.value.trim()) {
+    if (!comment.value.trim()) {
         return;
     }
 
     router.post(
-        route('comments.store', todo.value.id),
-        { body: newComment.value },
+        storeComment(todo.value).url,
+        { body: comment.value },
         {
             preserveScroll: true,
             onSuccess: () => {
-                newComment.value = '';
+                comment.value = '';
             },
         },
     );
 }
 
 function addChecklist() {
-    if (!newChecklistName.value.trim()) {
+    if (!checklistName.value.trim()) {
         return;
     }
 
     router.post(
-        route('checklists.store', todo.value.id),
-        { name: newChecklistName.value },
+        storeChecklist(todo.value).url,
+        { name: checklistName.value },
         {
             preserveScroll: true,
             onSuccess: () => {
-                newChecklistName.value = '';
+                checklistName.value = '';
             },
         },
     );
 }
 
 function addChecklistItem(checklistId: string) {
-    if (!newChecklistItemContent.value.trim()) {
+    const content = checklistItemDrafts[checklistId] ?? '';
+
+    if (!content.trim()) {
         return;
     }
 
     router.post(
-        route('checklistItems.store', checklistId),
-        { content: newChecklistItemContent.value },
+        storeChecklistItem(checklistId).url,
+        { content },
         {
             preserveScroll: true,
             onSuccess: () => {
-                newChecklistItemContent.value = '';
+                delete checklistItemDrafts[checklistId];
             },
         },
     );
 }
 
 function toggleChecklistItem(itemId: string) {
-    router.patch(
-        route('checklistItems.toggle', itemId),
-        {},
-        { preserveScroll: true },
-    );
+    router.patch(toggle(itemId).url, {}, { preserveScroll: true });
 }
 
 function goBack() {
@@ -177,10 +195,10 @@ function goBack() {
 }
 function formatDate(date: string | null): string {
     if (!date) {
-        return 'Not set';
+        return t('common.states.not_set');
     }
 
-    return new Date(date).toLocaleDateString('en-US', {
+    return formatLocalizedDate(date, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -208,15 +226,19 @@ function priorityBadge(
                 <h1 class="text-2xl font-bold">{{ todo.title }}</h1>
                 <div class="mt-1 flex items-center gap-3">
                     <Badge :variant="priorityBadge(todo.priority)">{{
-                        todo.priority
+                        t(`tasks.priorities.${todo.priority}`)
                     }}</Badge>
                     <span class="text-sm text-muted-foreground">{{
-                        todo.status?.replace('_', ' ')
+                        t(`tasks.statuses.${todo.status}`)
                     }}</span>
                     <span
                         v-if="todo.project"
                         class="text-sm text-muted-foreground"
-                        >in {{ todo.project.name }}</span
+                        >{{
+                            t('tasks.detail.in_project', {
+                                project: todo.project.name,
+                            })
+                        }}</span
                     >
                 </div>
             </div>
@@ -228,7 +250,11 @@ function priorityBadge(
                 :variant="todo.status === 'completed' ? 'outline' : 'default'"
                 @click="toggleComplete"
             >
-                {{ todo.status === 'completed' ? 'Reopen' : 'Complete' }}
+                {{
+                    todo.status === 'completed'
+                        ? t('common.actions.reopen')
+                        : t('common.actions.complete')
+                }}
             </Button>
         </div>
 
@@ -385,16 +411,27 @@ function priorityBadge(
             <Card
                 ><CardContent class="space-y-1 pt-4">
                     <div class="flex items-center gap-2 text-sm">
-                        <Calendar class="h-4 w-4 text-muted-foreground" />Due:
-                        {{ formatDate(todo.due_date) }}
+                        <Calendar class="h-4 w-4 text-muted-foreground" />{{
+                            t('tasks.detail.due', {
+                                date: formatDate(todo.due_date),
+                            })
+                        }}
                     </div>
                     <div class="flex items-center gap-2 text-sm">
-                        <User class="h-4 w-4 text-muted-foreground" />Assigned:
-                        {{ todo.assignee?.name ?? 'Unassigned' }}
+                        <User class="h-4 w-4 text-muted-foreground" />{{
+                            t('tasks.detail.assigned', {
+                                name:
+                                    todo.assignee?.name ??
+                                    t('common.states.unassigned'),
+                            })
+                        }}
                     </div>
                     <div class="flex items-center gap-2 text-sm">
-                        <Clock class="h-4 w-4 text-muted-foreground" />Created:
-                        {{ formatDate(todo.created_at) }}
+                        <Clock class="h-4 w-4 text-muted-foreground" />{{
+                            t('tasks.detail.created', {
+                                date: formatDate(todo.created_at),
+                            })
+                        }}
                     </div>
                 </CardContent></Card
             >
@@ -404,7 +441,7 @@ function priorityBadge(
                         <p
                             class="mb-1 text-xs font-medium text-muted-foreground"
                         >
-                            Labels
+                            {{ t('tasks.detail.labels') }}
                         </p>
                         <div class="flex flex-wrap gap-1">
                             <Badge
@@ -423,7 +460,7 @@ function priorityBadge(
                         <p
                             class="mb-1 text-xs font-medium text-muted-foreground"
                         >
-                            Tags
+                            {{ t('tasks.detail.tags') }}
                         </p>
                         <div class="flex flex-wrap gap-1">
                             <Badge
@@ -442,9 +479,9 @@ function priorityBadge(
         <!-- Description -->
         <Card v-if="todo.description">
             <CardHeader
-                ><CardTitle class="text-base"
-                    >Description</CardTitle
-                ></CardHeader
+                ><CardTitle class="text-base">{{
+                    t('tasks.detail.description')
+                }}</CardTitle></CardHeader
             >
             <CardContent
                 ><p class="text-sm whitespace-pre-wrap">
@@ -456,7 +493,9 @@ function priorityBadge(
         <!-- Checklists -->
         <Card v-if="todo.checklists?.length">
             <CardHeader
-                ><CardTitle class="text-base">Checklists</CardTitle></CardHeader
+                ><CardTitle class="text-base">{{
+                    t('tasks.detail.checklists')
+                }}</CardTitle></CardHeader
             >
             <CardContent class="space-y-4">
                 <div
@@ -488,8 +527,8 @@ function priorityBadge(
                     </div>
                     <div class="mt-2 flex gap-2">
                         <Input
-                            v-model="newChecklistItemContent"
-                            placeholder="Add item..."
+                            v-model="checklistItemDrafts[cl.id]"
+                            :placeholder="t('tasks.detail.add_item')"
                             class="h-8 text-xs"
                             @keyup.enter="addChecklistItem(cl.id)"
                         />
@@ -497,14 +536,14 @@ function priorityBadge(
                 </div>
                 <div class="flex gap-2">
                     <Input
-                        v-model="newChecklistName"
-                        placeholder="New checklist..."
+                        v-model="checklistName"
+                        :placeholder="t('tasks.detail.checklist_short')"
                         class="h-8 text-xs"
                         @keyup.enter="addChecklist"
                     />
-                    <Button variant="outline" size="sm" @click="addChecklist"
-                        >Add</Button
-                    >
+                    <Button variant="outline" size="sm" @click="addChecklist">{{
+                        t('common.actions.add')
+                    }}</Button>
                 </div>
             </CardContent>
         </Card>
@@ -513,9 +552,11 @@ function priorityBadge(
         <Card>
             <CardHeader class="flex flex-row items-center gap-2">
                 <MessageSquare class="h-4 w-4" />
-                <CardTitle class="text-base"
-                    >Comments ({{ todo.comments?.length ?? 0 }})</CardTitle
-                >
+                <CardTitle class="text-base">{{
+                    t('tasks.detail.comments_count', {
+                        count: formatNumber(todo.comments?.length ?? 0),
+                    })
+                }}</CardTitle>
             </CardHeader>
             <CardContent class="space-y-3">
                 <div
@@ -525,7 +566,7 @@ function priorityBadge(
                 >
                     <div class="mb-1 flex items-center gap-2">
                         <span class="text-sm font-medium">{{
-                            comment.user?.name ?? 'Unknown'
+                            comment.user?.name ?? t('common.states.unknown')
                         }}</span>
                         <span class="text-xs text-muted-foreground">{{
                             formatDate(comment.created_at)
@@ -537,14 +578,14 @@ function priorityBadge(
                 </div>
                 <div class="flex gap-2">
                     <Input
-                        v-model="newComment"
-                        placeholder="Write a comment..."
+                        v-model="comment"
+                        :placeholder="t('tasks.detail.comment_placeholder')"
                         class="h-8 text-xs"
                         @keyup.enter="addComment"
                     />
-                    <Button variant="outline" size="sm" @click="addComment"
-                        >Post</Button
-                    >
+                    <Button variant="outline" size="sm" @click="addComment">{{
+                        t('common.actions.post')
+                    }}</Button>
                 </div>
             </CardContent>
         </Card>

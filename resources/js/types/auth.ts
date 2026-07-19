@@ -15,7 +15,7 @@ export type Auth = {
 };
 
 export type Passkey = {
-    id: string;
+    id: number;
     name: string;
     authenticator: string | null;
     created_at_diff: string;

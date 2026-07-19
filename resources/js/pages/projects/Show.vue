@@ -8,7 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/composables/useToast';
+import { useUi } from '@/composables/useUi';
 import { projects } from '@/routes';
+import { archive, duplicate, restore } from '@/routes/projects';
+import { complete, destroy, show, uncomplete } from '@/routes/todos';
 import type { Project, Todo } from '@/types/models';
 
 const props = defineProps<{
@@ -18,6 +21,7 @@ const props = defineProps<{
 }>();
 
 const toast = useToast();
+const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
 const project = computed(() => props.project.data);
 const searchQuery = ref('');
 const selectedTodo = ref<Todo | null>(null);
@@ -44,16 +48,16 @@ const completedTodos = computed(() =>
 );
 
 function toggleComplete(todo: Todo) {
-    const routeName =
-        todo.status === 'completed' ? 'todos.uncomplete' : 'todos.complete';
-    router.post(route(routeName, todo.id), {}, { preserveScroll: true });
+    const target = todo.status === 'completed' ? uncomplete : complete;
+
+    router.post(target(todo).url, {}, { preserveScroll: true });
 }
 
 function deleteTodo(todo: Todo) {
-    router.delete(route('todos.destroy', todo.id), {
+    router.delete(destroy(todo).url, {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success('Task deleted');
+            toast.success(t('tasks.detail.deleted'));
 
             if (selectedTodo.value?.id === todo.id) {
                 selectedTodo.value = null;
@@ -64,40 +68,40 @@ function deleteTodo(todo: Todo) {
 
 function archiveProject() {
     router.post(
-        route('projects.archive', [props.workspace.id, project.value.id]),
+        archive([props.workspace.id, project.value.id]).url,
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success('Project archived'),
+            onSuccess: () => toast.success(t('projects.show.archived')),
         },
     );
 }
 
 function restoreProject() {
     router.post(
-        route('projects.restore', [props.workspace.id, project.value.id]),
+        restore([props.workspace.id, project.value.id]).url,
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success('Project restored'),
+            onSuccess: () => toast.success(t('projects.show.restored')),
         },
     );
 }
 
 function duplicateProject() {
     router.post(
-        route('projects.duplicate', [props.workspace.id, project.value.id]),
+        duplicate([props.workspace.id, project.value.id]).url,
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success('Project duplicated'),
+            onSuccess: () => toast.success(t('projects.show.duplicated')),
         },
     );
 }
 
 function selectTodo(todo: Todo) {
     router.get(
-        route('todos.show', todo.id),
+        show(todo).url,
         {},
         {
             preserveState: true,
@@ -110,7 +114,9 @@ function selectTodo(todo: Todo) {
     );
 }
 
-const priorityBadge = (p: string) =>
+const priorityBadge = (
+    p: string,
+): 'default' | 'destructive' | 'outline' | 'secondary' =>
     ({
         urgent: 'destructive',
         high: 'destructive',
@@ -118,13 +124,26 @@ const priorityBadge = (p: string) =>
         low: 'outline',
         none: 'outline',
     })[p] ?? 'outline';
-const formatDate = (d: string | null) =>
-    d
-        ? new Date(d).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-          })
-        : '';
+const formatDate = (date: string | null) =>
+    date ? formatLocalizedDate(date, { month: 'short', day: 'numeric' }) : '';
+
+const taskGroups = computed(() => [
+    {
+        key: 'in_progress',
+        label: t('tasks.statuses.in_progress'),
+        todos: inProgressTodos.value,
+    },
+    {
+        key: 'pending',
+        label: t('tasks.board.to_do'),
+        todos: pendingTodos.value,
+    },
+    {
+        key: 'completed',
+        label: t('tasks.board.done'),
+        todos: completedTodos.value,
+    },
+]);
 </script>
 
 <template>
@@ -132,7 +151,7 @@ const formatDate = (d: string | null) =>
     <div class="space-y-6 p-6">
         <div class="flex items-center gap-4">
             <Button variant="ghost" size="sm" @click="router.visit(projects())">
-                <ArrowLeft class="mr-1 h-4 w-4" />Back
+                <ArrowLeft class="mr-1 h-4 w-4" />{{ t('common.actions.back') }}
             </Button>
             <div
                 class="flex h-8 w-8 items-center justify-center rounded-lg"
@@ -146,20 +165,24 @@ const formatDate = (d: string | null) =>
             <div class="flex-1">
                 <h1 class="text-2xl font-bold">{{ project.name }}</h1>
                 <p class="text-sm text-muted-foreground">
-                    {{ project.description ?? 'No description' }}
+                    {{
+                        project.description ?? t('projects.show.no_description')
+                    }}
                 </p>
             </div>
             <div class="flex gap-2">
-                <Button variant="outline" size="sm" @click="duplicateProject"
-                    >Duplicate</Button
-                >
+                <Button variant="outline" size="sm" @click="duplicateProject">{{
+                    t('common.actions.duplicate')
+                }}</Button>
                 <Button
                     v-if="!project.is_archived"
                     variant="outline"
                     size="sm"
                     @click="archiveProject"
                 >
-                    <Archive class="mr-1 h-4 w-4" />Archive
+                    <Archive class="mr-1 h-4 w-4" />{{
+                        t('common.actions.archive')
+                    }}
                 </Button>
                 <Button
                     v-else
@@ -167,10 +190,14 @@ const formatDate = (d: string | null) =>
                     size="sm"
                     @click="restoreProject"
                 >
-                    <RotateCcw class="mr-1 h-4 w-4" />Restore
+                    <RotateCcw class="mr-1 h-4 w-4" />{{
+                        t('common.actions.restore')
+                    }}
                 </Button>
                 <Button @click="showCreateDialog = true"
-                    ><Plus class="mr-1 h-4 w-4" />Task</Button
+                    ><Plus class="mr-1 h-4 w-4" />{{
+                        t('projects.show.task')
+                    }}</Button
                 >
             </div>
         </div>
@@ -178,31 +205,24 @@ const formatDate = (d: string | null) =>
         <div class="flex items-center gap-4">
             <Input
                 v-model="searchQuery"
-                placeholder="Search tasks in this project..."
+                :placeholder="t('projects.show.search')"
                 class="max-w-sm"
             />
-            <span class="text-sm text-muted-foreground"
-                >{{ todos.length }} tasks</span
-            >
+            <span class="text-sm text-muted-foreground">{{
+                t('projects.show.task_count', {
+                    count: formatNumber(todos.length),
+                })
+            }}</span>
         </div>
 
         <!-- Tasks grouped by status -->
         <div class="space-y-6">
-            <div
-                v-for="group in [
-                    {
-                        key: 'in_progress',
-                        label: 'In Progress',
-                        todos: inProgressTodos,
-                    },
-                    { key: 'pending', label: 'To Do', todos: pendingTodos },
-                    { key: 'completed', label: 'Done', todos: completedTodos },
-                ]"
-                :key="group.key"
-            >
+            <div v-for="group in taskGroups" :key="group.key">
                 <div v-if="group.todos.length > 0">
                     <h3 class="mb-3 text-sm font-medium text-muted-foreground">
-                        {{ group.label }} ({{ group.todos.length }})
+                        {{ group.label }} ({{
+                            formatNumber(group.todos.length)
+                        }})
                     </h3>
                     <div class="space-y-2">
                         <div
@@ -235,7 +255,7 @@ const formatDate = (d: string | null) =>
                                 >
                             </div>
                             <Badge :variant="priorityBadge(todo.priority)">{{
-                                todo.priority
+                                t(`tasks.priorities.${todo.priority}`)
                             }}</Badge>
                             <Button
                                 variant="ghost"
@@ -253,12 +273,13 @@ const formatDate = (d: string | null) =>
             v-if="todos.length === 0"
             class="flex flex-col items-center justify-center py-12 text-muted-foreground"
         >
-            <p>No tasks in this project yet</p>
+            <p>{{ t('projects.show.empty') }}</p>
         </div>
     </div>
 
     <TaskDetail
         v-if="selectedTodo"
+        :key="selectedTodo.id"
         :todo="selectedTodo"
         :open="!!selectedTodo"
         @close="selectedTodo = null"

@@ -18,22 +18,13 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/composables/useToast';
-import { edit, update } from '@/routes/preferences';
+import { useUi } from '@/composables/useUi';
+import { update } from '@/routes/preferences';
 import type { UserPreference } from '@/types/models';
-
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            {
-                title: 'Preferences',
-                href: edit(),
-            },
-        ],
-    },
-});
 
 const props = defineProps<{ preferences: UserPreference }>();
 const toast = useToast();
+const { t } = useUi();
 
 const form = useForm({
     timezone: props.preferences.timezone,
@@ -46,7 +37,7 @@ const form = useForm({
 
 function submit() {
     form.put(update.url(), {
-        onSuccess: () => toast.success('Preferences saved'),
+        onSuccess: () => toast.success(t('settings.preferences.saved')),
     });
 }
 
@@ -67,20 +58,24 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
 </script>
 
 <template>
-    <Head title="Preferences" />
+    <Head :title="t('settings.preferences.title')" />
     <div class="space-y-6">
         <div>
-            <h2 class="text-lg font-semibold">Preferences</h2>
+            <h2 class="text-lg font-semibold">
+                {{ t('settings.preferences.title') }}
+            </h2>
             <p class="text-sm text-muted-foreground">
-                Customize your experience
+                {{ t('settings.preferences.description') }}
             </p>
         </div>
 
         <Card>
             <CardHeader>
-                <CardTitle>Appearance</CardTitle>
+                <CardTitle>{{
+                    t('settings.preferences.appearance')
+                }}</CardTitle>
                 <CardDescription>
-                    Update the appearance settings for your account
+                    {{ t('settings.preferences.appearance_description') }}
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -90,28 +85,42 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
 
         <form @submit.prevent="submit" class="space-y-6">
             <Card>
-                <CardHeader><CardTitle>Display</CardTitle></CardHeader>
+                <CardHeader
+                    ><CardTitle>{{
+                        t('settings.preferences.display')
+                    }}</CardTitle></CardHeader
+                >
                 <CardContent class="space-y-4">
                     <div class="space-y-2">
-                        <Label>Default View</Label>
+                        <Label>{{
+                            t('settings.preferences.default_view')
+                        }}</Label>
                         <Select v-model="form.default_view">
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="list">List</SelectItem>
-                                <SelectItem value="calendar"
-                                    >Calendar</SelectItem
-                                >
+                                <SelectItem value="list">{{
+                                    t('settings.preferences.list_view')
+                                }}</SelectItem>
+                                <SelectItem value="calendar">{{
+                                    t('settings.preferences.calendar_view')
+                                }}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader><CardTitle>Locale</CardTitle></CardHeader>
+                <CardHeader
+                    ><CardTitle>{{
+                        t('settings.preferences.locale')
+                    }}</CardTitle></CardHeader
+                >
                 <CardContent class="space-y-4">
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div class="space-y-2">
-                            <Label>Timezone</Label>
+                            <Label>{{
+                                t('settings.preferences.timezone')
+                            }}</Label>
                             <Select v-model="form.timezone">
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -125,7 +134,9 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
                             </Select>
                         </div>
                         <div class="space-y-2">
-                            <Label>Date Format</Label>
+                            <Label>{{
+                                t('settings.preferences.date_format')
+                            }}</Label>
                             <Select v-model="form.date_format">
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -142,9 +153,9 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
                 </CardContent>
             </Card>
             <div class="flex justify-end">
-                <Button type="submit" :disabled="form.processing"
-                    >Save Preferences</Button
-                >
+                <Button type="submit" :disabled="form.processing">{{
+                    t('settings.preferences.save')
+                }}</Button>
             </div>
         </form>
     </div>

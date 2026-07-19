@@ -1,29 +1,31 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { X, Calendar, User } from '@lucide/vue';
-import { ref } from 'vue';
+import { Calendar, User, X } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { useTaskDetailState } from '@/composables/useTaskDetailState';
 import { useToast } from '@/composables/useToast';
+import { useUi } from '@/composables/useUi';
+import { store as storeChecklistItem, toggle } from '@/routes/checklistItems';
+import { store as storeChecklist } from '@/routes/checklists';
+import { store as storeComment } from '@/routes/comments';
+import { complete, destroy, uncomplete, update } from '@/routes/todos';
 import type { Todo } from '@/types/models';
 
 const props = defineProps<{ todo: Todo; open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 const toast = useToast();
-
-const editingTitle = ref(false);
-const titleValue = ref(props.todo.title);
-const newComment = ref('');
-const newChecklistName = ref('');
-const newChecklistItemContent = ref('');
+const { formatDate, t } = useUi();
+const { checklistItemDrafts, checklistName, comment, editingTitle, form } =
+    useTaskDetailState(() => props.todo);
 
 function updateTitle() {
-    if (titleValue.value.trim() && titleValue.value !== props.todo.title) {
+    if (form.title.trim() && form.title !== props.todo.title) {
         router.put(
-            route('todos.update', props.todo.id),
-            { title: titleValue.value },
+            update(props.todo).url,
+            { title: form.title },
             { preserveScroll: true },
         );
     }
@@ -32,104 +34,92 @@ function updateTitle() {
 }
 
 function toggleComplete() {
-    const routeName =
-        props.todo.status === 'completed'
-            ? 'todos.uncomplete'
-            : 'todos.complete';
-    router.post(route(routeName, props.todo.id), {}, { preserveScroll: true });
+    const target = props.todo.status === 'completed' ? uncomplete : complete;
+
+    router.post(target(props.todo).url, {}, { preserveScroll: true });
 }
 
 function setPriority(priority: string) {
-    router.put(
-        route('todos.update', props.todo.id),
-        { priority },
-        { preserveScroll: true },
-    );
+    router.put(update(props.todo).url, { priority }, { preserveScroll: true });
 }
 
 function setStatus(status: string) {
-    router.put(
-        route('todos.update', props.todo.id),
-        { status },
-        { preserveScroll: true },
-    );
+    router.put(update(props.todo).url, { status }, { preserveScroll: true });
 }
 
 function addComment() {
-    if (!newComment.value.trim()) {
-return;
-}
+    if (!comment.value.trim()) {
+        return;
+    }
 
     router.post(
-        route('comments.store', props.todo.id),
-        { body: newComment.value },
+        storeComment(props.todo).url,
+        { body: comment.value },
         {
             preserveScroll: true,
             onSuccess: () => {
-                newComment.value = '';
+                comment.value = '';
             },
         },
     );
 }
 
 function addChecklist() {
-    if (!newChecklistName.value.trim()) {
-return;
-}
+    if (!checklistName.value.trim()) {
+        return;
+    }
 
     router.post(
-        route('checklists.store', props.todo.id),
-        { name: newChecklistName.value },
+        storeChecklist(props.todo).url,
+        { name: checklistName.value },
         {
             preserveScroll: true,
             onSuccess: () => {
-                newChecklistName.value = '';
+                checklistName.value = '';
             },
         },
     );
 }
 
 function addChecklistItem(checklistId: string) {
-    if (!newChecklistItemContent.value.trim()) {
-return;
-}
+    const content = checklistItemDrafts[checklistId] ?? '';
+
+    if (!content.trim()) {
+        return;
+    }
 
     router.post(
-        route('checklistItems.store', checklistId),
-        { content: newChecklistItemContent.value },
+        storeChecklistItem(checklistId).url,
+        { content },
         {
             preserveScroll: true,
             onSuccess: () => {
-                newChecklistItemContent.value = '';
+                delete checklistItemDrafts[checklistId];
             },
         },
     );
 }
 
 function toggleChecklistItem(itemId: string) {
-    router.patch(
-        route('checklistItems.toggle', itemId),
-        {},
-        { preserveScroll: true },
-    );
+    router.patch(toggle(itemId).url, {}, { preserveScroll: true });
 }
 
 function deleteTodo() {
-    router.delete(route('todos.destroy', props.todo.id), {
+    router.delete(destroy(props.todo).url, {
         preserveScroll: true,
         onSuccess: () => {
             emit('close');
-            toast.success('Task deleted');
+            toast.success(t('tasks.detail.deleted'));
         },
     });
 }
 
-function formatDate(date: string | null): string {
+function displayDate(date: string | null): string {
     if (!date) {
-return 'Not set';
-}
+        return t('common.states.not_set');
+    }
 
-    return new Date(date).toLocaleDateString('en-US', {
+    return formatDate(date, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -157,11 +147,15 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                             class="h-4 w-4"
                             @change="toggleComplete"
                         />
-                        <span class="text-sm text-muted-foreground"
-                            >Task Detail</span
-                        >
+                        <span class="text-sm text-muted-foreground">{{
+                            t('tasks.detail.title')
+                        }}</span>
                     </div>
-                    <Button variant="ghost" size="sm" @click="emit('close')"
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        :aria-label="t('common.actions.close')"
+                        @click="emit('close')"
                         ><X class="h-4 w-4"
                     /></Button>
                 </div>
@@ -171,7 +165,7 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                     <div>
                         <input
                             v-if="editingTitle"
-                            v-model="titleValue"
+                            v-model="form.title"
                             class="w-full border-b border-primary pb-1 text-lg font-semibold outline-none"
                             @blur="updateTitle"
                             @keyup.enter="updateTitle"
@@ -188,9 +182,9 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
 
                     <!-- Status -->
                     <div class="flex items-center gap-2">
-                        <span class="w-24 text-sm text-muted-foreground"
-                            >Status</span
-                        >
+                        <span class="w-24 text-sm text-muted-foreground">{{
+                            t('tasks.filters.status')
+                        }}</span>
                         <div class="flex gap-1">
                             <Badge
                                 v-for="s in statusOptions"
@@ -200,16 +194,16 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                                 "
                                 class="cursor-pointer"
                                 @click="setStatus(s)"
-                                >{{ s.replace('_', ' ') }}</Badge
+                                >{{ t(`tasks.statuses.${s}`) }}</Badge
                             >
                         </div>
                     </div>
 
                     <!-- Priority -->
                     <div class="flex items-center gap-2">
-                        <span class="w-24 text-sm text-muted-foreground"
-                            >Priority</span
-                        >
+                        <span class="w-24 text-sm text-muted-foreground">{{
+                            t('tasks.filters.priority')
+                        }}</span>
                         <div class="flex gap-1">
                             <Badge
                                 v-for="p in priorityOptions"
@@ -219,7 +213,7 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                                 "
                                 class="cursor-pointer"
                                 @click="setPriority(p)"
-                                >{{ p }}</Badge
+                                >{{ t(`tasks.priorities.${p}`) }}</Badge
                             >
                         </div>
                     </div>
@@ -227,25 +221,32 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                     <!-- Due Date -->
                     <div class="flex items-center gap-2">
                         <Calendar class="h-4 w-4 text-muted-foreground" />
-                        <span class="text-sm"
-                            >Due: {{ formatDate(todo.due_date) }}</span
-                        >
+                        <span class="text-sm">{{
+                            t('tasks.detail.due', {
+                                date: displayDate(todo.due_date),
+                            })
+                        }}</span>
                     </div>
 
                     <!-- Assignee -->
                     <div class="flex items-center gap-2">
                         <User class="h-4 w-4 text-muted-foreground" />
-                        <span class="text-sm"
-                            >Assigned:
-                            {{ todo.assignee?.name ?? 'Unassigned' }}</span
-                        >
+                        <span class="text-sm">{{
+                            t('tasks.detail.assigned', {
+                                name:
+                                    todo.assignee?.name ??
+                                    t('common.states.unassigned'),
+                            })
+                        }}</span>
                     </div>
 
                     <Separator />
 
                     <!-- Labels -->
                     <div v-if="todo.labels?.length">
-                        <h3 class="mb-2 text-sm font-medium">Labels</h3>
+                        <h3 class="mb-2 text-sm font-medium">
+                            {{ t('tasks.detail.labels') }}
+                        </h3>
                         <div class="flex flex-wrap gap-1">
                             <Badge
                                 v-for="label in todo.labels"
@@ -261,7 +262,9 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
 
                     <!-- Tags -->
                     <div v-if="todo.tags?.length">
-                        <h3 class="mb-2 text-sm font-medium">Tags</h3>
+                        <h3 class="mb-2 text-sm font-medium">
+                            {{ t('tasks.detail.tags') }}
+                        </h3>
                         <div class="flex flex-wrap gap-1">
                             <Badge
                                 v-for="tag in todo.tags"
@@ -276,11 +279,16 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
 
                     <!-- Description -->
                     <div>
-                        <h3 class="mb-2 text-sm font-medium">Description</h3>
+                        <h3 class="mb-2 text-sm font-medium">
+                            {{ t('tasks.detail.description') }}
+                        </h3>
                         <p
                             class="text-sm whitespace-pre-wrap text-muted-foreground"
                         >
-                            {{ todo.description ?? 'No description' }}
+                            {{
+                                todo.description ??
+                                t('tasks.detail.no_description')
+                            }}
                         </p>
                     </div>
 
@@ -288,7 +296,9 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
 
                     <!-- Checklists -->
                     <div>
-                        <h3 class="mb-2 text-sm font-medium">Checklists</h3>
+                        <h3 class="mb-2 text-sm font-medium">
+                            {{ t('tasks.detail.checklists') }}
+                        </h3>
                         <div
                             v-for="checklist in todo.checklists ?? []"
                             :key="checklist.id"
@@ -320,8 +330,8 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                             </div>
                             <div class="mt-2 flex gap-2">
                                 <Input
-                                    v-model="newChecklistItemContent"
-                                    placeholder="Add item..."
+                                    v-model="checklistItemDrafts[checklist.id]"
+                                    :placeholder="t('tasks.detail.add_item')"
                                     class="h-8 text-xs"
                                     @keyup.enter="
                                         addChecklistItem(checklist.id)
@@ -331,8 +341,8 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                         </div>
                         <div class="flex gap-2">
                             <Input
-                                v-model="newChecklistName"
-                                placeholder="New checklist name..."
+                                v-model="checklistName"
+                                :placeholder="t('tasks.detail.checklist_name')"
                                 class="h-8 text-xs"
                                 @keyup.enter="addChecklist"
                             />
@@ -340,7 +350,7 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                                 variant="outline"
                                 size="sm"
                                 @click="addChecklist"
-                                >Add</Button
+                                >{{ t('common.actions.add') }}</Button
                             >
                         </div>
                     </div>
@@ -349,7 +359,9 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
 
                     <!-- Comments -->
                     <div>
-                        <h3 class="mb-2 text-sm font-medium">Comments</h3>
+                        <h3 class="mb-2 text-sm font-medium">
+                            {{ t('tasks.detail.comments') }}
+                        </h3>
                         <div
                             v-for="comment in todo.comments ?? []"
                             :key="comment.id"
@@ -357,10 +369,11 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                         >
                             <div class="mb-1 flex items-center gap-2">
                                 <span class="text-sm font-medium">{{
-                                    comment.user?.name ?? 'Unknown'
+                                    comment.user?.name ??
+                                    t('common.states.unknown')
                                 }}</span>
                                 <span class="text-xs text-muted-foreground">{{
-                                    formatDate(comment.created_at)
+                                    displayDate(comment.created_at)
                                 }}</span>
                             </div>
                             <p class="text-sm whitespace-pre-wrap">
@@ -369,8 +382,10 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                         </div>
                         <div class="flex gap-2">
                             <Input
-                                v-model="newComment"
-                                placeholder="Write a comment..."
+                                v-model="comment"
+                                :placeholder="
+                                    t('tasks.detail.comment_placeholder')
+                                "
                                 class="h-8 text-xs"
                                 @keyup.enter="addComment"
                             />
@@ -378,7 +393,7 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                                 variant="outline"
                                 size="sm"
                                 @click="addComment"
-                                >Post</Button
+                                >{{ t('common.actions.post') }}</Button
                             >
                         </div>
                     </div>
@@ -391,7 +406,7 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                             variant="destructive"
                             size="sm"
                             @click="deleteTodo"
-                            >Delete Task</Button
+                            >{{ t('tasks.detail.delete') }}</Button
                         >
                     </div>
                 </div>

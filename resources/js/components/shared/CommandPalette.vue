@@ -3,9 +3,14 @@ import { router } from '@inertiajs/vue3';
 import { Search, Folder, CheckSquare, Settings, LogOut } from '@lucide/vue';
 import { ref, computed, watch } from 'vue';
 import { Input } from '@/components/ui/input';
+import { useUi } from '@/composables/useUi';
+import { dashboard, logout, projects } from '@/routes';
+import { edit as editProfile } from '@/routes/profile';
+import { index as tasks } from '@/routes/todos';
 import { useUiStore } from '@/stores/ui';
 
 const ui = useUiStore();
+const { t } = useUi();
 const query = ref('');
 const inputRef = ref<HTMLInputElement>();
 
@@ -17,50 +22,50 @@ interface CommandItem {
     section: string;
 }
 
-const commands: CommandItem[] = [
+const commands = computed<CommandItem[]>(() => [
     {
         id: 'dashboard',
-        label: 'Go to Dashboard',
+        label: t('commands.go_dashboard'),
         icon: CheckSquare,
-        action: () => router.visit(route('dashboard')),
-        section: 'Navigation',
+        action: () => router.visit(dashboard().url),
+        section: t('commands.navigation'),
     },
     {
         id: 'tasks',
-        label: 'Go to Tasks',
+        label: t('commands.go_tasks'),
         icon: CheckSquare,
-        action: () => router.visit(route('tasks')),
-        section: 'Navigation',
+        action: () => router.visit(tasks().url),
+        section: t('commands.navigation'),
     },
     {
         id: 'projects',
-        label: 'Go to Projects',
+        label: t('commands.go_projects'),
         icon: Folder,
-        action: () => router.visit(route('projects')),
-        section: 'Navigation',
+        action: () => router.visit(projects().url),
+        section: t('commands.navigation'),
     },
     {
         id: 'settings',
-        label: 'Go to Settings',
+        label: t('commands.go_settings'),
         icon: Settings,
-        action: () => router.visit('/settings/profile'),
-        section: 'Navigation',
+        action: () => router.visit(editProfile().url),
+        section: t('commands.navigation'),
     },
     {
         id: 'logout',
-        label: 'Log Out',
+        label: t('commands.logout'),
         icon: LogOut,
-        action: () => router.post('/logout'),
-        section: 'Account',
+        action: () => router.post(logout().url),
+        section: t('commands.account'),
     },
-];
+]);
 
 const filteredCommands = computed(() => {
     if (!query.value) {
-return commands;
-}
+        return commands.value;
+    }
 
-    return commands.filter((c) =>
+    return commands.value.filter((c) =>
         c.label.toLowerCase().includes(query.value.toLowerCase()),
     );
 });
@@ -69,8 +74,8 @@ const groupedCommands = computed(() => {
     const groups: Record<string, CommandItem[]> = {};
     filteredCommands.value.forEach((cmd) => {
         if (!groups[cmd.section]) {
-groups[cmd.section] = [];
-}
+            groups[cmd.section] = [];
+        }
 
         groups[cmd.section].push(cmd);
     });
@@ -95,8 +100,8 @@ function executeCommand(command: CommandItem) {
 
 function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
-ui.closeCommandPalette();
-}
+        ui.closeCommandPalette();
+    }
 }
 </script>
 
@@ -117,7 +122,7 @@ ui.closeCommandPalette();
                         <Input
                             ref="inputRef"
                             v-model="query"
-                            placeholder="Type a command..."
+                            :placeholder="t('commands.placeholder')"
                             class="border-0 shadow-none focus-visible:ring-0"
                             @keydown="handleKeydown"
                         />
@@ -149,7 +154,7 @@ ui.closeCommandPalette();
                             v-if="filteredCommands.length === 0"
                             class="px-3 py-6 text-center text-sm text-muted-foreground"
                         >
-                            No commands found
+                            {{ t('commands.empty') }}
                         </p>
                     </div>
                 </div>

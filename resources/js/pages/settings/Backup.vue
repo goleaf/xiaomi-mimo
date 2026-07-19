@@ -11,8 +11,15 @@ import {
     CardDescription,
 } from '@/components/ui/card';
 import { useToast } from '@/composables/useToast';
+import { useUi } from '@/composables/useUi';
+import {
+    create as createBackupRoute,
+    download,
+    restore,
+} from '@/routes/backup';
 
 const toast = useToast();
+const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
 const creating = ref(false);
 
 interface Backup {
@@ -26,16 +33,16 @@ defineProps<{ backups: Backup[] }>();
 function createBackup() {
     creating.value = true;
     router.post(
-        '/backup',
+        createBackupRoute().url,
         {},
         {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Backup created');
+                toast.success(t('settings.backup.created'));
                 creating.value = false;
             },
             onError: () => {
-                toast.error('Backup failed');
+                toast.error(t('settings.backup.failed'));
                 creating.value = false;
             },
         },
@@ -43,24 +50,20 @@ function createBackup() {
 }
 
 function restoreBackup(filename: string) {
-    if (
-        confirm(
-            `Restore from ${filename}? This will replace the current database.`,
-        )
-    ) {
+    if (confirm(t('settings.backup.restore_confirm', { filename }))) {
         router.post(
-            `/backups/${filename}/restore`,
+            restore(filename).url,
             {},
             {
                 preserveScroll: true,
-                onSuccess: () => toast.success('Database restored'),
+                onSuccess: () => toast.success(t('settings.backup.restored')),
             },
         );
     }
 }
 
 function downloadBackup(filename: string) {
-    window.location.href = `/backups/${filename}/download`;
+    window.location.href = download(filename).url;
 }
 
 function formatSize(bytes: number): string {
@@ -72,43 +75,54 @@ function formatSize(bytes: number): string {
         i++;
     }
 
-    return `${Math.round(bytes)} ${units[i]}`;
+    return `${formatNumber(Math.round(bytes))} ${units[i]}`;
 }
 
 function formatDate(timestamp: number): string {
-    return new Date(timestamp * 1000).toLocaleString();
+    return formatLocalizedDate(timestamp * 1000, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    });
 }
 </script>
 
 <template>
-    <Head title="Backup" />
+    <Head :title="t('settings.navigation.backup')" />
     <div class="space-y-6">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-lg font-semibold">Database Backup</h2>
+                <h2 class="text-lg font-semibold">
+                    {{ t('settings.backup.title') }}
+                </h2>
                 <p class="text-sm text-muted-foreground">
-                    Create and manage SQLite database backups
+                    {{ t('settings.backup.description') }}
                 </p>
             </div>
             <Button @click="createBackup" :disabled="creating">
                 <Download class="mr-2 h-4 w-4" />
-                {{ creating ? 'Creating...' : 'Create Backup' }}
+                {{
+                    creating
+                        ? t('settings.backup.creating')
+                        : t('settings.backup.create')
+                }}
             </Button>
         </div>
 
         <Card>
             <CardHeader>
-                <CardTitle>Backups</CardTitle>
-                <CardDescription
-                    >{{ backups.length }} backup(s) available</CardDescription
-                >
+                <CardTitle>{{ t('settings.backup.list_title') }}</CardTitle>
+                <CardDescription>{{
+                    t('settings.backup.available', {
+                        count: formatNumber(backups.length),
+                    })
+                }}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div
                     v-if="backups.length === 0"
                     class="py-8 text-center text-muted-foreground"
                 >
-                    No backups yet. Create your first backup above.
+                    {{ t('settings.backup.empty') }}
                 </div>
                 <div v-else class="space-y-3">
                     <div
@@ -129,6 +143,7 @@ function formatDate(timestamp: number): string {
                             <Button
                                 variant="outline"
                                 size="sm"
+                                :aria-label="t('settings.backup.download')"
                                 @click="downloadBackup(backup.filename)"
                             >
                                 <Download class="h-4 w-4" />
@@ -136,6 +151,7 @@ function formatDate(timestamp: number): string {
                             <Button
                                 variant="outline"
                                 size="sm"
+                                :aria-label="t('settings.backup.restore')"
                                 @click="restoreBackup(backup.filename)"
                             >
                                 <RotateCcw class="h-4 w-4" />

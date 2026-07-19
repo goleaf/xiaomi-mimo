@@ -98,9 +98,20 @@ class HandleInertiaRequests extends Middleware
             'currentWorkspace' => fn () => $resolveNavigation()['currentWorkspace'],
             'navigation' => fn () => $resolveNavigation(),
             'preferences' => fn () => $user?->preferences,
+            'ui' => fn (): array => $this->uiTranslations(),
             'workspaceUi' => fn (): array => $this->workspaceUiTranslations(),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function uiTranslations(): array
+    {
+        $translations = __('ui');
+
+        return is_array($translations) ? $translations : [];
     }
 
     private function workspaceUiTranslations(): array

@@ -10,6 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useUi } from '@/composables/useUi';
 
 const props = defineProps<{
     filters: Record<string, string>;
@@ -17,6 +18,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{ update: [filters: Record<string, string>] }>();
+const { t } = useUi();
 
 const searchQuery = ref(props.filters.search ?? '');
 const statusFilter = ref(props.filters.status ?? 'all');
@@ -58,32 +60,50 @@ function clearFilters() {
                 />
                 <Input
                     v-model="searchQuery"
-                    placeholder="Search tasks..."
+                    :placeholder="t('tasks.filters.search')"
                     class="pl-9"
                     @keyup.enter="applyFilters"
                 />
             </div>
             <Select v-model="statusFilter" @update:model-value="applyFilters">
                 <SelectTrigger class="w-[140px]"
-                    ><SelectValue placeholder="Status"
+                    ><SelectValue :placeholder="t('tasks.filters.status')"
                 /></SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="all">{{
+                        t('tasks.filters.all_statuses')
+                    }}</SelectItem>
+                    <SelectItem value="pending">{{
+                        t('tasks.statuses.pending')
+                    }}</SelectItem>
+                    <SelectItem value="in_progress">{{
+                        t('tasks.statuses.in_progress')
+                    }}</SelectItem>
+                    <SelectItem value="completed">{{
+                        t('tasks.statuses.completed')
+                    }}</SelectItem>
                 </SelectContent>
             </Select>
             <Select v-model="priorityFilter" @update:model-value="applyFilters">
                 <SelectTrigger class="w-[140px]"
-                    ><SelectValue placeholder="Priority"
+                    ><SelectValue :placeholder="t('tasks.filters.priority')"
                 /></SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All Priority</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="all">{{
+                        t('tasks.filters.all_priorities')
+                    }}</SelectItem>
+                    <SelectItem value="urgent">{{
+                        t('tasks.priorities.urgent')
+                    }}</SelectItem>
+                    <SelectItem value="high">{{
+                        t('tasks.priorities.high')
+                    }}</SelectItem>
+                    <SelectItem value="medium">{{
+                        t('tasks.priorities.medium')
+                    }}</SelectItem>
+                    <SelectItem value="low">{{
+                        t('tasks.priorities.low')
+                    }}</SelectItem>
                 </SelectContent>
             </Select>
             <Button

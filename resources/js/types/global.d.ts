@@ -24,6 +24,7 @@ declare module '@inertiajs/core' {
             navigation: SidebarNavigation;
             preferences: UserPreference | null;
             sidebarOpen: boolean;
+            ui: Record<string, unknown>;
             workspaceUi: WorkspaceUiCopy;
             [key: string]: unknown;
         };
@@ -36,12 +37,4 @@ declare module 'vue' {
         $page: Page;
         $headManager: ReturnType<typeof createHeadManager>;
     }
-}
-
-declare global {
-    function route(
-        name: string,
-        params?: string | string[] | Record<string, unknown>,
-        options?: Record<string, unknown>,
-    ): string;
 }

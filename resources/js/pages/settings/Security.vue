@@ -12,12 +12,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/composables/useToast';
+import { useUi } from '@/composables/useUi';
+import { disable, enable } from '@/routes/two-factor';
+import { update as updatePasswordRoute } from '@/routes/user-password';
 
 defineProps<{
     user: { id: string; two_factor_enabled?: boolean };
 }>();
 
 const toast = useToast();
+const { t } = useUi();
 
 const passwordForm = useForm({
     current_password: '',
@@ -28,47 +32,49 @@ const passwordForm = useForm({
 const twoFactorForm = useForm({});
 
 function updatePassword() {
-    passwordForm.put('/settings/password', {
+    passwordForm.put(updatePasswordRoute.url(), {
         onSuccess: () => {
-            toast.success('Password updated');
+            toast.success(t('settings.security.password_updated'));
             passwordForm.reset();
         },
     });
 }
 
 function enable2FA() {
-    twoFactorForm.post('/user/two-factor-authentication', {
-        onSuccess: () => toast.success('Two-factor authentication enabled'),
+    twoFactorForm.post(enable.url(), {
+        onSuccess: () => toast.success(t('settings.security.enabled_2fa')),
     });
 }
 
 function disable2FA() {
-    if (confirm('Disable two-factor authentication?')) {
-        twoFactorForm.delete('/user/two-factor-authentication', {
-            onSuccess: () =>
-                toast.success('Two-factor authentication disabled'),
+    if (confirm(t('settings.security.disable_2fa_confirm'))) {
+        twoFactorForm.delete(disable.url(), {
+            onSuccess: () => toast.success(t('settings.security.disabled_2fa')),
         });
     }
 }
 </script>
 
 <template>
-    <Head title="Security" />
+    <Head :title="t('settings.security.title')" />
     <div class="space-y-6">
         <div>
-            <h2 class="text-lg font-semibold">Security</h2>
+            <h2 class="text-lg font-semibold">
+                {{ t('settings.security.title') }}
+            </h2>
             <p class="text-sm text-muted-foreground">
-                Manage your account security
+                {{ t('settings.security.description') }}
             </p>
         </div>
 
         <Card>
             <CardHeader>
-                <CardTitle>Update Password</CardTitle>
-                <CardDescription
-                    >Ensure your account is using a long, random
-                    password</CardDescription
-                >
+                <CardTitle>{{
+                    t('settings.security.update_password')
+                }}</CardTitle>
+                <CardDescription>{{
+                    t('settings.security.password_description')
+                }}</CardDescription>
             </CardHeader>
             <CardContent>
                 <form
@@ -76,7 +82,9 @@ function disable2FA() {
                     class="max-w-md space-y-4"
                 >
                     <div class="space-y-2">
-                        <Label for="current_password">Current Password</Label>
+                        <Label for="current_password">{{
+                            t('settings.security.current_password')
+                        }}</Label>
                         <Input
                             id="current_password"
                             v-model="passwordForm.current_password"
@@ -91,7 +99,9 @@ function disable2FA() {
                         </p>
                     </div>
                     <div class="space-y-2">
-                        <Label for="password">New Password</Label>
+                        <Label for="password">{{
+                            t('settings.security.new_password')
+                        }}</Label>
                         <Input
                             id="password"
                             v-model="passwordForm.password"
@@ -106,9 +116,9 @@ function disable2FA() {
                         </p>
                     </div>
                     <div class="space-y-2">
-                        <Label for="password_confirmation"
-                            >Confirm Password</Label
-                        >
+                        <Label for="password_confirmation">{{
+                            t('settings.security.confirm_password')
+                        }}</Label>
                         <Input
                             id="password_confirmation"
                             v-model="passwordForm.password_confirmation"
@@ -116,9 +126,9 @@ function disable2FA() {
                             required
                         />
                     </div>
-                    <Button type="submit" :disabled="passwordForm.processing"
-                        >Update Password</Button
-                    >
+                    <Button type="submit" :disabled="passwordForm.processing">{{
+                        t('settings.security.update_password')
+                    }}</Button>
                 </form>
             </CardContent>
         </Card>
@@ -127,11 +137,13 @@ function disable2FA() {
             <CardHeader>
                 <div class="flex items-center gap-2">
                     <Shield class="h-5 w-5" />
-                    <CardTitle>Two-Factor Authentication</CardTitle>
+                    <CardTitle>{{
+                        t('settings.security.two_factor_title')
+                    }}</CardTitle>
                 </div>
-                <CardDescription
-                    >Add additional security with 2FA</CardDescription
-                >
+                <CardDescription>{{
+                    t('settings.security.two_factor_description')
+                }}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div
@@ -139,17 +151,22 @@ function disable2FA() {
                     class="flex items-center gap-4"
                 >
                     <p class="text-sm font-medium text-green-600">
-                        Two-factor authentication is enabled
+                        {{ t('settings.security.enabled_state') }}
                     </p>
-                    <Button variant="destructive" size="sm" @click="disable2FA"
-                        >Disable</Button
+                    <Button
+                        variant="destructive"
+                        size="sm"
+                        @click="disable2FA"
+                        >{{ t('common.actions.disable') }}</Button
                     >
                 </div>
                 <div v-else class="flex items-center gap-4">
                     <p class="text-sm text-muted-foreground">
-                        Two-factor authentication is not enabled
+                        {{ t('settings.security.not_enabled_state') }}
                     </p>
-                    <Button size="sm" @click="enable2FA">Enable</Button>
+                    <Button size="sm" @click="enable2FA">{{
+                        t('common.actions.enable')
+                    }}</Button>
                 </div>
             </CardContent>
         </Card>

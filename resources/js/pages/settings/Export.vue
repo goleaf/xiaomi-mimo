@@ -10,29 +10,34 @@ import {
     CardDescription,
 } from '@/components/ui/card';
 import { useToast } from '@/composables/useToast';
+import { useUi } from '@/composables/useUi';
+import { exportMethod, importMethod } from '@/routes';
 import type { Workspace } from '@/types/models';
 
 const props = defineProps<{ workspace: Workspace }>();
 const toast = useToast();
+const { t } = useUi();
 
 function exportData(format: string) {
-    window.location.href = route('export', [props.workspace.id, format]);
-    toast.success(`Exporting as ${format.toUpperCase()}...`);
+    window.location.href = exportMethod([props.workspace.id, format]).url;
+    toast.success(
+        t('settings.export.exporting', { format: format.toUpperCase() }),
+    );
 }
 
 function handleImport(event: Event, format: string) {
     const input = event.target as HTMLInputElement;
 
     if (!input.files?.length) {
-return;
-}
+        return;
+    }
 
     const formData = new FormData();
     formData.append('file', input.files[0]);
     formData.append('format', format);
 
-    router.post(route('import', props.workspace.id), formData, {
-        onSuccess: () => toast.success('Import completed'),
+    router.post(importMethod(props.workspace.id).url, formData, {
+        onSuccess: () => toast.success(t('settings.export.import_success')),
         preserveScroll: true,
     });
     input.value = '';
@@ -40,19 +45,23 @@ return;
 </script>
 
 <template>
-    <Head title="Export & Import" />
+    <Head :title="t('settings.export.title')" />
     <div class="space-y-6">
         <div>
-            <h2 class="text-lg font-semibold">Export & Import</h2>
+            <h2 class="text-lg font-semibold">
+                {{ t('settings.export.title') }}
+            </h2>
             <p class="text-sm text-muted-foreground">
-                Export your data or import from a file
+                {{ t('settings.export.description') }}
             </p>
         </div>
 
         <Card>
             <CardHeader>
-                <CardTitle>Export</CardTitle>
-                <CardDescription>Download your workspace data</CardDescription>
+                <CardTitle>{{ t('settings.export.export_title') }}</CardTitle>
+                <CardDescription>{{
+                    t('settings.export.export_description')
+                }}</CardDescription>
             </CardHeader>
             <CardContent class="flex gap-3">
                 <Button variant="outline" @click="exportData('json')"
@@ -69,10 +78,10 @@ return;
 
         <Card>
             <CardHeader>
-                <CardTitle>Import</CardTitle>
-                <CardDescription
-                    >Import tasks from a JSON or CSV file</CardDescription
-                >
+                <CardTitle>{{ t('settings.export.import_title') }}</CardTitle>
+                <CardDescription>{{
+                    t('settings.export.import_description')
+                }}</CardDescription>
             </CardHeader>
             <CardContent class="flex gap-3">
                 <label class="inline-flex cursor-pointer items-center gap-2">
@@ -83,7 +92,9 @@ return;
                         @change="handleImport($event, 'json')"
                     />
                     <Button variant="outline"
-                        ><Upload class="mr-2 h-4 w-4" />Import JSON</Button
+                        ><Upload class="mr-2 h-4 w-4" />{{
+                            t('settings.export.import_json')
+                        }}</Button
                     >
                 </label>
                 <label class="inline-flex cursor-pointer items-center gap-2">
@@ -94,7 +105,9 @@ return;
                         @change="handleImport($event, 'csv')"
                     />
                     <Button variant="outline"
-                        ><Upload class="mr-2 h-4 w-4" />Import CSV</Button
+                        ><Upload class="mr-2 h-4 w-4" />{{
+                            t('settings.export.import_csv')
+                        }}</Button
                     >
                 </label>
             </CardContent>

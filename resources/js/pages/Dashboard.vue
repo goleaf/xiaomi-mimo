@@ -5,6 +5,7 @@ import { computed } from 'vue';
 import TaskStats from '@/components/task/TaskStats.vue';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useUi } from '@/composables/useUi';
 import type { Todo } from '@/types/models';
 
 const props = defineProps<{
@@ -21,6 +22,7 @@ const props = defineProps<{
     upcomingTasks: Todo[];
     weeklyData: Array<{ date: string; completed: number; created: number }>;
 }>();
+const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
 
 const allTodos = computed(() => [
     ...props.todayTasks,
@@ -42,10 +44,10 @@ function priorityColor(priority: string): string {
 
 function formatDate(date: string | null): string {
     if (!date) {
-return '';
-}
+        return '';
+    }
 
-    return new Date(date).toLocaleDateString('en-US', {
+    return formatLocalizedDate(date, {
         month: 'short',
         day: 'numeric',
     });
@@ -57,12 +59,12 @@ const maxWeekly = computed(() =>
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head :title="t('dashboard.title')" />
     <div class="space-y-6 p-6">
         <div>
-            <h1 class="text-2xl font-bold">Dashboard</h1>
+            <h1 class="text-2xl font-bold">{{ t('dashboard.title') }}</h1>
             <p class="text-muted-foreground">
-                Welcome back! Here's your task overview.
+                {{ t('dashboard.welcome') }}
             </p>
         </div>
 
@@ -72,14 +74,16 @@ const maxWeekly = computed(() =>
             <Card>
                 <CardHeader class="flex flex-row items-center gap-2">
                     <AlertTriangle class="h-4 w-4 text-red-500" />
-                    <CardTitle class="text-base">Overdue Tasks</CardTitle>
+                    <CardTitle class="text-base">{{
+                        t('dashboard.overdue_tasks')
+                    }}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div
                         v-if="overdueTasks.length === 0"
                         class="py-4 text-sm text-muted-foreground"
                     >
-                        No overdue tasks
+                        {{ t('dashboard.no_overdue') }}
                     </div>
                     <div v-else class="space-y-2">
                         <div
@@ -101,7 +105,9 @@ const maxWeekly = computed(() =>
                                     {{ formatDate(todo.due_date) }}
                                 </p>
                             </div>
-                            <Badge variant="destructive">overdue</Badge>
+                            <Badge variant="destructive">{{
+                                t('dashboard.overdue')
+                            }}</Badge>
                         </div>
                     </div>
                 </CardContent>
@@ -110,14 +116,16 @@ const maxWeekly = computed(() =>
             <Card>
                 <CardHeader class="flex flex-row items-center gap-2">
                     <Calendar class="h-4 w-4 text-blue-500" />
-                    <CardTitle class="text-base">Upcoming Tasks</CardTitle>
+                    <CardTitle class="text-base">{{
+                        t('dashboard.upcoming_tasks')
+                    }}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div
                         v-if="upcomingTasks.length === 0"
                         class="py-4 text-sm text-muted-foreground"
                     >
-                        No upcoming tasks
+                        {{ t('dashboard.no_upcoming') }}
                     </div>
                     <div v-else class="space-y-2">
                         <div
@@ -139,7 +147,9 @@ const maxWeekly = computed(() =>
                                     {{ formatDate(todo.due_date) }}
                                 </p>
                             </div>
-                            <Badge variant="outline">{{ todo.status }}</Badge>
+                            <Badge variant="outline">{{
+                                t(`tasks.statuses.${todo.status}`)
+                            }}</Badge>
                         </div>
                     </div>
                 </CardContent>
@@ -148,9 +158,9 @@ const maxWeekly = computed(() =>
 
         <Card>
             <CardHeader
-                ><CardTitle class="text-base"
-                    >Weekly Overview</CardTitle
-                ></CardHeader
+                ><CardTitle class="text-base">{{
+                    t('dashboard.weekly_overview')
+                }}</CardTitle></CardHeader
             >
             <CardContent>
                 <div class="flex h-32 items-end gap-2">
@@ -160,7 +170,7 @@ const maxWeekly = computed(() =>
                         class="flex flex-1 flex-col items-center gap-1"
                     >
                         <div class="text-xs font-medium text-muted-foreground">
-                            {{ day.completed }}
+                            {{ formatNumber(day.completed) }}
                         </div>
                         <div
                             class="w-full rounded-t bg-primary/80 transition-all"
@@ -170,7 +180,7 @@ const maxWeekly = computed(() =>
                         />
                         <div class="text-[10px] text-muted-foreground">
                             {{
-                                new Date(day.date).toLocaleDateString('en-US', {
+                                formatLocalizedDate(day.date, {
                                     weekday: 'short',
                                 })
                             }}

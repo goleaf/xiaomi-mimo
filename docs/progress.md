@@ -1004,6 +1004,54 @@ No migration or package change was made.
 - Push to `origin main` succeeded (`13ec033..576d602`).
 - Existing localization, task, settings, import/export, attachment, NativePHP, and planning changes remain outside this phase and are preserved in the worktree.
 
+## Frontend Localization, Wayfinder, And Task State Isolation
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Replace remaining frontend user-facing English literals with semantic Laravel translation keys supplied to Inertia for English, Lithuanian, and Russian, with Laravel's English fallback.
+- Route all locale-sensitive dates and numbers through one shared formatter that respects the authenticated user's language and timezone preferences.
+- Remove the custom global `route()` shim and replace its consumers, hardcoded settings paths, and other application route strings with generated Wayfinder functions.
+- Reset task detail, comment, and checklist draft state whenever the selected task identity changes so unsaved values cannot leak between tasks.
+- Add focused Pest localization and routing contracts plus a dependency-free frontend state regression test.
+- Preserve and exclude unrelated data-transfer, attachment, runtime, and design work already present in the worktree.
+
+### Changed Files
+
+- `app/Http/Middleware/HandleInertiaRequests.php`
+- `lang/en/ui.php`, `lang/lt/ui.php`, `lang/ru/ui.php`
+- Shared frontend translation, locale-formatting, task-detail state, application bootstrap, and Inertia type files under `resources/js`.
+- Auth, account-security, dashboard, project, task, workspace, settings, navigation, command-palette, and notification Vue consumers under `resources/js`.
+- `tests/Feature/FrontendLocalizationTest.php`, `resources/js/composables/useTaskDetailState.test.ts`
+- `package.json`, `composer.json`, `tsconfig.json`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm dependency was added, removed, or upgraded. The existing package and Composer verification commands now include the dependency-free Node frontend state test.
+
+### Verification
+
+- The new frontend test failed first because `useTaskDetailState.ts` did not exist, then passed after implementation. It opens task A, applies unsaved detail, comment, checklist-name, and checklist-item edits, switches to task B, and confirms only task B values and empty drafts remain.
+- `php artisan test --compact tests/Feature/FrontendLocalizationTest.php tests/Feature/TodoTest.php tests/Feature/AppNavigationTest.php`: passed with 19 tests and 125 assertions.
+- `php artisan test --compact`: passed with 188 tests and 1,147 assertions.
+- `npm run test:frontend`, `npm run types:check`, `npm run lint:check`, and `npm run build`: passed. Vite emitted only the existing optional `fontaine` notice.
+- `vendor/bin/pint --dirty --format agent`, `composer validate --strict --no-check-publish`, and `git diff --check`: passed.
+- Full Larastan was executed and remains red with 328 pre-existing application errors outside this frontend phase. The new translation helper return type is specified; the touched middleware still reports three existing or concurrent model/workspace-translation findings.
+- Full `npm run format:check` was executed and remains red only for the pre-existing `resources/js/composables/useKeyboard.ts` and `resources/js/composables/useKeyboardShortcuts.ts`; all phase frontend files pass scoped Prettier formatting.
+
+### Known Limitations
+
+- Passkey relative-time strings continue to arrive preformatted from the installed passkeys package; application-owned dates and numbers now use the shared locale and timezone formatter.
+- Active data-transfer, attachment, upload-runtime, and design work in the shared worktree remains excluded from this phase.
+
+### Git Delivery
+
+The isolated commit uses `fix: localize frontend and reset task state` and will be pushed directly to `origin main`. Only this phase's files and attributable hunks are included; unrelated staged and unstaged work remains preserved.
+
 ## ESLint Cleanup Batch 1: Dead Frontend Bindings
 
 ### Status

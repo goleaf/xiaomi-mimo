@@ -1,6 +1,8 @@
 import { toast } from 'vue-sonner';
+import { useUi } from '@/composables/useUi';
 
 export function useToast() {
+    const { t } = useUi();
     function success(message: string) {
         toast.success(message);
     }
@@ -20,7 +22,7 @@ export function useToast() {
     function withUndo(message: string, undoFn: () => void) {
         toast(message, {
             action: {
-                label: 'Undo',
+                label: t('common.toast.undo'),
                 onClick: undoFn,
             },
         });

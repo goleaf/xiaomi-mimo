@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { useUi } from '@/composables/useUi';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
 
-defineOptions({
-    layout: {
-        title: 'Email verification',
-        description:
-            'Please verify your email address by clicking on the link we just emailed to you.',
-    },
+const { t } = useUi();
+
+setLayoutProps({
+    title: t('auth.verify_email.title'),
+    description: t('auth.verify_email.description'),
 });
 
 defineProps<{
@@ -20,14 +20,13 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Email verification" />
+    <Head :title="t('auth.verify_email.title')" />
 
     <div
         v-if="status === 'verification-link-sent'"
         class="mb-4 text-center text-sm font-medium text-green-600"
     >
-        A new verification link has been sent to the email address you provided
-        during registration.
+        {{ t('auth.verify_email.sent') }}
     </div>
 
     <Form
@@ -37,11 +36,11 @@ defineProps<{
     >
         <Button :disabled="processing" variant="secondary">
             <Spinner v-if="processing" />
-            Resend verification email
+            {{ t('auth.verify_email.resend') }}
         </Button>
 
         <TextLink :href="logout()" as="button" class="mx-auto block text-sm">
-            Log out
+            {{ t('auth.verify_email.logout') }}
         </TextLink>
     </Form>
 </template>

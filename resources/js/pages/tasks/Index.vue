@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { useBulkSelect } from '@/composables/useBulkSelect';
 import { useToast } from '@/composables/useToast';
+import { useUi } from '@/composables/useUi';
 import {
     complete,
     destroy,
@@ -35,6 +36,7 @@ const props = defineProps<{
 
 const bulkSelect = useBulkSelect<Todo>();
 const toast = useToast();
+const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
 const searchQuery = ref(props.filters.search ?? '');
 const statusFilter = ref(props.filters.status ?? 'all');
 const priorityFilter = ref(props.filters.priority ?? 'all');
@@ -70,7 +72,7 @@ function deleteTodo(todo: Todo) {
     router.delete(destroy(todo).url, {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success('Task deleted');
+            toast.success(t('tasks.index.deleted'));
 
             if (selectedTodo.value?.id === todo.id) {
                 selectedTodo.value = null;
@@ -94,16 +96,18 @@ function selectTodo(todo: Todo) {
     );
 }
 
-function priorityBadge(priority: string) {
-    return (
-        {
-            urgent: 'destructive',
-            high: 'destructive',
-            medium: 'secondary',
-            low: 'outline',
-            none: 'outline',
-        }[priority] ?? 'outline'
-    );
+function priorityBadge(
+    priority: string,
+): 'destructive' | 'outline' | 'secondary' {
+    if (priority === 'urgent' || priority === 'high') {
+        return 'destructive';
+    }
+
+    if (priority === 'medium') {
+        return 'secondary';
+    }
+
+    return 'outline';
 }
 
 function formatDate(date: string | null): string {
@@ -111,7 +115,7 @@ function formatDate(date: string | null): string {
         return '';
     }
 
-    return new Date(date).toLocaleDateString('en-US', {
+    return formatLocalizedDate(date, {
         month: 'short',
         day: 'numeric',
     });
@@ -119,16 +123,26 @@ function formatDate(date: string | null): string {
 </script>
 
 <template>
-    <Head title="Tasks" />
+    <Head :title="t('tasks.index.title')" />
     <div class="space-y-6 p-6">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold">Tasks</h1>
-                <p class="text-muted-foreground">{{ todos.total }} tasks</p>
+                <h1 class="text-2xl font-bold">
+                    {{ t('tasks.index.title') }}
+                </h1>
+                <p class="text-muted-foreground">
+                    {{
+                        t('tasks.index.count', {
+                            count: formatNumber(todos.total),
+                        })
+                    }}
+                </p>
             </div>
             <div class="flex items-center gap-2">
                 <Button @click="showCreateDialog = true"
-                    ><Plus class="mr-2 h-4 w-4" />New Task</Button
+                    ><Plus class="mr-2 h-4 w-4" />{{
+                        t('tasks.create.new_task')
+                    }}</Button
                 >
             </div>
         </div>
@@ -140,32 +154,50 @@ function formatDate(date: string | null): string {
                 />
                 <Input
                     v-model="searchQuery"
-                    placeholder="Search tasks..."
+                    :placeholder="t('tasks.filters.search')"
                     class="pl-9"
                     @keyup.enter="applyFilters"
                 />
             </div>
             <Select v-model="statusFilter" @update:model-value="applyFilters">
                 <SelectTrigger class="w-[150px]"
-                    ><SelectValue placeholder="Status"
+                    ><SelectValue :placeholder="t('tasks.filters.status')"
                 /></SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="all">{{
+                        t('tasks.filters.all_statuses')
+                    }}</SelectItem>
+                    <SelectItem value="pending">{{
+                        t('tasks.statuses.pending')
+                    }}</SelectItem>
+                    <SelectItem value="in_progress">{{
+                        t('tasks.statuses.in_progress')
+                    }}</SelectItem>
+                    <SelectItem value="completed">{{
+                        t('tasks.statuses.completed')
+                    }}</SelectItem>
                 </SelectContent>
             </Select>
             <Select v-model="priorityFilter" @update:model-value="applyFilters">
                 <SelectTrigger class="w-[150px]"
-                    ><SelectValue placeholder="Priority"
+                    ><SelectValue :placeholder="t('tasks.filters.priority')"
                 /></SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All Priority</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="all">{{
+                        t('tasks.filters.all_priorities')
+                    }}</SelectItem>
+                    <SelectItem value="urgent">{{
+                        t('tasks.priorities.urgent')
+                    }}</SelectItem>
+                    <SelectItem value="high">{{
+                        t('tasks.priorities.high')
+                    }}</SelectItem>
+                    <SelectItem value="medium">{{
+                        t('tasks.priorities.medium')
+                    }}</SelectItem>
+                    <SelectItem value="low">{{
+                        t('tasks.priorities.low')
+                    }}</SelectItem>
                 </SelectContent>
             </Select>
         </div>
@@ -174,14 +206,16 @@ function formatDate(date: string | null): string {
             v-if="bulkSelect.hasSelection.value"
             class="flex items-center gap-4 rounded-lg border bg-muted p-3"
         >
-            <span class="text-sm"
-                >{{ bulkSelect.selectedCount.value }} selected</span
-            >
+            <span class="text-sm">{{
+                t('common.states.selected', {
+                    count: formatNumber(bulkSelect.selectedCount.value),
+                })
+            }}</span>
             <Button
                 variant="outline"
                 size="sm"
                 @click="bulkSelect.clearSelection"
-                >Cancel</Button
+                >{{ t('common.actions.cancel') }}</Button
             >
         </div>
 
@@ -224,7 +258,7 @@ function formatDate(date: string | null): string {
                 </div>
                 <div class="flex items-center gap-2">
                     <Badge :variant="priorityBadge(todo.priority)">{{
-                        todo.priority
+                        t(`tasks.priorities.${todo.priority}`)
                     }}</Badge>
                     <div class="flex gap-1">
                         <span
@@ -245,14 +279,15 @@ function formatDate(date: string | null): string {
             v-if="allTodos.length === 0"
             class="flex flex-col items-center justify-center py-12 text-muted-foreground"
         >
-            <p class="text-lg">No tasks found</p>
-            <p class="text-sm">Create a new task to get started</p>
+            <p class="text-lg">{{ t('tasks.index.empty_title') }}</p>
+            <p class="text-sm">{{ t('tasks.index.empty_description') }}</p>
         </div>
     </div>
 
     <!-- Task Detail Drawer -->
     <TaskDetail
         v-if="selectedTodo"
+        :key="selectedTodo.id"
         :todo="selectedTodo"
         :open="!!selectedTodo"
         @close="selectedTodo = null"

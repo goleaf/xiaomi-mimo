@@ -4,10 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/composables/useToast';
+import { useUi } from '@/composables/useUi';
+import { update } from '@/routes/preferences';
 import type { UserPreference } from '@/types/models';
 
 const props = defineProps<{ preferences: UserPreference }>();
 const toast = useToast();
+const { t } = useUi();
 
 const form = useForm({
     notification_email: props.preferences.notification_email,
@@ -16,19 +19,21 @@ const form = useForm({
 });
 
 function submit() {
-    form.put('/settings/preferences', {
-        onSuccess: () => toast.success('Notification settings saved'),
+    form.put(update.url(), {
+        onSuccess: () => toast.success(t('settings.notifications.saved')),
     });
 }
 </script>
 
 <template>
-    <Head title="Notification Settings" />
+    <Head :title="t('settings.notifications.title')" />
     <div class="space-y-6">
         <div>
-            <h2 class="text-lg font-semibold">Notifications</h2>
+            <h2 class="text-lg font-semibold">
+                {{ t('settings.notifications.title') }}
+            </h2>
             <p class="text-sm text-muted-foreground">
-                Configure how you receive notifications
+                {{ t('settings.notifications.description') }}
             </p>
         </div>
         <form @submit.prevent="submit">
@@ -36,9 +41,15 @@ function submit() {
                 <CardContent class="space-y-4 pt-6">
                     <div
                         v-for="(field, key) in {
-                            notification_email: 'Email notifications',
-                            notification_browser: 'Browser notifications',
-                            notification_in_app: 'In-app notifications',
+                            notification_email: t(
+                                'settings.notifications.email',
+                            ),
+                            notification_browser: t(
+                                'settings.notifications.browser',
+                            ),
+                            notification_in_app: t(
+                                'settings.notifications.in_app',
+                            ),
                         }"
                         :key="key"
                         class="flex items-center justify-between"
@@ -53,7 +64,9 @@ function submit() {
                 </CardContent>
             </Card>
             <div class="mt-4 flex justify-end">
-                <Button type="submit" :disabled="form.processing">Save</Button>
+                <Button type="submit" :disabled="form.processing">{{
+                    t('common.actions.save')
+                }}</Button>
             </div>
         </form>
     </div>

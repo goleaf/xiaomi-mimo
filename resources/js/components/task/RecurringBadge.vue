@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { Repeat } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
+import { useUi } from '@/composables/useUi';
 
 defineProps<{ rule: string | null }>();
+const { t } = useUi();
 
 function formatRule(rule: string): string {
     if (!rule) {
@@ -10,13 +12,13 @@ function formatRule(rule: string): string {
     }
 
     const map: Record<string, string> = {
-        'FREQ=DAILY': 'Daily',
-        'FREQ=WEEKLY': 'Weekly',
-        'FREQ=MONTHLY': 'Monthly',
-        'FREQ=YEARLY': 'Yearly',
-        'FREQ=DAILY;INTERVAL=2': 'Every 2 days',
-        'FREQ=WEEKLY;INTERVAL=2': 'Every 2 weeks',
-        'FREQ=MONTHLY;INTERVAL=2': 'Every 2 months',
+        'FREQ=DAILY': t('tasks.recurring.daily'),
+        'FREQ=WEEKLY': t('tasks.recurring.weekly'),
+        'FREQ=MONTHLY': t('tasks.recurring.monthly'),
+        'FREQ=YEARLY': t('tasks.recurring.yearly'),
+        'FREQ=DAILY;INTERVAL=2': t('tasks.recurring.every_2_days'),
+        'FREQ=WEEKLY;INTERVAL=2': t('tasks.recurring.every_2_weeks'),
+        'FREQ=MONTHLY;INTERVAL=2': t('tasks.recurring.every_2_months'),
     };
 
     return map[rule] ?? rule.replace('FREQ=', '').split(';')[0].toLowerCase();

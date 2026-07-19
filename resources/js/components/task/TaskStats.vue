@@ -8,9 +8,11 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useUi } from '@/composables/useUi';
 import type { Todo } from '@/types/models';
 
 const props = defineProps<{ todos: Todo[] }>();
+const { formatNumber, t } = useUi();
 
 const stats = computed(() => {
     const total = props.todos.length;
@@ -43,12 +45,14 @@ const stats = computed(() => {
             <CardHeader
                 class="flex flex-row items-center justify-between space-y-0 pb-2"
             >
-                <CardTitle class="text-sm font-medium">Total</CardTitle>
+                <CardTitle class="text-sm font-medium">{{
+                    t('tasks.stats.total')
+                }}</CardTitle>
                 <List class="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent
                 ><div class="text-2xl font-bold">
-                    {{ stats.total }}
+                    {{ formatNumber(stats.total) }}
                 </div></CardContent
             >
         </Card>
@@ -56,12 +60,14 @@ const stats = computed(() => {
             <CardHeader
                 class="flex flex-row items-center justify-between space-y-0 pb-2"
             >
-                <CardTitle class="text-sm font-medium">Pending</CardTitle>
+                <CardTitle class="text-sm font-medium">{{
+                    t('tasks.stats.pending')
+                }}</CardTitle>
                 <Clock class="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent
                 ><div class="text-2xl font-bold">
-                    {{ stats.pending }}
+                    {{ formatNumber(stats.pending) }}
                 </div></CardContent
             >
         </Card>
@@ -69,12 +75,14 @@ const stats = computed(() => {
             <CardHeader
                 class="flex flex-row items-center justify-between space-y-0 pb-2"
             >
-                <CardTitle class="text-sm font-medium">In Progress</CardTitle>
+                <CardTitle class="text-sm font-medium">{{
+                    t('tasks.stats.in_progress')
+                }}</CardTitle>
                 <TrendingUp class="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent
                 ><div class="text-2xl font-bold">
-                    {{ stats.inProgress }}
+                    {{ formatNumber(stats.inProgress) }}
                 </div></CardContent
             >
         </Card>
@@ -82,12 +90,14 @@ const stats = computed(() => {
             <CardHeader
                 class="flex flex-row items-center justify-between space-y-0 pb-2"
             >
-                <CardTitle class="text-sm font-medium">Completed</CardTitle>
+                <CardTitle class="text-sm font-medium">{{
+                    t('tasks.stats.completed')
+                }}</CardTitle>
                 <CheckCircle class="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent
                 ><div class="text-2xl font-bold">
-                    {{ stats.completed }}
+                    {{ formatNumber(stats.completed) }}
                 </div></CardContent
             >
         </Card>
@@ -95,12 +105,14 @@ const stats = computed(() => {
             <CardHeader
                 class="flex flex-row items-center justify-between space-y-0 pb-2"
             >
-                <CardTitle class="text-sm font-medium">Overdue</CardTitle>
+                <CardTitle class="text-sm font-medium">{{
+                    t('tasks.stats.overdue')
+                }}</CardTitle>
                 <AlertTriangle class="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent
                 ><div class="text-2xl font-bold">
-                    {{ stats.overdue }}
+                    {{ formatNumber(stats.overdue) }}
                 </div></CardContent
             >
         </Card>

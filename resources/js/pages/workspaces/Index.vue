@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { Plus, Users, Folder, CheckSquare } from '@lucide/vue';
 import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
@@ -15,23 +14,26 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/composables/useToast';
+import { useUi } from '@/composables/useUi';
+import { store } from '@/routes/workspaces';
 import type { Workspace } from '@/types/models';
 
 defineProps<{ workspaces: { data: Workspace[] } }>();
 
 const toast = useToast();
+const { formatNumber, t } = useUi();
 const showCreateDialog = ref(false);
 const form = ref({ name: '', description: '' });
 
 function createWorkspace() {
     if (!form.value.name.trim()) {
-return;
-}
+        return;
+    }
 
-    router.post(route('workspaces.store'), form.value, {
+    router.post(store().url, form.value, {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success('Workspace created');
+            toast.success(t('workspaces.created'));
             showCreateDialog.value = false;
             form.value = { name: '', description: '' };
         },
@@ -40,17 +42,21 @@ return;
 </script>
 
 <template>
-    <Head title="Workspaces" />
+    <Head :title="t('workspaces.title')" />
     <div class="space-y-6 p-6">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold">Workspaces</h1>
+                <h1 class="text-2xl font-bold">{{ t('workspaces.title') }}</h1>
                 <p class="text-muted-foreground">
-                    {{ workspaces.data.length }} workspace(s)
+                    {{
+                        t('workspaces.count', {
+                            count: formatNumber(workspaces.data.length),
+                        })
+                    }}
                 </p>
             </div>
             <Button @click="showCreateDialog = true"
-                ><Plus class="mr-2 h-4 w-4" />New Workspace</Button
+                ><Plus class="mr-2 h-4 w-4" />{{ t('workspaces.new') }}</Button
             >
         </div>
 
@@ -63,7 +69,10 @@ return;
                 <CardHeader>
                     <CardTitle>{{ workspace.name }}</CardTitle>
                     <p class="text-sm text-muted-foreground">
-                        {{ workspace.description ?? 'No description' }}
+                        {{
+                            workspace.description ??
+                            t('workspaces.no_description')
+                        }}
                     </p>
                 </CardHeader>
                 <CardContent>
@@ -72,17 +81,17 @@ return;
                     >
                         <span class="flex items-center gap-1"
                             ><Users class="h-4 w-4" />{{
-                                workspace.members_count ?? 0
+                                formatNumber(workspace.members_count ?? 0)
                             }}</span
                         >
                         <span class="flex items-center gap-1"
                             ><Folder class="h-4 w-4" />{{
-                                workspace.projects_count ?? 0
+                                formatNumber(workspace.projects_count ?? 0)
                             }}</span
                         >
                         <span class="flex items-center gap-1"
                             ><CheckSquare class="h-4 w-4" />{{
-                                workspace.todos_count ?? 0
+                                formatNumber(workspace.todos_count ?? 0)
                             }}</span
                         >
                     </div>
@@ -94,9 +103,11 @@ return;
             v-if="workspaces.data.length === 0"
             class="flex flex-col items-center justify-center py-12 text-muted-foreground"
         >
-            <p class="text-lg">No workspaces yet</p>
+            <p class="text-lg">{{ t('workspaces.empty') }}</p>
             <Button class="mt-4" @click="showCreateDialog = true"
-                ><Plus class="mr-2 h-4 w-4" />Create Workspace</Button
+                ><Plus class="mr-2 h-4 w-4" />{{
+                    t('workspaces.create')
+                }}</Button
             >
         </div>
     </div>
@@ -104,24 +115,28 @@ return;
     <Dialog :open="showCreateDialog" @update:open="showCreateDialog = false">
         <DialogContent class="sm:max-w-md">
             <DialogHeader
-                ><DialogTitle>New Workspace</DialogTitle></DialogHeader
+                ><DialogTitle>{{
+                    t('workspaces.new')
+                }}</DialogTitle></DialogHeader
             >
             <form @submit.prevent="createWorkspace" class="space-y-4">
                 <div class="space-y-2">
-                    <Label for="ws-name">Name</Label>
+                    <Label for="ws-name">{{ t('workspaces.name') }}</Label>
                     <Input
                         id="ws-name"
                         v-model="form.name"
-                        placeholder="Workspace name"
+                        :placeholder="t('workspaces.name_placeholder')"
                         autofocus
                     />
                 </div>
                 <div class="space-y-2">
-                    <Label for="ws-desc">Description</Label>
+                    <Label for="ws-desc">{{
+                        t('workspaces.description')
+                    }}</Label>
                     <Input
                         id="ws-desc"
                         v-model="form.description"
-                        placeholder="Optional description"
+                        :placeholder="t('workspaces.description_placeholder')"
                     />
                 </div>
                 <DialogFooter>
@@ -129,9 +144,11 @@ return;
                         type="button"
                         variant="outline"
                         @click="showCreateDialog = false"
-                        >Cancel</Button
+                        >{{ t('common.actions.cancel') }}</Button
                     >
-                    <Button type="submit">Create</Button>
+                    <Button type="submit">{{
+                        t('common.actions.create')
+                    }}</Button>
                 </DialogFooter>
             </form>
         </DialogContent>

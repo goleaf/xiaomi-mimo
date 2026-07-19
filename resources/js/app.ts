@@ -7,12 +7,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
-import { route } from '@/lib/route';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
-
-// Make route() globally available
-(window as unknown as Record<string, unknown>).route = route;
 
 createInertiaApp({
     http: axiosAdapter(),

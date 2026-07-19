@@ -1,6 +1,10 @@
 import { router } from '@inertiajs/vue3';
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import {
+    markAllRead as markAllReadRoute,
+    markRead as markReadRoute,
+} from '@/routes/notifications';
 
 export const useNotificationStore = defineStore('notification', () => {
     const notifications = ref<
@@ -11,7 +15,7 @@ export const useNotificationStore = defineStore('notification', () => {
     );
 
     function markRead(id: string) {
-        router.post(`/notifications/${id}/read`, {}, { preserveScroll: true });
+        router.post(markReadRoute(id).url, {}, { preserveScroll: true });
         const notification = notifications.value.find((n) => n.id === id);
 
         if (notification) {
@@ -20,7 +24,7 @@ export const useNotificationStore = defineStore('notification', () => {
     }
 
     function markAllRead() {
-        router.post('/notifications/read-all', {}, { preserveScroll: true });
+        router.post(markAllReadRoute().url, {}, { preserveScroll: true });
         notifications.value.forEach((n) => {
             n.read_at = new Date().toISOString();
         });
