@@ -2533,4 +2533,6 @@ No migration or Composer/npm package change is planned.
 
 - Implementation commit: `dea5fca` (`fix: align shared secondary actions`).
 - Implementation push: successful to `origin/main`.
-- Documentation commit and push are pending.
+- Documentation commit: `72a3b58` (`docs: record secondary action unification`).
+- Documentation push: successful to `origin/main`.
+- This final delivery record is committed and pushed separately so the phase commits remain focused.
