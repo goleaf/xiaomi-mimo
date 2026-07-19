@@ -11,6 +11,7 @@ import {
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { update as updateTodo } from '@/actions/App/Http/Controllers/TodoController';
+import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -216,378 +217,421 @@ function priorityBadge(
 </script>
 
 <template>
-    <Head :title="todo.title" />
-    <div class="max-w-3xl space-y-6 p-6">
-        <div class="flex items-center gap-4">
-            <Button variant="ghost" size="sm" @click="goBack"
-                ><ArrowLeft class="h-4 w-4"
-            /></Button>
-            <div class="flex-1">
-                <h1 class="text-2xl font-bold">{{ todo.title }}</h1>
-                <div class="mt-1 flex items-center gap-3">
-                    <Badge :variant="priorityBadge(todo.priority)">{{
-                        t(`tasks.priorities.${todo.priority}`)
-                    }}</Badge>
-                    <span class="text-sm text-muted-foreground">{{
-                        t(`tasks.statuses.${todo.status}`)
-                    }}</span>
+    <div>
+        <Head :title="todo.title" />
+
+        <main class="min-h-full bg-muted/20 px-4 py-5 sm:p-6 lg:p-8">
+            <div class="mx-auto flex max-w-[1480px] flex-col gap-6">
+                <WorkspacePageHeader
+                    :eyebrow="t('tasks.detail.title')"
+                    :title="todo.title"
+                    :description="
+                        todo.description ?? t('tasks.detail.no_description')
+                    "
+                >
+                    <template #actions>
+                        <Button variant="outline" @click="goBack">
+                            <ArrowLeft class="size-4" aria-hidden="true" />
+                            {{ t('common.actions.back') }}
+                        </Button>
+                        <Button
+                            v-if="!editing"
+                            variant="outline"
+                            @click="startEditing"
+                        >
+                            <Pencil class="size-4" aria-hidden="true" />
+                            {{ labels.editTask }}
+                        </Button>
+                        <Button
+                            :variant="
+                                todo.status === 'completed'
+                                    ? 'outline'
+                                    : 'default'
+                            "
+                            @click="toggleComplete"
+                        >
+                            {{
+                                todo.status === 'completed'
+                                    ? t('common.actions.reopen')
+                                    : t('common.actions.complete')
+                            }}
+                        </Button>
+                    </template>
+                </WorkspacePageHeader>
+
+                <div
+                    class="flex flex-wrap items-center gap-2 rounded-xl border border-border/80 bg-card px-4 py-3 shadow-sm"
+                >
+                    <Badge :variant="priorityBadge(todo.priority)">
+                        {{ t(`tasks.priorities.${todo.priority}`) }}
+                    </Badge>
+                    <span class="text-sm text-muted-foreground">
+                        {{ t(`tasks.statuses.${todo.status}`) }}
+                    </span>
                     <span
                         v-if="todo.project"
                         class="text-sm text-muted-foreground"
-                        >{{
+                    >
+                        {{
                             t('tasks.detail.in_project', {
                                 project: todo.project.name,
                             })
-                        }}</span
+                        }}
+                    </span>
+                </div>
+
+                <Card v-if="editing">
+                    <CardHeader>
+                        <CardTitle class="text-base">{{
+                            labels.editTask
+                        }}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <form class="space-y-4" @submit.prevent="submitEdit">
+                            <div class="space-y-2">
+                                <Label for="task-title">{{
+                                    labels.title
+                                }}</Label>
+                                <Input
+                                    id="task-title"
+                                    v-model="editForm.title"
+                                    maxlength="500"
+                                    autofocus
+                                />
+                                <p
+                                    v-if="editForm.errors.title"
+                                    class="text-sm text-destructive"
+                                >
+                                    {{ editForm.errors.title }}
+                                </p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <Label for="task-description">{{
+                                    labels.description
+                                }}</Label>
+                                <textarea
+                                    id="task-description"
+                                    v-model="editForm.description"
+                                    rows="4"
+                                    :placeholder="labels.descriptionPlaceholder"
+                                    class="flex min-h-24 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-orange-500 focus-visible:ring-[3px] focus-visible:ring-orange-500/20 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:bg-input/30 dark:aria-invalid:ring-destructive/40"
+                                />
+                                <p
+                                    v-if="editForm.errors.description"
+                                    class="text-sm text-destructive"
+                                >
+                                    {{ editForm.errors.description }}
+                                </p>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                <div class="space-y-2">
+                                    <Label>{{ labels.status }}</Label>
+                                    <Select v-model="editForm.status">
+                                        <SelectTrigger class="w-full">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="pending">{{
+                                                labels.statuses.pending
+                                            }}</SelectItem>
+                                            <SelectItem value="in_progress">{{
+                                                labels.statuses.inProgress
+                                            }}</SelectItem>
+                                            <SelectItem value="completed">{{
+                                                labels.statuses.completed
+                                            }}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p
+                                        v-if="editForm.errors.status"
+                                        class="text-sm text-destructive"
+                                    >
+                                        {{ editForm.errors.status }}
+                                    </p>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label>{{ labels.priority }}</Label>
+                                    <Select v-model="editForm.priority">
+                                        <SelectTrigger class="w-full">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">{{
+                                                labels.priorities.none
+                                            }}</SelectItem>
+                                            <SelectItem value="low">{{
+                                                labels.priorities.low
+                                            }}</SelectItem>
+                                            <SelectItem value="medium">{{
+                                                labels.priorities.medium
+                                            }}</SelectItem>
+                                            <SelectItem value="high">{{
+                                                labels.priorities.high
+                                            }}</SelectItem>
+                                            <SelectItem value="urgent">{{
+                                                labels.priorities.urgent
+                                            }}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p
+                                        v-if="editForm.errors.priority"
+                                        class="text-sm text-destructive"
+                                    >
+                                        {{ editForm.errors.priority }}
+                                    </p>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="task-due-date">{{
+                                        labels.dueDate
+                                    }}</Label>
+                                    <Input
+                                        id="task-due-date"
+                                        v-model="editForm.due_date"
+                                        type="date"
+                                    />
+                                    <p
+                                        v-if="editForm.errors.due_date"
+                                        class="text-sm text-destructive"
+                                    >
+                                        {{ editForm.errors.due_date }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    :disabled="editForm.processing"
+                                    @click="cancelEditing"
+                                >
+                                    {{ labels.cancel }}
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    :disabled="
+                                        editForm.processing ||
+                                        !editForm.title.trim()
+                                    "
+                                >
+                                    <LoaderCircle
+                                        v-if="editForm.processing"
+                                        class="h-4 w-4 animate-spin"
+                                    />
+                                    {{
+                                        editForm.processing
+                                            ? labels.saving
+                                            : labels.saveChanges
+                                    }}
+                                </Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
+
+                <!-- Metadata -->
+                <div class="grid gap-4 md:grid-cols-2">
+                    <Card
+                        ><CardContent class="space-y-1 pt-4">
+                            <div class="flex items-center gap-2 text-sm">
+                                <Calendar
+                                    class="h-4 w-4 text-muted-foreground"
+                                />{{
+                                    t('tasks.detail.due', {
+                                        date: formatDate(todo.due_date),
+                                    })
+                                }}
+                            </div>
+                            <div class="flex items-center gap-2 text-sm">
+                                <User class="h-4 w-4 text-muted-foreground" />{{
+                                    t('tasks.detail.assigned', {
+                                        name:
+                                            todo.assignee?.name ??
+                                            t('common.states.unassigned'),
+                                    })
+                                }}
+                            </div>
+                            <div class="flex items-center gap-2 text-sm">
+                                <Clock
+                                    class="h-4 w-4 text-muted-foreground"
+                                />{{
+                                    t('tasks.detail.created', {
+                                        date: formatDate(todo.created_at),
+                                    })
+                                }}
+                            </div>
+                        </CardContent></Card
+                    >
+                    <Card
+                        ><CardContent class="pt-4">
+                            <div v-if="todo.labels?.length" class="mb-2">
+                                <p
+                                    class="mb-1 text-xs font-medium text-muted-foreground"
+                                >
+                                    {{ t('tasks.detail.labels') }}
+                                </p>
+                                <div class="flex flex-wrap gap-1">
+                                    <Badge
+                                        v-for="l in todo.labels"
+                                        :key="l.id"
+                                        :style="{
+                                            backgroundColor: l.color,
+                                            color: 'white',
+                                        }"
+                                        class="text-xs"
+                                        >{{ l.name }}</Badge
+                                    >
+                                </div>
+                            </div>
+                            <div v-if="todo.tags?.length">
+                                <p
+                                    class="mb-1 text-xs font-medium text-muted-foreground"
+                                >
+                                    {{ t('tasks.detail.tags') }}
+                                </p>
+                                <div class="flex flex-wrap gap-1">
+                                    <Badge
+                                        v-for="t in todo.tags"
+                                        :key="t.id"
+                                        variant="secondary"
+                                        class="text-xs"
+                                        >{{ t.name }}</Badge
+                                    >
+                                </div>
+                            </div>
+                        </CardContent></Card
                     >
                 </div>
-            </div>
-            <Button v-if="!editing" variant="outline" @click="startEditing">
-                <Pencil class="h-4 w-4" />
-                {{ labels.editTask }}
-            </Button>
-            <Button
-                :variant="todo.status === 'completed' ? 'outline' : 'default'"
-                @click="toggleComplete"
-            >
-                {{
-                    todo.status === 'completed'
-                        ? t('common.actions.reopen')
-                        : t('common.actions.complete')
-                }}
-            </Button>
-        </div>
 
-        <Card v-if="editing">
-            <CardHeader>
-                <CardTitle class="text-base">{{ labels.editTask }}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <form class="space-y-4" @submit.prevent="submitEdit">
-                    <div class="space-y-2">
-                        <Label for="task-title">{{ labels.title }}</Label>
-                        <Input
-                            id="task-title"
-                            v-model="editForm.title"
-                            maxlength="500"
-                            autofocus
-                        />
-                        <p
-                            v-if="editForm.errors.title"
-                            class="text-sm text-destructive"
+                <!-- Description -->
+                <Card v-if="todo.description">
+                    <CardHeader
+                        ><CardTitle class="text-base">{{
+                            t('tasks.detail.description')
+                        }}</CardTitle></CardHeader
+                    >
+                    <CardContent
+                        ><p class="text-sm whitespace-pre-wrap">
+                            {{ todo.description }}
+                        </p></CardContent
+                    >
+                </Card>
+
+                <!-- Checklists -->
+                <Card v-if="todo.checklists?.length">
+                    <CardHeader
+                        ><CardTitle class="text-base">{{
+                            t('tasks.detail.checklists')
+                        }}</CardTitle></CardHeader
+                    >
+                    <CardContent class="space-y-4">
+                        <div
+                            v-for="cl in todo.checklists"
+                            :key="cl.id"
+                            class="rounded-lg border p-3"
                         >
-                            {{ editForm.errors.title }}
-                        </p>
-                    </div>
-
-                    <div class="space-y-2">
-                        <Label for="task-description">{{
-                            labels.description
-                        }}</Label>
-                        <textarea
-                            id="task-description"
-                            v-model="editForm.description"
-                            rows="4"
-                            :placeholder="labels.descriptionPlaceholder"
-                            class="flex min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:bg-input/30 dark:aria-invalid:ring-destructive/40"
-                        />
-                        <p
-                            v-if="editForm.errors.description"
-                            class="text-sm text-destructive"
-                        >
-                            {{ editForm.errors.description }}
-                        </p>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        <div class="space-y-2">
-                            <Label>{{ labels.status }}</Label>
-                            <Select v-model="editForm.status">
-                                <SelectTrigger class="w-full">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="pending">{{
-                                        labels.statuses.pending
-                                    }}</SelectItem>
-                                    <SelectItem value="in_progress">{{
-                                        labels.statuses.inProgress
-                                    }}</SelectItem>
-                                    <SelectItem value="completed">{{
-                                        labels.statuses.completed
-                                    }}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p
-                                v-if="editForm.errors.status"
-                                class="text-sm text-destructive"
-                            >
-                                {{ editForm.errors.status }}
+                            <p class="mb-2 text-sm font-medium">
+                                {{ cl.name }}
                             </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label>{{ labels.priority }}</Label>
-                            <Select v-model="editForm.priority">
-                                <SelectTrigger class="w-full">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">{{
-                                        labels.priorities.none
-                                    }}</SelectItem>
-                                    <SelectItem value="low">{{
-                                        labels.priorities.low
-                                    }}</SelectItem>
-                                    <SelectItem value="medium">{{
-                                        labels.priorities.medium
-                                    }}</SelectItem>
-                                    <SelectItem value="high">{{
-                                        labels.priorities.high
-                                    }}</SelectItem>
-                                    <SelectItem value="urgent">{{
-                                        labels.priorities.urgent
-                                    }}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p
-                                v-if="editForm.errors.priority"
-                                class="text-sm text-destructive"
+                            <div
+                                v-for="item in cl.items ?? []"
+                                :key="item.id"
+                                class="flex items-center gap-2 py-1"
                             >
-                                {{ editForm.errors.priority }}
-                            </p>
+                                <input
+                                    type="checkbox"
+                                    :checked="item.is_checked"
+                                    class="h-3 w-3"
+                                    @change="toggleChecklistItem(item.id)"
+                                />
+                                <span
+                                    :class="[
+                                        'text-sm',
+                                        item.is_checked
+                                            ? 'text-muted-foreground line-through'
+                                            : '',
+                                    ]"
+                                    >{{ item.content }}</span
+                                >
+                            </div>
+                            <div class="mt-2 flex gap-2">
+                                <Input
+                                    v-model="checklistItemDrafts[cl.id]"
+                                    :placeholder="t('tasks.detail.add_item')"
+                                    class="h-8 text-xs"
+                                    @keyup.enter="addChecklistItem(cl.id)"
+                                />
+                            </div>
                         </div>
-
-                        <div class="space-y-2">
-                            <Label for="task-due-date">{{
-                                labels.dueDate
-                            }}</Label>
+                        <div class="flex gap-2">
                             <Input
-                                id="task-due-date"
-                                v-model="editForm.due_date"
-                                type="date"
+                                v-model="checklistName"
+                                :placeholder="t('tasks.detail.checklist_short')"
+                                class="h-8 text-xs"
+                                @keyup.enter="addChecklist"
                             />
-                            <p
-                                v-if="editForm.errors.due_date"
-                                class="text-sm text-destructive"
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                @click="addChecklist"
+                                >{{ t('common.actions.add') }}</Button
                             >
-                                {{ editForm.errors.due_date }}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Comments -->
+                <Card>
+                    <CardHeader class="flex flex-row items-center gap-2">
+                        <MessageSquare class="h-4 w-4" />
+                        <CardTitle class="text-base">{{
+                            t('tasks.detail.comments_count', {
+                                count: formatNumber(todo.comments?.length ?? 0),
+                            })
+                        }}</CardTitle>
+                    </CardHeader>
+                    <CardContent class="space-y-3">
+                        <div
+                            v-for="comment in todo.comments ?? []"
+                            :key="comment.id"
+                            class="rounded-lg border p-3"
+                        >
+                            <div class="mb-1 flex items-center gap-2">
+                                <span class="text-sm font-medium">{{
+                                    comment.user?.name ??
+                                    t('common.states.unknown')
+                                }}</span>
+                                <span class="text-xs text-muted-foreground">{{
+                                    formatDate(comment.created_at)
+                                }}</span>
+                            </div>
+                            <p class="text-sm whitespace-pre-wrap">
+                                {{ comment.body }}
                             </p>
                         </div>
-                    </div>
-
-                    <div class="flex flex-wrap justify-end gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            :disabled="editForm.processing"
-                            @click="cancelEditing"
-                        >
-                            {{ labels.cancel }}
-                        </Button>
-                        <Button
-                            type="submit"
-                            :disabled="
-                                editForm.processing || !editForm.title.trim()
-                            "
-                        >
-                            <LoaderCircle
-                                v-if="editForm.processing"
-                                class="h-4 w-4 animate-spin"
+                        <div class="flex gap-2">
+                            <Input
+                                v-model="comment"
+                                :placeholder="
+                                    t('tasks.detail.comment_placeholder')
+                                "
+                                class="h-8 text-xs"
+                                @keyup.enter="addComment"
                             />
-                            {{
-                                editForm.processing
-                                    ? labels.saving
-                                    : labels.saveChanges
-                            }}
-                        </Button>
-                    </div>
-                </form>
-            </CardContent>
-        </Card>
-
-        <!-- Metadata -->
-        <div class="grid grid-cols-2 gap-4">
-            <Card
-                ><CardContent class="space-y-1 pt-4">
-                    <div class="flex items-center gap-2 text-sm">
-                        <Calendar class="h-4 w-4 text-muted-foreground" />{{
-                            t('tasks.detail.due', {
-                                date: formatDate(todo.due_date),
-                            })
-                        }}
-                    </div>
-                    <div class="flex items-center gap-2 text-sm">
-                        <User class="h-4 w-4 text-muted-foreground" />{{
-                            t('tasks.detail.assigned', {
-                                name:
-                                    todo.assignee?.name ??
-                                    t('common.states.unassigned'),
-                            })
-                        }}
-                    </div>
-                    <div class="flex items-center gap-2 text-sm">
-                        <Clock class="h-4 w-4 text-muted-foreground" />{{
-                            t('tasks.detail.created', {
-                                date: formatDate(todo.created_at),
-                            })
-                        }}
-                    </div>
-                </CardContent></Card
-            >
-            <Card
-                ><CardContent class="pt-4">
-                    <div v-if="todo.labels?.length" class="mb-2">
-                        <p
-                            class="mb-1 text-xs font-medium text-muted-foreground"
-                        >
-                            {{ t('tasks.detail.labels') }}
-                        </p>
-                        <div class="flex flex-wrap gap-1">
-                            <Badge
-                                v-for="l in todo.labels"
-                                :key="l.id"
-                                :style="{
-                                    backgroundColor: l.color,
-                                    color: 'white',
-                                }"
-                                class="text-xs"
-                                >{{ l.name }}</Badge
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                @click="addComment"
+                                >{{ t('common.actions.post') }}</Button
                             >
                         </div>
-                    </div>
-                    <div v-if="todo.tags?.length">
-                        <p
-                            class="mb-1 text-xs font-medium text-muted-foreground"
-                        >
-                            {{ t('tasks.detail.tags') }}
-                        </p>
-                        <div class="flex flex-wrap gap-1">
-                            <Badge
-                                v-for="t in todo.tags"
-                                :key="t.id"
-                                variant="secondary"
-                                class="text-xs"
-                                >{{ t.name }}</Badge
-                            >
-                        </div>
-                    </div>
-                </CardContent></Card
-            >
-        </div>
-
-        <!-- Description -->
-        <Card v-if="todo.description">
-            <CardHeader
-                ><CardTitle class="text-base">{{
-                    t('tasks.detail.description')
-                }}</CardTitle></CardHeader
-            >
-            <CardContent
-                ><p class="text-sm whitespace-pre-wrap">
-                    {{ todo.description }}
-                </p></CardContent
-            >
-        </Card>
-
-        <!-- Checklists -->
-        <Card v-if="todo.checklists?.length">
-            <CardHeader
-                ><CardTitle class="text-base">{{
-                    t('tasks.detail.checklists')
-                }}</CardTitle></CardHeader
-            >
-            <CardContent class="space-y-4">
-                <div
-                    v-for="cl in todo.checklists"
-                    :key="cl.id"
-                    class="rounded-lg border p-3"
-                >
-                    <p class="mb-2 text-sm font-medium">{{ cl.name }}</p>
-                    <div
-                        v-for="item in cl.items ?? []"
-                        :key="item.id"
-                        class="flex items-center gap-2 py-1"
-                    >
-                        <input
-                            type="checkbox"
-                            :checked="item.is_checked"
-                            class="h-3 w-3"
-                            @change="toggleChecklistItem(item.id)"
-                        />
-                        <span
-                            :class="[
-                                'text-sm',
-                                item.is_checked
-                                    ? 'text-muted-foreground line-through'
-                                    : '',
-                            ]"
-                            >{{ item.content }}</span
-                        >
-                    </div>
-                    <div class="mt-2 flex gap-2">
-                        <Input
-                            v-model="checklistItemDrafts[cl.id]"
-                            :placeholder="t('tasks.detail.add_item')"
-                            class="h-8 text-xs"
-                            @keyup.enter="addChecklistItem(cl.id)"
-                        />
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <Input
-                        v-model="checklistName"
-                        :placeholder="t('tasks.detail.checklist_short')"
-                        class="h-8 text-xs"
-                        @keyup.enter="addChecklist"
-                    />
-                    <Button variant="outline" size="sm" @click="addChecklist">{{
-                        t('common.actions.add')
-                    }}</Button>
-                </div>
-            </CardContent>
-        </Card>
-
-        <!-- Comments -->
-        <Card>
-            <CardHeader class="flex flex-row items-center gap-2">
-                <MessageSquare class="h-4 w-4" />
-                <CardTitle class="text-base">{{
-                    t('tasks.detail.comments_count', {
-                        count: formatNumber(todo.comments?.length ?? 0),
-                    })
-                }}</CardTitle>
-            </CardHeader>
-            <CardContent class="space-y-3">
-                <div
-                    v-for="comment in todo.comments ?? []"
-                    :key="comment.id"
-                    class="rounded-lg border p-3"
-                >
-                    <div class="mb-1 flex items-center gap-2">
-                        <span class="text-sm font-medium">{{
-                            comment.user?.name ?? t('common.states.unknown')
-                        }}</span>
-                        <span class="text-xs text-muted-foreground">{{
-                            formatDate(comment.created_at)
-                        }}</span>
-                    </div>
-                    <p class="text-sm whitespace-pre-wrap">
-                        {{ comment.body }}
-                    </p>
-                </div>
-                <div class="flex gap-2">
-                    <Input
-                        v-model="comment"
-                        :placeholder="t('tasks.detail.comment_placeholder')"
-                        class="h-8 text-xs"
-                        @keyup.enter="addComment"
-                    />
-                    <Button variant="outline" size="sm" @click="addComment">{{
-                        t('common.actions.post')
-                    }}</Button>
-                </div>
-            </CardContent>
-        </Card>
+                    </CardContent>
+                </Card>
+            </div>
+        </main>
     </div>
 </template>

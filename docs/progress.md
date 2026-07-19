@@ -1323,6 +1323,59 @@ No migration or Composer/npm package was added, removed, or upgraded.
 - Commit `4ed0952` (`fix: clean board and keyboard guards`) was pushed to `origin main`.
 - This final delivery record will be committed as `docs: record ESLint cleanup delivery` and pushed separately to `origin main`.
 
+## UI Phase: Warm Precision Across All Pages
+
+### Status
+
+Completed.
+
+### Before Implementation Inventory
+
+- Confirmed `/projects` as the live visual reference: warm neutral canvas, orange editorial accent, oversized page title, integrated metric strip, rounded collection surfaces, and restrained depth.
+- Inventoried every routed Inertia page and found the Warm Precision system already present on Activity, Notifications, Calendar, and Projects, while Dashboard, Tasks, task/project detail, Workspaces, Settings, and Auth still used starter-kit styling.
+- Preserved the active localization, transfer/upload, Wayfinder, and task-state work already present in the dirty worktree.
+
+### Scope And Decisions
+
+- Extend the shared `WorkspacePageHeader` and `WorkspaceMetric` presentation to Dashboard, Tasks, task detail, project detail, and Workspaces without changing their Inertia contracts or state-change behavior.
+- Give Settings and every Fortify/Auth page shared responsive shells that carry the same orange line, rounded white surface, warm background, and light/dark treatment.
+- Align common cards, buttons, inputs, select triggers, dialogs, headings, focus rings, corner radius, and sidebar tokens so secondary pages and nested forms inherit the design automatically.
+- Keep all copy semantic and translated in English, Lithuanian, and Russian; add Workspaces header and metric labels to each locale.
+- Correct the task index's visible pagination total to read Laravel resource pagination from `meta.total`, with backward-compatible fallbacks.
+
+### Changed Files
+
+- Shared theme and primitives in `resources/css/app.css`, `resources/js/components/Heading.vue`, and the card, button, input, select, and dialog UI components.
+- Shared shells in `resources/js/layouts/auth/AuthSimpleLayout.vue` and `resources/js/layouts/settings/Layout.vue`.
+- Warm Precision page implementations in Dashboard, Tasks index/detail, Projects detail, and Workspaces index.
+- English, Lithuanian, and Russian workspace copy in the three `lang/*/ui.php` catalogs.
+- Focused presentation contract coverage in `tests/Feature/FrontendDesignTest.php`.
+
+### Migrations And Packages
+
+No migration or Composer/npm package was added, removed, or upgraded.
+
+### Verification
+
+- The new presentation contract first failed all five legacy page/shell datasets, then passed with 6 tests and 21 assertions after implementation.
+- Focused frontend/design/localization/workspace/dashboard/task/project Pest coverage passed with 36 tests and 238 assertions.
+- The full Pest suite passed with 196 tests and 1,181 assertions.
+- Frontend state tests passed, and full ESLint plus full resource Prettier verification passed with zero findings.
+- Scoped Vue type checking passes for every changed file; the full check is blocked only by the existing `useAutosave.ts` import of the unavailable `@vueuse/core` `debounce` export.
+- The production Vite build passed with only the existing optional `fontaine` notice.
+- Pint and `git diff --check` passed. Full Larastan remains red with 327 existing application errors; this frontend-only phase adds no PHP application error.
+- Browser verification passed at 1440px and 390px for Dashboard, Tasks, Project detail, Workspaces, Settings, and Auth, including the dark mobile Tasks view. All checked pages had no horizontal overflow, console errors, or JavaScript errors.
+
+### Known Limitations
+
+- The repository-wide Vue type check remains blocked by the unrelated `resources/js/composables/useAutosave.ts` import noted above.
+- Full Larastan retains its existing application-wide backlog of 327 errors.
+- The optional `fontaine` build notice remains unchanged because resolving it requires a dependency or build-configuration decision outside this UI phase.
+
+### Git Delivery
+
+Commit message: `feat: extend warm precision design`. Push to `origin main` will be attempted immediately after the isolated phase commit; any failure will be recorded in a follow-up delivery entry.
+
 ## Frontend Formatting Cleanup
 
 ### Status

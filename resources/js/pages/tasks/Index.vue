@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { Plus, Search, Trash2 } from '@lucide/vue';
-import { ref, computed } from 'vue';
+import {
+    CheckCircle2,
+    Clock3,
+    ListChecks,
+    Plus,
+    Search,
+    Trash2,
+} from '@lucide/vue';
+import { computed, ref } from 'vue';
+import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
+import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import TaskCreateDialog from '@/components/task/TaskCreateDialog.vue';
 import TaskDetail from '@/components/task/TaskDetail.vue';
 import { Badge } from '@/components/ui/badge';
@@ -25,10 +34,10 @@ import {
     uncomplete,
 } from '@/routes/todos';
 import type { PaginatedResponse } from '@/types/api';
-import type { Todo, Project } from '@/types/models';
+import type { Project, Todo } from '@/types/models';
 
 const props = defineProps<{
-    todos: PaginatedResponse<Todo>;
+    todos: PaginatedResponse<Todo> & { meta?: { total: number } };
     filters: Record<string, string>;
     projects: { data: Project[] };
     workspace: { id: string };
@@ -44,8 +53,17 @@ const selectedTodo = ref<Todo | null>(null);
 const showCreateDialog = ref(false);
 
 const allTodos = computed(() => props.todos.data);
+const totalCount = computed(
+    () => props.todos.meta?.total ?? props.todos.total ?? allTodos.value.length,
+);
+const pendingCount = computed(
+    () => allTodos.value.filter((todo) => todo.status === 'pending').length,
+);
+const completedCount = computed(
+    () => allTodos.value.filter((todo) => todo.status === 'completed').length,
+);
 
-function applyFilters() {
+function applyFilters(): void {
     router.get(
         tasksIndex.url(),
         {
@@ -61,14 +79,14 @@ function applyFilters() {
     );
 }
 
-function toggleComplete(todo: Todo) {
+function toggleComplete(todo: Todo): void {
     const target =
         todo.status === 'completed' ? uncomplete(todo) : complete(todo);
 
     router.post(target.url, {}, { preserveScroll: true });
 }
 
-function deleteTodo(todo: Todo) {
+function deleteTodo(todo: Todo): void {
     router.delete(destroy(todo).url, {
         preserveScroll: true,
         onSuccess: () => {
@@ -81,7 +99,7 @@ function deleteTodo(todo: Todo) {
     });
 }
 
-function selectTodo(todo: Todo) {
+function selectTodo(todo: Todo): void {
     router.get(
         show(todo).url,
         {},
@@ -123,181 +141,253 @@ function formatDate(date: string | null): string {
 </script>
 
 <template>
-    <Head :title="t('tasks.index.title')" />
-    <div class="space-y-6 p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-bold">
-                    {{ t('tasks.index.title') }}
-                </h1>
-                <p class="text-muted-foreground">
-                    {{
+    <div>
+        <Head :title="t('tasks.index.title')" />
+
+        <main class="min-h-full bg-muted/20 px-4 py-5 sm:p-6 lg:p-8">
+            <div class="mx-auto flex max-w-[1480px] flex-col gap-6">
+                <WorkspacePageHeader
+                    :eyebrow="t('tasks.board.to_do')"
+                    :title="t('tasks.index.title')"
+                    :description="
                         t('tasks.index.count', {
-                            count: formatNumber(todos.total),
+                            count: formatNumber(totalCount),
                         })
-                    }}
-                </p>
-            </div>
-            <div class="flex items-center gap-2">
-                <Button @click="showCreateDialog = true"
-                    ><Plus class="mr-2 h-4 w-4" />{{
-                        t('tasks.create.new_task')
-                    }}</Button
+                    "
                 >
-            </div>
-        </div>
-
-        <div class="flex items-center gap-4">
-            <div class="relative max-w-sm flex-1">
-                <Search
-                    class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                    v-model="searchQuery"
-                    :placeholder="t('tasks.filters.search')"
-                    class="pl-9"
-                    @keyup.enter="applyFilters"
-                />
-            </div>
-            <Select v-model="statusFilter" @update:model-value="applyFilters">
-                <SelectTrigger class="w-[150px]"
-                    ><SelectValue :placeholder="t('tasks.filters.status')"
-                /></SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">{{
-                        t('tasks.filters.all_statuses')
-                    }}</SelectItem>
-                    <SelectItem value="pending">{{
-                        t('tasks.statuses.pending')
-                    }}</SelectItem>
-                    <SelectItem value="in_progress">{{
-                        t('tasks.statuses.in_progress')
-                    }}</SelectItem>
-                    <SelectItem value="completed">{{
-                        t('tasks.statuses.completed')
-                    }}</SelectItem>
-                </SelectContent>
-            </Select>
-            <Select v-model="priorityFilter" @update:model-value="applyFilters">
-                <SelectTrigger class="w-[150px]"
-                    ><SelectValue :placeholder="t('tasks.filters.priority')"
-                /></SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">{{
-                        t('tasks.filters.all_priorities')
-                    }}</SelectItem>
-                    <SelectItem value="urgent">{{
-                        t('tasks.priorities.urgent')
-                    }}</SelectItem>
-                    <SelectItem value="high">{{
-                        t('tasks.priorities.high')
-                    }}</SelectItem>
-                    <SelectItem value="medium">{{
-                        t('tasks.priorities.medium')
-                    }}</SelectItem>
-                    <SelectItem value="low">{{
-                        t('tasks.priorities.low')
-                    }}</SelectItem>
-                </SelectContent>
-            </Select>
-        </div>
-
-        <div
-            v-if="bulkSelect.hasSelection.value"
-            class="flex items-center gap-4 rounded-lg border bg-muted p-3"
-        >
-            <span class="text-sm">{{
-                t('common.states.selected', {
-                    count: formatNumber(bulkSelect.selectedCount.value),
-                })
-            }}</span>
-            <Button
-                variant="outline"
-                size="sm"
-                @click="bulkSelect.clearSelection"
-                >{{ t('common.actions.cancel') }}</Button
-            >
-        </div>
-
-        <div class="space-y-2">
-            <div
-                v-for="todo in allTodos"
-                :key="todo.id"
-                class="flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50"
-                @click="selectTodo(todo)"
-            >
-                <input
-                    type="checkbox"
-                    :checked="todo.status === 'completed'"
-                    class="h-4 w-4 rounded border-gray-300"
-                    @change.stop="toggleComplete(todo)"
-                />
-                <div class="min-w-0 flex-1">
-                    <p
-                        :class="[
-                            'text-sm font-medium',
-                            todo.status === 'completed'
-                                ? 'text-muted-foreground line-through'
-                                : '',
-                        ]"
-                    >
-                        {{ todo.title }}
-                    </p>
-                    <div class="mt-1 flex items-center gap-2">
-                        <span
-                            v-if="todo.project"
-                            class="text-xs text-muted-foreground"
-                            >{{ todo.project.name }}</span
+                    <template #actions>
+                        <Button
+                            class="min-h-11 px-4"
+                            @click="showCreateDialog = true"
                         >
-                        <span
-                            v-if="todo.due_date"
-                            class="text-xs text-muted-foreground"
-                            >{{ formatDate(todo.due_date) }}</span
-                        >
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <Badge :variant="priorityBadge(todo.priority)">{{
-                        t(`tasks.priorities.${todo.priority}`)
-                    }}</Badge>
-                    <div class="flex gap-1">
-                        <span
-                            v-for="label in (todo.labels ?? []).slice(0, 2)"
-                            :key="label.id"
-                            class="h-2 w-2 rounded-full"
-                            :style="{ backgroundColor: label.color }"
+                            <Plus class="size-4" aria-hidden="true" />
+                            {{ t('tasks.create.new_task') }}
+                        </Button>
+                    </template>
+
+                    <template #metrics>
+                        <WorkspaceMetric
+                            :label="t('tasks.stats.total')"
+                            :value="formatNumber(totalCount)"
+                            :icon="ListChecks"
+                            tone="orange"
                         />
+                        <WorkspaceMetric
+                            :label="t('tasks.stats.pending')"
+                            :value="formatNumber(pendingCount)"
+                            :icon="Clock3"
+                            tone="blue"
+                        />
+                        <WorkspaceMetric
+                            :label="t('tasks.stats.completed')"
+                            :value="formatNumber(completedCount)"
+                            :icon="CheckCircle2"
+                            tone="emerald"
+                        />
+                    </template>
+                </WorkspacePageHeader>
+
+                <section
+                    class="rounded-[1.5rem] border border-border/80 bg-card p-4 shadow-[0_20px_60px_-52px_rgba(15,23,42,0.6)] sm:p-6"
+                >
+                    <div
+                        class="grid gap-3 border-b border-border/70 pb-5 sm:grid-cols-2 lg:grid-cols-[minmax(16rem,1fr)_11rem_11rem]"
+                    >
+                        <div class="relative sm:col-span-2 lg:col-span-1">
+                            <Search
+                                class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+                                aria-hidden="true"
+                            />
+                            <Input
+                                v-model="searchQuery"
+                                type="search"
+                                :placeholder="t('tasks.filters.search')"
+                                class="pl-10"
+                                @keyup.enter="applyFilters"
+                            />
+                        </div>
+                        <Select
+                            v-model="statusFilter"
+                            @update:model-value="applyFilters"
+                        >
+                            <SelectTrigger class="w-full">
+                                <SelectValue
+                                    :placeholder="t('tasks.filters.status')"
+                                />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    {{ t('tasks.filters.all_statuses') }}
+                                </SelectItem>
+                                <SelectItem value="pending">
+                                    {{ t('tasks.statuses.pending') }}
+                                </SelectItem>
+                                <SelectItem value="in_progress">
+                                    {{ t('tasks.statuses.in_progress') }}
+                                </SelectItem>
+                                <SelectItem value="completed">
+                                    {{ t('tasks.statuses.completed') }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select
+                            v-model="priorityFilter"
+                            @update:model-value="applyFilters"
+                        >
+                            <SelectTrigger class="w-full">
+                                <SelectValue
+                                    :placeholder="t('tasks.filters.priority')"
+                                />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    {{ t('tasks.filters.all_priorities') }}
+                                </SelectItem>
+                                <SelectItem value="urgent">
+                                    {{ t('tasks.priorities.urgent') }}
+                                </SelectItem>
+                                <SelectItem value="high">
+                                    {{ t('tasks.priorities.high') }}
+                                </SelectItem>
+                                <SelectItem value="medium">
+                                    {{ t('tasks.priorities.medium') }}
+                                </SelectItem>
+                                <SelectItem value="low">
+                                    {{ t('tasks.priorities.low') }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                </div>
-                <Button variant="ghost" size="sm" @click.stop="deleteTodo(todo)"
-                    ><Trash2 class="h-4 w-4"
-                /></Button>
+
+                    <div
+                        v-if="bulkSelect.hasSelection.value"
+                        class="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-orange-500/15 bg-orange-500/[0.06] p-3"
+                    >
+                        <span class="text-sm">
+                            {{
+                                t('common.states.selected', {
+                                    count: formatNumber(
+                                        bulkSelect.selectedCount.value,
+                                    ),
+                                })
+                            }}
+                        </span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            @click="bulkSelect.clearSelection"
+                        >
+                            {{ t('common.actions.cancel') }}
+                        </Button>
+                    </div>
+
+                    <div v-if="allTodos.length" class="mt-5 space-y-2.5">
+                        <div
+                            v-for="todo in allTodos"
+                            :key="todo.id"
+                            class="group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border/80 bg-background p-3.5 transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-orange-500/25 hover:shadow-[0_16px_36px_-30px_rgba(234,88,12,0.55)] motion-reduce:transform-none sm:gap-4 sm:p-4"
+                            @click="selectTodo(todo)"
+                        >
+                            <input
+                                type="checkbox"
+                                :checked="todo.status === 'completed'"
+                                class="size-4 rounded border-gray-300 accent-orange-600"
+                                :aria-label="todo.title"
+                                @change.stop="toggleComplete(todo)"
+                            />
+                            <div class="min-w-0">
+                                <p
+                                    :class="[
+                                        'truncate text-sm font-medium',
+                                        todo.status === 'completed'
+                                            ? 'text-muted-foreground line-through'
+                                            : '',
+                                    ]"
+                                >
+                                    {{ todo.title }}
+                                </p>
+                                <div
+                                    class="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"
+                                >
+                                    <span
+                                        v-if="todo.project"
+                                        class="truncate text-xs text-muted-foreground"
+                                    >
+                                        {{ todo.project.name }}
+                                    </span>
+                                    <span
+                                        v-if="todo.due_date"
+                                        class="text-xs text-muted-foreground"
+                                    >
+                                        {{ formatDate(todo.due_date) }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5 sm:gap-2">
+                                <Badge
+                                    class="hidden sm:inline-flex"
+                                    :variant="priorityBadge(todo.priority)"
+                                >
+                                    {{ t(`tasks.priorities.${todo.priority}`) }}
+                                </Badge>
+                                <div class="hidden gap-1 md:flex">
+                                    <span
+                                        v-for="label in (
+                                            todo.labels ?? []
+                                        ).slice(0, 2)"
+                                        :key="label.id"
+                                        class="size-2 rounded-full"
+                                        :style="{
+                                            backgroundColor: label.color,
+                                        }"
+                                    />
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    class="text-muted-foreground opacity-70 hover:text-destructive sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
+                                    :aria-label="t('common.actions.delete')"
+                                    @click.stop="deleteTodo(todo)"
+                                >
+                                    <Trash2 class="size-4" aria-hidden="true" />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        v-else
+                        class="flex min-h-72 flex-col items-center justify-center px-6 text-center"
+                    >
+                        <div
+                            class="flex size-16 items-center justify-center rounded-2xl bg-orange-500/[0.08] text-orange-700 dark:text-orange-300"
+                        >
+                            <ListChecks class="size-7" aria-hidden="true" />
+                        </div>
+                        <p class="mt-5 text-lg font-semibold">
+                            {{ t('tasks.index.empty_title') }}
+                        </p>
+                        <p class="mt-1 text-sm text-muted-foreground">
+                            {{ t('tasks.index.empty_description') }}
+                        </p>
+                    </div>
+                </section>
             </div>
-        </div>
+        </main>
 
-        <div
-            v-if="allTodos.length === 0"
-            class="flex flex-col items-center justify-center py-12 text-muted-foreground"
-        >
-            <p class="text-lg">{{ t('tasks.index.empty_title') }}</p>
-            <p class="text-sm">{{ t('tasks.index.empty_description') }}</p>
-        </div>
+        <TaskDetail
+            v-if="selectedTodo"
+            :key="selectedTodo.id"
+            :todo="selectedTodo"
+            :open="Boolean(selectedTodo)"
+            @close="selectedTodo = null"
+        />
+
+        <TaskCreateDialog
+            :open="showCreateDialog"
+            :workspace-id="workspace.id"
+            @close="showCreateDialog = false"
+            @created="applyFilters"
+        />
     </div>
-
-    <!-- Task Detail Drawer -->
-    <TaskDetail
-        v-if="selectedTodo"
-        :key="selectedTodo.id"
-        :todo="selectedTodo"
-        :open="!!selectedTodo"
-        @close="selectedTodo = null"
-    />
-
-    <!-- Create Task Dialog -->
-    <TaskCreateDialog
-        :open="showCreateDialog"
-        :workspace-id="workspace.id"
-        @close="showCreateDialog = false"
-        @created="applyFilters"
-    />
 </template>

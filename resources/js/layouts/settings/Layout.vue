@@ -98,7 +98,7 @@ const navItems = computed(() => [
                         {{ item.label }}
                     </Link>
                 </nav>
-                <div class="min-w-0 flex-1">
+                <div class="settings-page min-w-0 flex-1">
                     <slot />
                 </div>
             </div>

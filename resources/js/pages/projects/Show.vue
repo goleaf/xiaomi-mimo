@@ -1,7 +1,19 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ArrowLeft, Plus, Trash2, Archive, RotateCcw } from '@lucide/vue';
-import { ref, computed } from 'vue';
+import {
+    Archive,
+    ArrowLeft,
+    CheckCircle2,
+    Clock3,
+    ListChecks,
+    Plus,
+    RotateCcw,
+    Search,
+    Trash2,
+} from '@lucide/vue';
+import { computed, ref } from 'vue';
+import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
+import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import TaskCreateDialog from '@/components/task/TaskCreateDialog.vue';
 import TaskDetail from '@/components/task/TaskDetail.vue';
 import { Badge } from '@/components/ui/badge';
@@ -32,28 +44,28 @@ const filteredTodos = computed(() => {
         return props.todos;
     }
 
-    return props.todos.filter((t) =>
-        t.title.toLowerCase().includes(searchQuery.value.toLowerCase()),
+    return props.todos.filter((todo) =>
+        todo.title.toLowerCase().includes(searchQuery.value.toLowerCase()),
     );
 });
 
 const pendingTodos = computed(() =>
-    filteredTodos.value.filter((t) => t.status === 'pending'),
+    filteredTodos.value.filter((todo) => todo.status === 'pending'),
 );
 const inProgressTodos = computed(() =>
-    filteredTodos.value.filter((t) => t.status === 'in_progress'),
+    filteredTodos.value.filter((todo) => todo.status === 'in_progress'),
 );
 const completedTodos = computed(() =>
-    filteredTodos.value.filter((t) => t.status === 'completed'),
+    filteredTodos.value.filter((todo) => todo.status === 'completed'),
 );
 
-function toggleComplete(todo: Todo) {
+function toggleComplete(todo: Todo): void {
     const target = todo.status === 'completed' ? uncomplete : complete;
 
     router.post(target(todo).url, {}, { preserveScroll: true });
 }
 
-function deleteTodo(todo: Todo) {
+function deleteTodo(todo: Todo): void {
     router.delete(destroy(todo).url, {
         preserveScroll: true,
         onSuccess: () => {
@@ -66,7 +78,7 @@ function deleteTodo(todo: Todo) {
     });
 }
 
-function archiveProject() {
+function archiveProject(): void {
     router.post(
         archive([props.workspace.id, project.value.id]).url,
         {},
@@ -77,7 +89,7 @@ function archiveProject() {
     );
 }
 
-function restoreProject() {
+function restoreProject(): void {
     router.post(
         restore([props.workspace.id, project.value.id]).url,
         {},
@@ -88,7 +100,7 @@ function restoreProject() {
     );
 }
 
-function duplicateProject() {
+function duplicateProject(): void {
     router.post(
         duplicate([props.workspace.id, project.value.id]).url,
         {},
@@ -99,7 +111,7 @@ function duplicateProject() {
     );
 }
 
-function selectTodo(todo: Todo) {
+function selectTodo(todo: Todo): void {
     router.get(
         show(todo).url,
         {},
@@ -114,18 +126,28 @@ function selectTodo(todo: Todo) {
     );
 }
 
-const priorityBadge = (
-    p: string,
-): 'default' | 'destructive' | 'outline' | 'secondary' =>
-    ({
+function priorityBadge(
+    priority: string,
+): 'default' | 'destructive' | 'outline' | 'secondary' {
+    const variants: Record<
+        string,
+        'default' | 'destructive' | 'outline' | 'secondary'
+    > = {
         urgent: 'destructive',
         high: 'destructive',
         medium: 'secondary',
         low: 'outline',
         none: 'outline',
-    })[p] ?? 'outline';
-const formatDate = (date: string | null) =>
-    date ? formatLocalizedDate(date, { month: 'short', day: 'numeric' }) : '';
+    };
+
+    return variants[priority] ?? 'outline';
+}
+
+function formatDate(date: string | null): string {
+    return date
+        ? formatLocalizedDate(date, { month: 'short', day: 'numeric' })
+        : '';
+}
 
 const taskGroups = computed(() => [
     {
@@ -147,148 +169,219 @@ const taskGroups = computed(() => [
 </script>
 
 <template>
-    <Head :title="project.name" />
-    <div class="space-y-6 p-6">
-        <div class="flex items-center gap-4">
-            <Button variant="ghost" size="sm" @click="router.visit(projects())">
-                <ArrowLeft class="mr-1 h-4 w-4" />{{ t('common.actions.back') }}
-            </Button>
-            <div
-                class="flex h-8 w-8 items-center justify-center rounded-lg"
-                :style="{ backgroundColor: project.color + '20' }"
-            >
-                <div
-                    class="h-4 w-4 rounded"
-                    :style="{ backgroundColor: project.color }"
-                />
-            </div>
-            <div class="flex-1">
-                <h1 class="text-2xl font-bold">{{ project.name }}</h1>
-                <p class="text-sm text-muted-foreground">
-                    {{
+    <div>
+        <Head :title="project.name" />
+
+        <main class="min-h-full bg-muted/20 px-4 py-5 sm:p-6 lg:p-8">
+            <div class="mx-auto flex max-w-[1480px] flex-col gap-6">
+                <WorkspacePageHeader
+                    :eyebrow="
+                        t('projects.show.task_count', {
+                            count: formatNumber(todos.length),
+                        })
+                    "
+                    :title="project.name"
+                    :description="
                         project.description ?? t('projects.show.no_description')
-                    }}
-                </p>
-            </div>
-            <div class="flex gap-2">
-                <Button variant="outline" size="sm" @click="duplicateProject">{{
-                    t('common.actions.duplicate')
-                }}</Button>
-                <Button
-                    v-if="!project.is_archived"
-                    variant="outline"
-                    size="sm"
-                    @click="archiveProject"
+                    "
                 >
-                    <Archive class="mr-1 h-4 w-4" />{{
-                        t('common.actions.archive')
-                    }}
-                </Button>
-                <Button
-                    v-else
-                    variant="outline"
-                    size="sm"
-                    @click="restoreProject"
-                >
-                    <RotateCcw class="mr-1 h-4 w-4" />{{
-                        t('common.actions.restore')
-                    }}
-                </Button>
-                <Button @click="showCreateDialog = true"
-                    ><Plus class="mr-1 h-4 w-4" />{{
-                        t('projects.show.task')
-                    }}</Button
-                >
-            </div>
-        </div>
-
-        <div class="flex items-center gap-4">
-            <Input
-                v-model="searchQuery"
-                :placeholder="t('projects.show.search')"
-                class="max-w-sm"
-            />
-            <span class="text-sm text-muted-foreground">{{
-                t('projects.show.task_count', {
-                    count: formatNumber(todos.length),
-                })
-            }}</span>
-        </div>
-
-        <!-- Tasks grouped by status -->
-        <div class="space-y-6">
-            <div v-for="group in taskGroups" :key="group.key">
-                <div v-if="group.todos.length > 0">
-                    <h3 class="mb-3 text-sm font-medium text-muted-foreground">
-                        {{ group.label }} ({{
-                            formatNumber(group.todos.length)
-                        }})
-                    </h3>
-                    <div class="space-y-2">
-                        <div
-                            v-for="todo in group.todos"
-                            :key="todo.id"
-                            class="flex cursor-pointer items-center gap-4 rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                            @click="selectTodo(todo)"
+                    <template #actions>
+                        <Button
+                            variant="outline"
+                            @click="router.visit(projects())"
                         >
-                            <input
-                                type="checkbox"
-                                :checked="todo.status === 'completed'"
-                                class="h-4 w-4 rounded border-gray-300"
-                                @change.stop="toggleComplete(todo)"
+                            <ArrowLeft class="size-4" aria-hidden="true" />
+                            {{ t('common.actions.back') }}
+                        </Button>
+                        <Button variant="outline" @click="duplicateProject">
+                            {{ t('common.actions.duplicate') }}
+                        </Button>
+                        <Button
+                            v-if="!project.is_archived"
+                            variant="outline"
+                            @click="archiveProject"
+                        >
+                            <Archive class="size-4" aria-hidden="true" />
+                            {{ t('common.actions.archive') }}
+                        </Button>
+                        <Button
+                            v-else
+                            variant="outline"
+                            @click="restoreProject"
+                        >
+                            <RotateCcw class="size-4" aria-hidden="true" />
+                            {{ t('common.actions.restore') }}
+                        </Button>
+                        <Button @click="showCreateDialog = true">
+                            <Plus class="size-4" aria-hidden="true" />
+                            {{ t('projects.show.task') }}
+                        </Button>
+                    </template>
+
+                    <template #metrics>
+                        <WorkspaceMetric
+                            :label="t('tasks.stats.total')"
+                            :value="formatNumber(todos.length)"
+                            :icon="ListChecks"
+                            tone="orange"
+                        />
+                        <WorkspaceMetric
+                            :label="t('tasks.stats.in_progress')"
+                            :value="formatNumber(inProgressTodos.length)"
+                            :icon="Clock3"
+                            tone="blue"
+                        />
+                        <WorkspaceMetric
+                            :label="t('tasks.stats.completed')"
+                            :value="formatNumber(completedTodos.length)"
+                            :icon="CheckCircle2"
+                            tone="emerald"
+                        />
+                    </template>
+                </WorkspacePageHeader>
+
+                <section
+                    class="rounded-[1.5rem] border border-border/80 bg-card p-4 shadow-[0_20px_60px_-52px_rgba(15,23,42,0.6)] sm:p-6"
+                >
+                    <div
+                        class="flex flex-col gap-3 border-b border-border/70 pb-5 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <div class="relative w-full max-w-md">
+                            <Search
+                                class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+                                aria-hidden="true"
                             />
-                            <div class="min-w-0 flex-1">
-                                <p
-                                    :class="[
-                                        'text-sm font-medium',
-                                        todo.status === 'completed'
-                                            ? 'text-muted-foreground line-through'
-                                            : '',
-                                    ]"
-                                >
-                                    {{ todo.title }}
-                                </p>
-                                <span
-                                    v-if="todo.due_date"
-                                    class="text-xs text-muted-foreground"
-                                    >{{ formatDate(todo.due_date) }}</span
-                                >
-                            </div>
-                            <Badge :variant="priorityBadge(todo.priority)">{{
-                                t(`tasks.priorities.${todo.priority}`)
-                            }}</Badge>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                @click.stop="deleteTodo(todo)"
-                                ><Trash2 class="h-4 w-4"
-                            /></Button>
+                            <Input
+                                v-model="searchQuery"
+                                type="search"
+                                :placeholder="t('projects.show.search')"
+                                class="pl-10"
+                            />
                         </div>
+                        <span
+                            class="text-sm text-muted-foreground tabular-nums"
+                        >
+                            {{
+                                t('projects.show.task_count', {
+                                    count: formatNumber(filteredTodos.length),
+                                })
+                            }}
+                        </span>
                     </div>
-                </div>
+
+                    <div v-if="filteredTodos.length" class="mt-6 space-y-7">
+                        <section
+                            v-for="group in taskGroups"
+                            v-show="group.todos.length > 0"
+                            :key="group.key"
+                        >
+                            <div class="mb-3 flex items-center gap-2">
+                                <span
+                                    class="size-2 rounded-full bg-orange-500"
+                                    aria-hidden="true"
+                                />
+                                <h2
+                                    class="text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase"
+                                >
+                                    {{ group.label }} ·
+                                    {{ formatNumber(group.todos.length) }}
+                                </h2>
+                            </div>
+                            <div class="space-y-2.5">
+                                <div
+                                    v-for="todo in group.todos"
+                                    :key="todo.id"
+                                    class="group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border/80 bg-background p-3.5 transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-orange-500/25 hover:shadow-[0_16px_36px_-30px_rgba(234,88,12,0.55)] motion-reduce:transform-none sm:gap-4"
+                                    @click="selectTodo(todo)"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        :checked="todo.status === 'completed'"
+                                        class="size-4 rounded border-gray-300 accent-orange-600"
+                                        :aria-label="todo.title"
+                                        @change.stop="toggleComplete(todo)"
+                                    />
+                                    <div class="min-w-0">
+                                        <p
+                                            :class="[
+                                                'truncate text-sm font-medium',
+                                                todo.status === 'completed'
+                                                    ? 'text-muted-foreground line-through'
+                                                    : '',
+                                            ]"
+                                        >
+                                            {{ todo.title }}
+                                        </p>
+                                        <span
+                                            v-if="todo.due_date"
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            {{ formatDate(todo.due_date) }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <Badge
+                                            class="hidden sm:inline-flex"
+                                            :variant="
+                                                priorityBadge(todo.priority)
+                                            "
+                                        >
+                                            {{
+                                                t(
+                                                    `tasks.priorities.${todo.priority}`,
+                                                )
+                                            }}
+                                        </Badge>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            class="text-muted-foreground opacity-70 hover:text-destructive sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
+                                            :aria-label="
+                                                t('common.actions.delete')
+                                            "
+                                            @click.stop="deleteTodo(todo)"
+                                        >
+                                            <Trash2
+                                                class="size-4"
+                                                aria-hidden="true"
+                                            />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div
+                        v-else
+                        class="flex min-h-72 flex-col items-center justify-center px-6 text-center"
+                    >
+                        <div
+                            class="flex size-16 items-center justify-center rounded-2xl bg-orange-500/[0.08] text-orange-700 dark:text-orange-300"
+                        >
+                            <ListChecks class="size-7" aria-hidden="true" />
+                        </div>
+                        <p class="mt-5 text-lg font-semibold">
+                            {{ t('projects.show.empty') }}
+                        </p>
+                    </div>
+                </section>
             </div>
-        </div>
+        </main>
 
-        <div
-            v-if="todos.length === 0"
-            class="flex flex-col items-center justify-center py-12 text-muted-foreground"
-        >
-            <p>{{ t('projects.show.empty') }}</p>
-        </div>
+        <TaskDetail
+            v-if="selectedTodo"
+            :key="selectedTodo.id"
+            :todo="selectedTodo"
+            :open="Boolean(selectedTodo)"
+            @close="selectedTodo = null"
+        />
+        <TaskCreateDialog
+            :open="showCreateDialog"
+            :workspace-id="workspace.id"
+            :project-id="project.id"
+            @close="showCreateDialog = false"
+            @created="showCreateDialog = false"
+        />
     </div>
-
-    <TaskDetail
-        v-if="selectedTodo"
-        :key="selectedTodo.id"
-        :todo="selectedTodo"
-        :open="!!selectedTodo"
-        @close="selectedTodo = null"
-    />
-    <TaskCreateDialog
-        :open="showCreateDialog"
-        :workspace-id="workspace.id"
-        :project-id="project.id"
-        @close="showCreateDialog = false"
-        @created="() => {}"
-    />
 </template>

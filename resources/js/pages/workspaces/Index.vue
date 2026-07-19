@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { Plus, Users, Folder, CheckSquare } from '@lucide/vue';
-import { ref } from 'vue';
+import { Building2, CheckSquare, Folder, Plus, Users } from '@lucide/vue';
+import { computed, ref } from 'vue';
+import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
+import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,14 +20,27 @@ import { useUi } from '@/composables/useUi';
 import { store } from '@/routes/workspaces';
 import type { Workspace } from '@/types/models';
 
-defineProps<{ workspaces: { data: Workspace[] } }>();
+const props = defineProps<{ workspaces: { data: Workspace[] } }>();
 
 const toast = useToast();
 const { formatNumber, t } = useUi();
 const showCreateDialog = ref(false);
 const form = ref({ name: '', description: '' });
 
-function createWorkspace() {
+const memberCount = computed(() =>
+    props.workspaces.data.reduce(
+        (total, workspace) => total + (workspace.members_count ?? 0),
+        0,
+    ),
+);
+const projectCount = computed(() =>
+    props.workspaces.data.reduce(
+        (total, workspace) => total + (workspace.projects_count ?? 0),
+        0,
+    ),
+);
+
+function createWorkspace(): void {
     if (!form.value.name.trim()) {
         return;
     }
@@ -42,115 +57,212 @@ function createWorkspace() {
 </script>
 
 <template>
-    <Head :title="t('workspaces.title')" />
-    <div class="space-y-6 p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-bold">{{ t('workspaces.title') }}</h1>
-                <p class="text-muted-foreground">
-                    {{
-                        t('workspaces.count', {
-                            count: formatNumber(workspaces.data.length),
-                        })
-                    }}
-                </p>
-            </div>
-            <Button @click="showCreateDialog = true"
-                ><Plus class="mr-2 h-4 w-4" />{{ t('workspaces.new') }}</Button
-            >
-        </div>
+    <div>
+        <Head :title="t('workspaces.title')" />
 
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Card
-                v-for="workspace in workspaces.data"
-                :key="workspace.id"
-                class="cursor-pointer transition-shadow hover:shadow-md"
-            >
-                <CardHeader>
-                    <CardTitle>{{ workspace.name }}</CardTitle>
-                    <p class="text-sm text-muted-foreground">
-                        {{
-                            workspace.description ??
-                            t('workspaces.no_description')
-                        }}
-                    </p>
-                </CardHeader>
-                <CardContent>
+        <main class="min-h-full bg-muted/20 px-4 py-5 sm:p-6 lg:p-8">
+            <div class="mx-auto flex max-w-[1480px] flex-col gap-6">
+                <WorkspacePageHeader
+                    :eyebrow="t('workspaces.eyebrow')"
+                    :title="t('workspaces.title')"
+                    :description="t('workspaces.page_description')"
+                >
+                    <template #actions>
+                        <Button @click="showCreateDialog = true">
+                            <Plus class="size-4" aria-hidden="true" />
+                            {{ t('workspaces.new') }}
+                        </Button>
+                    </template>
+
+                    <template #metrics>
+                        <WorkspaceMetric
+                            :label="t('workspaces.title')"
+                            :value="formatNumber(workspaces.data.length)"
+                            :icon="Building2"
+                            tone="orange"
+                        />
+                        <WorkspaceMetric
+                            :label="t('workspaces.members')"
+                            :value="formatNumber(memberCount)"
+                            :icon="Users"
+                            tone="emerald"
+                        />
+                        <WorkspaceMetric
+                            :label="t('workspaces.projects')"
+                            :value="formatNumber(projectCount)"
+                            :icon="Folder"
+                            tone="blue"
+                        />
+                    </template>
+                </WorkspacePageHeader>
+
+                <section
+                    class="rounded-[1.5rem] border border-border/80 bg-card p-4 shadow-[0_20px_60px_-52px_rgba(15,23,42,0.6)] sm:p-6"
+                >
                     <div
-                        class="flex items-center gap-4 text-sm text-muted-foreground"
+                        v-if="workspaces.data.length"
+                        class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
                     >
-                        <span class="flex items-center gap-1"
-                            ><Users class="h-4 w-4" />{{
-                                formatNumber(workspace.members_count ?? 0)
-                            }}</span
+                        <Card
+                            v-for="(workspace, index) in workspaces.data"
+                            :key="workspace.id"
+                            class="group relative min-h-56 overflow-hidden bg-background transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-orange-500/25 hover:shadow-[0_24px_50px_-38px_rgba(234,88,12,0.5)] motion-reduce:transform-none"
                         >
-                        <span class="flex items-center gap-1"
-                            ><Folder class="h-4 w-4" />{{
-                                formatNumber(workspace.projects_count ?? 0)
-                            }}</span
-                        >
-                        <span class="flex items-center gap-1"
-                            ><CheckSquare class="h-4 w-4" />{{
-                                formatNumber(workspace.todos_count ?? 0)
-                            }}</span
-                        >
+                            <span
+                                class="absolute inset-y-0 left-0 w-1.5 bg-orange-500"
+                                aria-hidden="true"
+                            />
+                            <span
+                                class="absolute -right-4 -bottom-9 text-8xl leading-none font-semibold tracking-[-0.1em] text-foreground/[0.025] select-none dark:text-white/[0.035]"
+                                aria-hidden="true"
+                            >
+                                {{ String(index + 1).padStart(2, '0') }}
+                            </span>
+                            <CardHeader class="relative">
+                                <div
+                                    class="mb-2 flex size-11 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-700 dark:text-orange-300"
+                                >
+                                    <Building2
+                                        class="size-5"
+                                        aria-hidden="true"
+                                    />
+                                </div>
+                                <CardTitle class="tracking-[-0.02em]">
+                                    {{ workspace.name }}
+                                </CardTitle>
+                                <p
+                                    class="line-clamp-2 text-sm leading-6 text-muted-foreground"
+                                >
+                                    {{
+                                        workspace.description ??
+                                        t('workspaces.no_description')
+                                    }}
+                                </p>
+                            </CardHeader>
+                            <CardContent class="relative mt-auto">
+                                <div
+                                    class="grid grid-cols-3 divide-x divide-border/70 rounded-xl border border-border/70 bg-muted/25"
+                                >
+                                    <div
+                                        class="flex items-center justify-center gap-1.5 px-2 py-3 text-sm"
+                                        :title="t('workspaces.members')"
+                                    >
+                                        <Users
+                                            class="size-4 text-muted-foreground"
+                                            aria-hidden="true"
+                                        />
+                                        <span class="font-medium tabular-nums">
+                                            {{
+                                                formatNumber(
+                                                    workspace.members_count ??
+                                                        0,
+                                                )
+                                            }}
+                                        </span>
+                                    </div>
+                                    <div
+                                        class="flex items-center justify-center gap-1.5 px-2 py-3 text-sm"
+                                        :title="t('workspaces.projects')"
+                                    >
+                                        <Folder
+                                            class="size-4 text-muted-foreground"
+                                            aria-hidden="true"
+                                        />
+                                        <span class="font-medium tabular-nums">
+                                            {{
+                                                formatNumber(
+                                                    workspace.projects_count ??
+                                                        0,
+                                                )
+                                            }}
+                                        </span>
+                                    </div>
+                                    <div
+                                        class="flex items-center justify-center gap-1.5 px-2 py-3 text-sm"
+                                        :title="t('workspaces.tasks')"
+                                    >
+                                        <CheckSquare
+                                            class="size-4 text-muted-foreground"
+                                            aria-hidden="true"
+                                        />
+                                        <span class="font-medium tabular-nums">
+                                            {{
+                                                formatNumber(
+                                                    workspace.todos_count ?? 0,
+                                                )
+                                            }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
-                </CardContent>
-            </Card>
-        </div>
 
-        <div
-            v-if="workspaces.data.length === 0"
-            class="flex flex-col items-center justify-center py-12 text-muted-foreground"
-        >
-            <p class="text-lg">{{ t('workspaces.empty') }}</p>
-            <Button class="mt-4" @click="showCreateDialog = true"
-                ><Plus class="mr-2 h-4 w-4" />{{
-                    t('workspaces.create')
-                }}</Button
-            >
-        </div>
-    </div>
-
-    <Dialog :open="showCreateDialog" @update:open="showCreateDialog = false">
-        <DialogContent class="sm:max-w-md">
-            <DialogHeader
-                ><DialogTitle>{{
-                    t('workspaces.new')
-                }}</DialogTitle></DialogHeader
-            >
-            <form @submit.prevent="createWorkspace" class="space-y-4">
-                <div class="space-y-2">
-                    <Label for="ws-name">{{ t('workspaces.name') }}</Label>
-                    <Input
-                        id="ws-name"
-                        v-model="form.name"
-                        :placeholder="t('workspaces.name_placeholder')"
-                        autofocus
-                    />
-                </div>
-                <div class="space-y-2">
-                    <Label for="ws-desc">{{
-                        t('workspaces.description')
-                    }}</Label>
-                    <Input
-                        id="ws-desc"
-                        v-model="form.description"
-                        :placeholder="t('workspaces.description_placeholder')"
-                    />
-                </div>
-                <DialogFooter>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        @click="showCreateDialog = false"
-                        >{{ t('common.actions.cancel') }}</Button
+                    <div
+                        v-else
+                        class="flex min-h-80 flex-col items-center justify-center px-6 text-center"
                     >
-                    <Button type="submit">{{
-                        t('common.actions.create')
-                    }}</Button>
-                </DialogFooter>
-            </form>
-        </DialogContent>
-    </Dialog>
+                        <div
+                            class="flex size-16 items-center justify-center rounded-2xl bg-orange-500/[0.08] text-orange-700 dark:text-orange-300"
+                        >
+                            <Building2 class="size-7" aria-hidden="true" />
+                        </div>
+                        <p class="mt-5 text-lg font-semibold">
+                            {{ t('workspaces.empty') }}
+                        </p>
+                        <Button class="mt-5" @click="showCreateDialog = true">
+                            <Plus class="size-4" aria-hidden="true" />
+                            {{ t('workspaces.create') }}
+                        </Button>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <Dialog
+            :open="showCreateDialog"
+            @update:open="showCreateDialog = false"
+        >
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>{{ t('workspaces.new') }}</DialogTitle>
+                </DialogHeader>
+                <form class="space-y-4" @submit.prevent="createWorkspace">
+                    <div class="space-y-2">
+                        <Label for="ws-name">{{ t('workspaces.name') }}</Label>
+                        <Input
+                            id="ws-name"
+                            v-model="form.name"
+                            :placeholder="t('workspaces.name_placeholder')"
+                            autofocus
+                        />
+                    </div>
+                    <div class="space-y-2">
+                        <Label for="ws-desc">
+                            {{ t('workspaces.description') }}
+                        </Label>
+                        <Input
+                            id="ws-desc"
+                            v-model="form.description"
+                            :placeholder="
+                                t('workspaces.description_placeholder')
+                            "
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            @click="showCreateDialog = false"
+                        >
+                            {{ t('common.actions.cancel') }}
+                        </Button>
+                        <Button type="submit">
+                            {{ t('common.actions.create') }}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    </div>
 </template>
