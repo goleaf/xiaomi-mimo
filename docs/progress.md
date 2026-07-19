@@ -2209,3 +2209,60 @@ No migration or Composer/npm package change was made.
 - Documentation commit: `43b26ca` (`docs: record shared control polish`).
 - Documentation push: successful to `origin/main`.
 - This final delivery record is committed and pushed separately so the phase commits remain focused.
+
+## Unified Form Feedback And Progress
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Extend the `/projects` Warm Precision language to validation errors, success and warning notices, and file-upload progress across authentication, task editing, and settings.
+- Reuse the shared alert and field-error components so semantic colors, radii, spacing, dark mode, and assistive-technology announcements remain consistent.
+- Replace duplicate page-level error markup and the browser-dependent native upload progress appearance without changing form behavior or adding packages.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Changed Files
+
+- `resources/js/components/InputError.vue`
+- `resources/js/components/DeleteUser.vue`
+- `resources/js/components/ui/alert/Alert.vue`
+- `resources/js/components/ui/alert/index.ts`
+- `resources/js/pages/auth/Login.vue`
+- `resources/js/pages/auth/ForgotPassword.vue`
+- `resources/js/pages/auth/VerifyEmail.vue`
+- `resources/js/pages/settings/Profile.vue`
+- `resources/js/pages/settings/Security.vue`
+- `resources/js/pages/settings/Members.vue`
+- `resources/js/pages/tasks/Show.vue`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Verification
+
+- Focused frontend-design and security coverage passed with 84 tests and 373 assertions.
+- Full Pest suite passed with 369 tests and 1,656 assertions.
+- A red-first regression test reproduced the Security page's stale `user.two_factor_enabled` binding; the page now consumes the controller's `canManageTwoFactor` and `twoFactorEnabled` props.
+- PHPStan passed with 0 errors.
+- Vue TypeScript checking, ESLint, Prettier verification, and the frontend Node test passed.
+- Production build passed after transforming 3,369 modules.
+- Light and dark browser QA on `/settings/security` confirmed the semantic 2FA status, accessible field-error treatment, 24px cards, 12px feedback surfaces, and zero horizontal overflow.
+- Mobile browser QA at 390×844 on `/settings/profile` confirmed the profile, destructive warning, and settings navigation remain visually coherent with zero horizontal overflow.
+- A failed password update safely exercised the validation state and confirmed the invalid input, error icon, error copy, and `aria-invalid` state without changing account data.
+- The final browser run produced no console errors or page errors.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+
+### Known Limitations And Next Work
+
+- Vite continues to report the existing optional `fontaine` optimization notice; the production build succeeds.
+- Future forms should use `InputError` and semantic `Alert` variants instead of page-level red, green, or amber feedback markup.
+
+### Git Delivery
+
+- Implementation commit: `8e3bd05` (`fix: unify form feedback surfaces`).
+- Implementation push: successful to `origin/main`.
+- Documentation delivery will be committed separately so the implementation commit remains focused.
