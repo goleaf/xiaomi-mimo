@@ -300,17 +300,24 @@ function formatDate(date: string | null): string {
                         <div
                             v-for="todo in allTodos"
                             :key="todo.id"
-                            class="group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border/80 bg-background p-3.5 transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-orange-500/25 hover:shadow-[0_16px_36px_-30px_rgba(234,88,12,0.55)] motion-reduce:transform-none sm:gap-4 sm:p-4"
-                            @click="selectTodo(todo)"
+                            class="group relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border/80 bg-background p-3.5 transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-orange-500/25 hover:shadow-[0_16px_36px_-30px_rgba(234,88,12,0.55)] motion-reduce:transform-none sm:gap-4 sm:p-4"
                         >
+                            <button
+                                type="button"
+                                class="absolute inset-0 z-10 cursor-pointer rounded-xl focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+                                :aria-label="todo.title"
+                                @click="selectTodo(todo)"
+                            ></button>
                             <Checkbox
                                 :model-value="todo.status === 'completed'"
-                                class="size-4.5 data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
+                                class="relative z-20 size-4.5 data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
                                 :aria-label="todo.title"
                                 @click.stop
                                 @update:model-value="toggleComplete(todo)"
                             />
-                            <div class="min-w-0">
+                            <div
+                                class="pointer-events-none relative z-20 min-w-0"
+                            >
                                 <p
                                     :class="[
                                         'truncate text-sm font-medium',
@@ -338,7 +345,9 @@ function formatDate(date: string | null): string {
                                     </span>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-1.5 sm:gap-2">
+                            <div
+                                class="pointer-events-none relative z-20 flex items-center gap-1.5 sm:gap-2"
+                            >
                                 <Badge
                                     class="hidden sm:inline-flex"
                                     :variant="priorityBadge(todo.priority)"
@@ -360,7 +369,7 @@ function formatDate(date: string | null): string {
                                 <Button
                                     variant="ghost"
                                     size="icon-sm"
-                                    class="text-muted-foreground opacity-70 hover:text-destructive sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
+                                    class="pointer-events-auto text-muted-foreground opacity-70 hover:text-destructive sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
                                     :aria-label="t('common.actions.delete')"
                                     @click.stop="todoToDelete = todo"
                                 >

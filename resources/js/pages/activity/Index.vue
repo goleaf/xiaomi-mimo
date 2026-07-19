@@ -234,7 +234,7 @@ function eventTone(event: string): string {
                     :aria-label="copy.common.filters"
                 >
                     <div
-                        class="flex max-w-full gap-2 overflow-x-auto lg:flex-col"
+                        class="flex max-w-full gap-1 overflow-x-auto rounded-xl bg-muted p-1 lg:flex-col"
                     >
                         <button
                             v-for="filter in filters"
@@ -244,19 +244,14 @@ function eventTone(event: string): string {
                             :class="[
                                 'flex min-h-11 min-w-max cursor-pointer items-center justify-between gap-5 rounded-xl px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none lg:w-full',
                                 activeFilter === filter.value
-                                    ? 'bg-foreground text-background'
+                                    ? 'bg-card text-foreground shadow-sm'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                             ]"
                             @click="activeFilter = filter.value"
                         >
                             <span>{{ filter.label }}</span>
                             <span
-                                :class="[
-                                    'rounded-full px-2 py-0.5 text-xs tabular-nums',
-                                    activeFilter === filter.value
-                                        ? 'bg-background/15 text-background'
-                                        : 'bg-muted text-muted-foreground',
-                                ]"
+                                class="text-xs text-muted-foreground tabular-nums opacity-65"
                             >
                                 {{ formatNumber(filter.count) }}
                             </span>

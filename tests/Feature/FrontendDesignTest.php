@@ -134,6 +134,30 @@ test('task interfaces use accessible application controls', function () {
         ->not->toContain('type="checkbox"');
 });
 
+test('task rows preserve whole-row selection through a keyboard focusable overlay', function (string $page) {
+    expect(File::get(resource_path("js/pages/{$page}")))
+        ->toContain('absolute inset-0 z-10 cursor-pointer rounded-xl')
+        ->toContain('focus-visible:ring-orange-500')
+        ->toContain(':aria-label="todo.title"')
+        ->toContain('pointer-events-auto text-muted-foreground')
+        ->not->toContain('class="group grid cursor-pointer');
+})->with([
+    'task index' => 'tasks/Index.vue',
+    'project task list' => 'projects/Show.vue',
+]);
+
+test('segmented controls use the projects muted and card surface contract', function () {
+    expect(File::get(resource_path('js/pages/activity/Index.vue')))
+        ->toContain('rounded-xl bg-muted p-1')
+        ->toContain("'bg-card text-foreground shadow-sm'")
+        ->not->toContain("'bg-foreground text-background'")
+        ->and(File::get(resource_path('js/components/AppearanceTabs.vue')))
+        ->toContain('rounded-xl bg-muted p-1')
+        ->toContain("'bg-card text-foreground shadow-sm'")
+        ->toContain('focus-visible:ring-orange-500')
+        ->not->toContain('bg-white');
+});
+
 test('list pages share the warm precision empty state', function (string $page) {
     expect(File::get(resource_path("js/pages/{$page}")))
         ->toContain('EmptyState');

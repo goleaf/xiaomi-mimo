@@ -15,21 +15,22 @@ const tabs = [
 
 <template>
     <div
-        class="inline-flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800"
+        class="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl bg-muted p-1"
     >
         <button
             v-for="{ value, Icon, labelKey } in tabs"
             :key="value"
+            type="button"
             @click="updateAppearance(value)"
             :class="[
-                'flex items-center rounded-md px-3.5 py-1.5 transition-colors',
+                'flex min-h-10 min-w-max cursor-pointer items-center gap-2 rounded-lg px-3.5 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none',
                 appearance === value
-                    ? 'bg-white shadow-xs dark:bg-neutral-700 dark:text-neutral-100'
-                    : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60',
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground',
             ]"
         >
-            <component :is="Icon" class="-ml-1 h-4 w-4" />
-            <span class="ml-1.5 text-sm">{{ t(labelKey) }}</span>
+            <component :is="Icon" class="size-4" aria-hidden="true" />
+            <span>{{ t(labelKey) }}</span>
         </button>
     </div>
 </template>
