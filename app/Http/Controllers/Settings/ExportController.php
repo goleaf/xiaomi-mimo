@@ -11,7 +11,9 @@ class ExportController extends Controller
 {
     public function edit(Request $request): Response
     {
-        $workspace = $request->user()->currentWorkspace();
+        $workspace = $request->user()->currentWorkspace(
+            (string) $request->session()->get('current_workspace_id'),
+        );
 
         return Inertia::render('settings/Export', [
             'workspace' => $workspace,

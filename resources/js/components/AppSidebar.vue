@@ -1,91 +1,162 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import {
-    LayoutDashboard,
-    CheckSquare,
-    Folder,
-    Calendar,
-    Bell,
-    Settings,
     Activity,
+    Bell,
+    CalendarDays,
+    CheckSquare2,
+    FolderKanban,
+    LayoutDashboard,
+    Settings,
 } from '@lucide/vue';
 import { computed } from 'vue';
+import AppLogo from '@/components/AppLogo.vue';
+import NavMain from '@/components/NavMain.vue';
+import NavUser from '@/components/NavUser.vue';
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarRail,
+} from '@/components/ui/sidebar';
 import WorkspaceSwitcher from '@/components/workspace/WorkspaceSwitcher.vue';
-import type { Workspace, Project } from '@/types/models';
+import { activity, calendar, dashboard, projects } from '@/routes';
+import { index as notificationsIndex } from '@/routes/notifications';
+import { edit as profileEdit } from '@/routes/profile';
+import { show as projectShow } from '@/routes/projects';
+import { index as tasksIndex } from '@/routes/todos';
+import type { NavItem } from '@/types';
+import type { Project } from '@/types/models';
 
 const page = usePage();
-const currentUrl = computed(() => page.url);
+const navigation = computed(() => page.props.navigation);
 
-const workspaces = computed(
-    () =>
-        ((page.props as Record<string, unknown>).workspaces as Workspace[]) ??
-        [],
-);
-const currentWorkspace = computed(
-    () =>
-        (page.props as Record<string, unknown>)
-            .currentWorkspace as Workspace | null,
-);
-const projects = computed(
-    () => ((page.props as Record<string, unknown>).projects as Project[]) ?? [],
-);
+const mainNavItems = computed<NavItem[]>(() => [
+    {
+        title: navigation.value.labels.dashboard,
+        href: dashboard(),
+        icon: LayoutDashboard,
+        isActive: page.component === 'Dashboard',
+    },
+    {
+        title: navigation.value.labels.tasks,
+        href: tasksIndex(),
+        icon: CheckSquare2,
+        isActive: page.component.startsWith('tasks/'),
+    },
+    {
+        title: navigation.value.labels.projects,
+        href: projects(),
+        icon: FolderKanban,
+        isActive: page.component.startsWith('projects/'),
+    },
+    {
+        title: navigation.value.labels.calendar,
+        href: calendar(),
+        icon: CalendarDays,
+        isActive: page.component.startsWith('calendar/'),
+    },
+    {
+        title: navigation.value.labels.activity,
+        href: activity(),
+        icon: Activity,
+        isActive: page.component.startsWith('activity/'),
+    },
+    {
+        title: navigation.value.labels.notifications,
+        href: notificationsIndex(),
+        icon: Bell,
+        isActive: page.component.startsWith('notifications/'),
+    },
+    {
+        title: navigation.value.labels.settings,
+        href: profileEdit(),
+        icon: Settings,
+        isActive: page.component.startsWith('settings/'),
+    },
+]);
 
-const navItems = [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Tasks', href: '/tasks', icon: CheckSquare },
-    { label: 'Projects', href: '/projects', icon: Folder },
-    { label: 'Calendar', href: '/calendar', icon: Calendar },
-    { label: 'Activity', href: '/activity', icon: Activity },
-    { label: 'Notifications', href: '/notifications', icon: Bell },
-    { label: 'Settings', href: '/settings/profile', icon: Settings },
-];
+function projectHref(project: Project) {
+    const workspace = navigation.value.currentWorkspace;
+
+    return workspace ? projectShow({ workspace, project }) : projects();
+}
 </script>
 
 <template>
-    <aside class="flex h-screen w-64 flex-col border-r bg-background">
-        <div class="border-b p-4">
+    <Sidebar collapsible="icon" variant="inset">
+        <SidebarHeader class="gap-2 border-b border-sidebar-border/80 pb-3">
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton size="lg" as-child tooltip="Xiaomi Mimo">
+                        <Link :href="dashboard()" prefetch>
+                            <AppLogo />
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+
             <WorkspaceSwitcher
-                :workspaces="workspaces"
-                :current-workspace="currentWorkspace"
+                :workspaces="navigation.workspaces"
+                :current-workspace="navigation.currentWorkspace"
+                :labels="navigation.labels"
             />
-        </div>
-        <nav class="flex-1 space-y-1 overflow-y-auto p-3">
-            <Link
-                v-for="item in navItems"
-                :key="item.href"
-                :href="item.href"
-                :class="[
-                    'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
-                    currentUrl.startsWith(item.href)
-                        ? 'bg-muted font-medium text-foreground'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
-                ]"
-            >
-                <component :is="item.icon" class="h-4 w-4" />
-                {{ item.label }}
-            </Link>
-        </nav>
-        <div class="border-t p-3">
-            <p class="px-3 text-xs text-muted-foreground">Projects</p>
-            <div class="mt-2 space-y-1">
-                <Link
-                    v-for="project in projects.slice(0, 5)"
-                    :key="project.id"
-                    :href="
-                        route('projects.show', [
-                            currentWorkspace?.id,
-                            project.id,
-                        ])
-                    "
-                    class="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+        </SidebarHeader>
+
+        <SidebarContent class="py-3">
+            <NavMain
+                :items="mainNavItems"
+                :label="navigation.labels.platform"
+            />
+
+            <SidebarGroup class="px-2 py-2">
+                <SidebarGroupLabel>
+                    {{ navigation.labels.recentProjects }}
+                </SidebarGroupLabel>
+                <SidebarMenu>
+                    <SidebarMenuItem
+                        v-for="project in navigation.projects"
+                        :key="project.id"
+                    >
+                        <SidebarMenuButton
+                            as-child
+                            :tooltip="project.name"
+                            :is-active="
+                                page.component === 'projects/Show' &&
+                                page.url.includes(project.id)
+                            "
+                        >
+                            <Link :href="projectHref(project)" prefetch>
+                                <span
+                                    class="size-2.5 shrink-0 rounded-full border border-black/10 shadow-sm dark:border-white/20"
+                                    :style="{
+                                        backgroundColor: project.color,
+                                    }"
+                                />
+                                <span>{{ project.name }}</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+                <p
+                    v-if="navigation.projects.length === 0"
+                    class="px-2 py-2 text-xs text-sidebar-foreground/55 group-data-[collapsible=icon]:hidden"
                 >
-                    <div
-                        class="h-2 w-2 rounded-full"
-                        :style="{ backgroundColor: project.color }"
-                    />
-                    <span class="truncate">{{ project.name }}</span>
-                </Link>
-            </div>
-        </div>
-    </aside>
+                    {{ navigation.labels.noProjects }}
+                </p>
+            </SidebarGroup>
+        </SidebarContent>
+
+        <SidebarFooter class="border-t border-sidebar-border/80 pt-3">
+            <NavUser />
+        </SidebarFooter>
+
+        <SidebarRail />
+    </Sidebar>
 </template>

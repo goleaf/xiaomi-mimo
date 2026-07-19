@@ -16,6 +16,13 @@ import {
 } from '@/components/ui/select';
 import { useBulkSelect } from '@/composables/useBulkSelect';
 import { useToast } from '@/composables/useToast';
+import {
+    complete,
+    destroy,
+    index as tasksIndex,
+    show,
+    uncomplete,
+} from '@/routes/todos';
 import type { PaginatedResponse } from '@/types/api';
 import type { Todo, Project } from '@/types/models';
 
@@ -29,8 +36,8 @@ const props = defineProps<{
 const bulkSelect = useBulkSelect<Todo>();
 const toast = useToast();
 const searchQuery = ref(props.filters.search ?? '');
-const statusFilter = ref(props.filters.status ?? '');
-const priorityFilter = ref(props.filters.priority ?? '');
+const statusFilter = ref(props.filters.status ?? 'all');
+const priorityFilter = ref(props.filters.priority ?? 'all');
 const viewMode = ref<'list' | 'board'>('list');
 const selectedTodo = ref<Todo | null>(null);
 const showCreateDialog = ref(false);
@@ -39,38 +46,43 @@ const allTodos = computed(() => props.todos.data);
 
 function applyFilters() {
     router.get(
-        route('todos.index'),
+        tasksIndex.url(),
         {
             search: searchQuery.value || undefined,
-            status: statusFilter.value || undefined,
-            priority: priorityFilter.value || undefined,
+            status:
+                statusFilter.value === 'all' ? undefined : statusFilter.value,
+            priority:
+                priorityFilter.value === 'all'
+                    ? undefined
+                    : priorityFilter.value,
         },
         { preserveState: true, replace: true },
     );
 }
 
 function toggleComplete(todo: Todo) {
-    const routeName =
-        todo.status === 'completed' ? 'todos.uncomplete' : 'todos.complete';
-    router.post(route(routeName, todo.id), {}, { preserveScroll: true });
+    const target =
+        todo.status === 'completed' ? uncomplete(todo) : complete(todo);
+
+    router.post(target.url, {}, { preserveScroll: true });
 }
 
 function deleteTodo(todo: Todo) {
-    router.delete(route('todos.destroy', todo.id), {
+    router.delete(destroy(todo).url, {
         preserveScroll: true,
         onSuccess: () => {
             toast.success('Task deleted');
 
             if (selectedTodo.value?.id === todo.id) {
-selectedTodo.value = null;
-}
+                selectedTodo.value = null;
+            }
         },
     });
 }
 
 function selectTodo(todo: Todo) {
     router.get(
-        route('todos.show', todo.id),
+        show(todo).url,
         {},
         {
             preserveState: true,
@@ -109,8 +121,8 @@ function priorityColor(priority: string): string {
 
 function formatDate(date: string | null): string {
     if (!date) {
-return '';
-}
+        return '';
+    }
 
     return new Date(date).toLocaleDateString('en-US', {
         month: 'short',
@@ -171,7 +183,7 @@ return '';
                     ><SelectValue placeholder="Status"
                 /></SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="in_progress">In Progress</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>
@@ -182,7 +194,7 @@ return '';
                     ><SelectValue placeholder="Priority"
                 /></SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">All Priority</SelectItem>
+                    <SelectItem value="all">All Priority</SelectItem>
                     <SelectItem value="urgent">Urgent</SelectItem>
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>

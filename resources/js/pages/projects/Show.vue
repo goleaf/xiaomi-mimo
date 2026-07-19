@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/composables/useToast';
+import { projects } from '@/routes';
 import type { Project, Todo } from '@/types/models';
 
 const props = defineProps<{
@@ -25,8 +26,8 @@ const showCreateDialog = ref(false);
 
 const filteredTodos = computed(() => {
     if (!searchQuery.value) {
-return props.todos;
-}
+        return props.todos;
+    }
 
     return props.todos.filter((t) =>
         t.title.toLowerCase().includes(searchQuery.value.toLowerCase()),
@@ -56,8 +57,8 @@ function deleteTodo(todo: Todo) {
             toast.success('Task deleted');
 
             if (selectedTodo.value?.id === todo.id) {
-selectedTodo.value = null;
-}
+                selectedTodo.value = null;
+            }
         },
     });
 }
@@ -139,11 +140,7 @@ const formatDate = (d: string | null) =>
     <Head :title="project.name" />
     <div class="space-y-6 p-6">
         <div class="flex items-center gap-4">
-            <Button
-                variant="ghost"
-                size="sm"
-                @click="router.visit(route('projects.index', workspace.id))"
-            >
+            <Button variant="ghost" size="sm" @click="router.visit(projects())">
                 <ArrowLeft class="mr-1 h-4 w-4" />Back
             </Button>
             <div

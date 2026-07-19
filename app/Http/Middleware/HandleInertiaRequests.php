@@ -2,11 +2,15 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Resources\ProjectResource;
+use App\Http\Resources\WorkspaceResource;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    private const SUPPORTED_LOCALES = ['en', 'lt', 'ru'];
+
     protected $rootView = 'app';
 
     public function version(Request $request): ?string
@@ -17,16 +21,82 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $user?->loadMissing('preferences');
+
+        $preferredLocale = $user?->preferences?->language;
+        $locale = is_string($preferredLocale) && in_array($preferredLocale, self::SUPPORTED_LOCALES, true)
+            ? $preferredLocale
+            : config('app.fallback_locale', 'en');
+
+        app()->setLocale($locale);
+
+        $navigationData = null;
+        $resolveNavigation = function () use ($request, $user, &$navigationData): array {
+            if (is_array($navigationData)) {
+                return $navigationData;
+            }
+
+            $labels = [
+                'platform' => __('navigation.platform'),
+                'workspace' => __('navigation.workspace'),
+                'selectWorkspace' => __('navigation.select_workspace'),
+                'dashboard' => __('navigation.dashboard'),
+                'tasks' => __('navigation.tasks'),
+                'projects' => __('navigation.projects'),
+                'calendar' => __('navigation.calendar'),
+                'activity' => __('navigation.activity'),
+                'notifications' => __('navigation.notifications'),
+                'settings' => __('navigation.settings'),
+                'manageWorkspaces' => __('navigation.manage_workspaces'),
+                'recentProjects' => __('navigation.recent_projects'),
+                'noProjects' => __('navigation.no_projects'),
+                'switchingFailed' => __('navigation.switching_failed'),
+            ];
+
+            if (! $user) {
+                return $navigationData = [
+                    'workspaces' => [],
+                    'currentWorkspace' => null,
+                    'projects' => [],
+                    'labels' => $labels,
+                ];
+            }
+
+            $workspaces = $user->workspaces()
+                ->withCount(['projects', 'todos'])
+                ->get();
+            $selectedWorkspaceId = $request->session()->get('current_workspace_id');
+            $currentWorkspace = is_string($selectedWorkspaceId)
+                ? $workspaces->firstWhere('id', $selectedWorkspaceId)
+                : null;
+            $currentWorkspace ??= $workspaces->first();
+            $projects = $currentWorkspace
+                ? $currentWorkspace->projects()->active()->withCount('todos')->limit(5)->get()
+                : collect();
+
+            return $navigationData = [
+                'workspaces' => WorkspaceResource::collection($workspaces)->resolve($request),
+                'currentWorkspace' => $currentWorkspace
+                    ? (new WorkspaceResource($currentWorkspace))->resolve($request)
+                    : null,
+                'projects' => ProjectResource::collection($projects)->resolve($request),
+                'labels' => $labels,
+            ];
+        };
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $user?->only(['id', 'name', 'email', 'email_verified_at', 'two_factor_enabled']),
+                'user' => $user ? [
+                    ...$user->only(['id', 'name', 'email', 'email_verified_at', 'two_factor_enabled']),
+                    'avatar' => is_string($user->getAttribute('avatar_path'))
+                        ? route('profile.avatar.show', ['v' => $user->updated_at?->getTimestamp()])
+                        : null,
+                ] : null,
             ],
-            'currentWorkspace' => fn () => $user
-                ? $user->workspaces()->withCount(['projects', 'todos'])->first()
-                : null,
+            'currentWorkspace' => fn () => $resolveNavigation()['currentWorkspace'],
+            'navigation' => fn () => $resolveNavigation(),
             'preferences' => fn () => $user?->preferences,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

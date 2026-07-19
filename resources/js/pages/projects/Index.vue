@@ -6,6 +6,7 @@ import ProjectCreateDialog from '@/components/project/ProjectCreateDialog.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { show as projectShow } from '@/routes/projects';
 import type { Project, Workspace } from '@/types/models';
 
 defineProps<{
@@ -35,7 +36,7 @@ const showCreateDialog = ref(false);
             <Link
                 v-for="project in projects.data"
                 :key="project.id"
-                :href="route('projects.show', [workspace.id, project.id])"
+                :href="projectShow({ workspace, project })"
             >
                 <Card
                     class="group h-full cursor-pointer transition-shadow hover:shadow-md"

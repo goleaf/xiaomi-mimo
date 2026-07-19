@@ -119,6 +119,59 @@ The production-code failures were not changed in this audit-only phase. No test 
 
 Prompt 2: implement and test the critical/high workspace isolation, role permission, nested validation, bulk/reorder, scoped binding, and Sanctum ability corrections.
 
+## UI Repair: Shared Responsive Sidebar
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Added an authenticated edit mode to the direct task detail page for title, description, status, priority, and due date.
+- Submitted edits through the generated Wayfinder controller action and Inertia `useForm`, with server validation errors, processing state, cancel/reset behavior, refreshed props, and a success toast.
+- Corrected the web update response to redirect for Inertia/browser requests while preserving JSON responses for JSON consumers.
+- Corrected the update action so nullable optional fields can actually be cleared instead of being discarded before persistence.
+- Added semantic task editing translations for English, Lithuanian, and Russian.
+- Added focused Pest regressions for the redirect response, nullable field clearing, and localized edit-page props.
+
+### Changed Files
+
+- `app/Actions/UpdateTodo.php`
+- `app/Http/Controllers/TodoController.php`
+- `resources/js/pages/tasks/Show.vue`
+- `lang/en/tasks.php`
+- `lang/lt/tasks.php`
+- `lang/ru/tasks.php`
+- `tests/Feature/TodoTest.php`
+- `docs/progress.md`
+
+### Scope And Decisions
+
+- Restore the starter-kit sidebar primitives that were replaced by a static `aside`, so the left navigation, desktop collapse state, keyboard shortcut, and mobile drawer share one state model.
+- Keep the existing Inertia application layout as the single shell for authenticated pages instead of adding page-specific menus.
+- Supply workspace and active-project navigation data through shared Inertia props, with the selected workspace resolved from the authenticated session.
+- Use generated Wayfinder route functions for sidebar navigation and Inertia's standalone HTTP client for the JSON workspace-switch endpoint.
+- Add English, Lithuanian, and Russian semantic navigation translations with English fallback.
+
+### Planned Files
+
+- Shared Inertia middleware and current-workspace resolution call sites.
+- Sidebar, workspace switcher, navigation, logo/header, and shared TypeScript types.
+- Navigation translation files and focused Pest coverage.
+
+### Migrations And Packages
+
+No migration or package change is planned.
+
+### Verification Plan
+
+- Focused Pest tests for shared sidebar props, locale labels, and session-aware workspace switching.
+- Pint, Larastan, Vue type checking, ESLint, Prettier verification, production build, and `git diff --check`.
+
+### Git Delivery
+
+Commit and push results will be recorded after verification. The unrelated staged `.mimocode/plans/1784461861035-kind-garden.md` file will remain untouched and excluded.
+
 ## NativePHP Mobile 3 Quick-Start Integration
 
 ### Status
@@ -183,6 +236,238 @@ Implementation commit `264d8d6` (`feat: integrate NativePHP Mobile 3`) was pushe
 - Platform-mode Vite builds and device launch/watch commands were not executed automatically, as required by the installed NativePHP development guidance.
 - This Intel Mac does not satisfy NativePHP's Apple-silicon iOS development requirement and does not have full Xcode, CocoaPods, Android Studio, or an Android SDK available. Device compilation must be completed on a supported workstation.
 - No Apple development team or product-specific icon/splash assets were supplied, so code signing remains unset and the NativePHP defaults remain in use.
+
+## UI Repair: Complete Profile Settings
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Added authenticated avatar upload, preview, progress, replacement, display, and removal with strict JPG/PNG/WebP, extension, MIME, 2 MB, and 4096-pixel validation.
+- Stored generated avatar filenames on a dedicated private disk, deleted replaced and removed files with explicit failure handling and database rollback, cleaned the avatar during account deletion, and served the current user's image with private no-store and nosniff headers.
+- Rebuilt the profile page around profile photo and personal information cards, removed the duplicate password form in favor of the Security page, and restored email-verification resend feedback.
+- Replaced the broken confirmation-only account deletion button with the existing accessible password-confirming dialog.
+- Added generated Wayfinder form routing, responsive Tailwind CSS 4 behavior, avatar fallbacks, duplicate-submit prevention, localized success/error states, and semantic English, Lithuanian, and Russian profile translations with English fallback.
+- Verified the live page on desktop and a 390-pixel viewport; avatar changes propagate to the account menu and the page creates no document-level horizontal overflow.
+
+### Changed Files
+
+- `app/Actions/DeleteProfileAvatar.php`
+- `app/Actions/UpdateProfileAvatar.php`
+- `app/Http/Controllers/Settings/ProfileController.php`
+- `app/Http/Requests/Settings/ProfileAvatarDeleteRequest.php`
+- `app/Http/Requests/Settings/ProfileAvatarUpdateRequest.php`
+- `app/Http/Middleware/HandleInertiaRequests.php`
+- `config/filesystems.php`
+- `database/migrations/2026_07_19_134932_add_avatar_path_to_users_table.php`
+- `routes/settings.php`
+- `resources/js/pages/settings/Profile.vue`
+- `resources/js/components/DeleteUser.vue`
+- `resources/js/layouts/settings/Layout.vue`
+- `lang/en/settings.php`, `lang/lt/settings.php`, and `lang/ru/settings.php`
+- `tests/Feature/Settings/ProfileUpdateTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+- Added and applied one SQLite-compatible nullable `users.avatar_path` column.
+- No package was added, removed, or upgraded.
+
+### Verification
+
+- `php artisan test --compact tests/Feature/Settings/ProfileUpdateTest.php`: passed, 19 tests and 145 assertions, including simulated storage deletion failures and recoverable account-avatar staging.
+- `php artisan test --compact`: passed, 148 tests and 659 assertions.
+- `vendor/bin/pint --dirty --format agent`: passed.
+- Scoped Larastan for both avatar actions, the controller, and both requests: passed with zero errors.
+- `npm run build`: passed; Wayfinder regenerated and Vite emitted only the existing optional `fontaine` notice.
+- Targeted ESLint and Prettier checks for the three changed Vue files: passed.
+- `git diff --check`: passed.
+- Authenticated Chromium verified upload (`302`), removal (`303`), live avatar/fallback propagation, success toasts, password-confirming deletion dialog, a cancel action that sends no DELETE request, zero page console errors, and a 390-pixel document width without horizontal overflow.
+- Live private-storage verification confirmed the uploaded file exists only under `storage/app/private/profile-avatars`, the public `/storage/...` path is denied, and the authenticated endpoint returns `private, no-store` plus `nosniff` headers.
+- Full Larastan remains red with 364 existing errors outside this profile flow.
+- Full Vue type checking remains red with nine existing errors outside the changed profile files.
+- Full ESLint remains red with 72 existing errors outside the changed profile files.
+- Full Prettier verification remains red on 13 existing files; all changed profile Vue files pass their targeted check.
+- The mandatory post-implementation code review found no critical issues; its private-storage, explicit deletion-failure, cancel-button, and localized-breadcrumb findings are resolved in the follow-up hardening change.
+
+### Known Limitations
+
+- Existing settings-navigation labels outside the profile content remain part of the broader localization phase.
+- Concurrent sidebar work owns the shared Inertia middleware and responsive settings-layout base; this repair adds only avatar and profile-specific integration to those files.
+
+### Git Delivery
+
+- Commit `c23f582` (`feat: complete profile settings`) contains only the 14 profile code, migration, translation, layout, and test files.
+- Push to `origin main` succeeded (`dc5ff2e..c23f582`).
+- Follow-up commit `1bc66f1` (`fix: harden profile avatar lifecycle`) contains only the eight reviewed profile/config/test files and was pushed successfully to `origin/main` (`c23f582..1bc66f1`).
+- Final review follow-up commit `c04d7a3` (`fix: make profile deletion recoverable`) stages account avatars before deletion, restores them on database failure, localizes the settings navigation landmark, and was pushed successfully to `origin/main`.
+- The shared Inertia avatar prop remains in the separately staged sidebar batch; the mixed `docs/progress.md` index/worktree state also remains excluded from the isolated profile commit.
+
+## Task Detail Editing Repair
+
+### Status
+
+In progress.
+
+### Scope And Decisions
+
+- Restore editing on the direct `/tasks/{todo}` Inertia page for the title, description, status, priority, and due date.
+- Keep `UpdateTodoRequest`, `TodoPolicy`, and `UpdateTodo` as the validation, authorization, and state-change boundaries.
+- Return a redirect for Inertia form submissions while preserving the existing JSON response for JSON clients.
+- Use generated Wayfinder controller actions, existing Vue UI primitives, and English, Lithuanian, and Russian semantic translations.
+
+### Migrations And Packages
+
+No migration or package change is planned.
+
+### Verification
+
+- The redirect and nullable-field regressions failed first for the expected `200` response and retained nullable values, then passed after their respective fixes.
+- `php artisan test --compact tests/Feature/TodoTest.php`: passed, 12 tests and 37 assertions.
+- `php artisan test --compact`: passed, 130 tests and 512 assertions on the final sequential run.
+- Scoped Pint for the six changed PHP files: passed.
+- Targeted ESLint and Prettier checks for `resources/js/pages/tasks/Show.vue`: passed.
+- `npm run build`: passed; Wayfinder generated types and Vite emitted only the existing optional `fontaine` notice.
+- `git diff --check` for the repair files: passed.
+- Authenticated Chromium verification on `/tasks/019f7a48-e93e-700c-a984-26341f7ddf06`: edit controls rendered, both update and restore returned `303`, the refreshed title rendered, and no console error occurred. The task title was restored after verification.
+- Full Larastan remains red with 364 existing application errors; the scoped controller/action run reports four existing typing/query errors.
+- Full Vue type checking remains red with nine existing errors outside `tasks/Show.vue`; the changed page has no type error.
+- Full ESLint remains red with 72 existing errors outside `tasks/Show.vue`.
+- Full Prettier verification remains red on 15 existing files; the changed page passes its targeted check.
+
+### Known Limitations
+
+- Existing hardcoded task-detail display copy and locale-aware date formatting remain broader localization debt; all copy introduced by this repair is translated.
+- Concurrent profile, members, preferences, sidebar, NativePHP, package, and planning work remains outside this repair.
+
+### Git Delivery
+
+- Commit `22ab435` (`fix: restore task detail editing`) contains only the seven task-repair code, translation, and test files.
+- Push to `origin main` succeeded (`8f150c2..22ab435`).
+- The mixed pre-existing `docs/progress.md` index/worktree state remains excluded from the isolated repair commit.
+
+## Settings UI: Unified Preferences And Appearance
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Consolidated the functional light, dark, and system appearance control into the Preferences page.
+- Removed the duplicate database-backed theme select from the preference form so appearance continues to use the existing cookie and local-storage behavior.
+- Removed the duplicate Appearance settings navigation item and superseded standalone Vue page.
+- Preserved `/settings/appearance` as an authenticated GET compatibility redirect to the canonical `/settings/preferences` route.
+- Replaced the affected hardcoded frontend URLs with generated Wayfinder route functions and made the locale controls responsive on narrow screens.
+- Added focused Pest coverage for the canonical Inertia page, compatibility redirect, authentication boundary, and shared appearance control.
+
+### Changed Files
+
+- `routes/settings.php`
+- `resources/js/layouts/settings/Layout.vue`
+- `resources/js/pages/settings/Preferences.vue`
+- `resources/js/pages/settings/Appearance.vue` (removed)
+- `tests/Feature/Settings/PreferencesTest.php`
+- `docs/progress.md`
+
+### Scope And Decisions
+
+- Make `/settings/preferences` the canonical page for account preferences and appearance controls.
+- Preserve `/settings/appearance` as an authenticated compatibility redirect to the canonical preferences route.
+- Remove the duplicate Appearance navigation entry and keep the functional cookie/local-storage appearance control on the unified page.
+- Use generated Wayfinder route functions for settings navigation and preference submission.
+
+### Planned Files
+
+- Settings routes, layout navigation, and the unified Preferences Vue page.
+- The superseded standalone Appearance Vue page.
+- Focused Pest coverage for the canonical page, compatibility redirect, and authentication boundary.
+
+### Migrations And Packages
+
+No migration or package was added, removed, or changed.
+
+### Verification
+
+- Focused `php artisan test --compact tests/Feature/Settings/PreferencesTest.php`: passed, 5 tests and 18 assertions after the expected RED run failed on the old separate-page behavior.
+- Scoped `vendor/bin/phpstan analyse --no-progress routes/settings.php`: passed with zero errors.
+- `vendor/bin/pint --dirty --format agent routes/settings.php tests/Feature/Settings/PreferencesTest.php`: passed.
+- Targeted ESLint and Prettier checks for the two modified Vue files: passed.
+- `npm run build`: passed; Wayfinder regenerated route and form definitions, and Vite emitted only the existing optional `fontaine` notice.
+- `git diff --check`: passed.
+- Full Vue type checking remains red on 11 unrelated files; neither modified Vue file reports an error.
+- Full ESLint remains red with 75 unrelated errors; both modified Vue files pass targeted ESLint.
+- Full Prettier verification remains red on 13 unrelated files; both modified Vue files pass targeted Prettier.
+- The complete Pest run passed 123 of 129 tests and failed only the six concurrently added, unrelated `SettingsMembersTest` cases; all unified preferences tests pass.
+
+### Known Limitations
+
+- Existing settings copy remains English-only as part of the repository's pre-existing localization debt; this consolidation reuses rather than expands that copy.
+- Concurrent profile, members, task, sidebar, NativePHP, attachment, package, and planning work remains outside this phase.
+
+### Git Delivery
+
+Implementation commit `d74c709` (`feat: unify settings preferences and appearance`) was pushed successfully to `origin/main`. This phase-related progress update remains uncommitted because `docs/progress.md` also contains staged and unstaged work from concurrent phases; committing the whole file would include unrelated changes.
+
+## Settings UI: Workspace Members Roster Repair
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Replaced the crashing nested `member.user` assumption with an explicit, workspace-scoped roster contract containing only the fields required by the page.
+- Rebuilt the page as a responsive roster with member identity, localized role context, search, management summary, invitation form, read-only state, and an accessible removal dialog.
+- Wired invite and removal submissions to generated Wayfinder controller actions and returned browser-compatible redirects so Inertia refreshes the roster after mutations.
+- Authorized removals through the workspace policy, rejected foreign member identifiers, and prevented removal of the workspace owner or current user.
+- Added semantic English, Lithuanian, and Russian members copy.
+- Made the shared settings navigation responsive so the roster remains usable at mobile widths.
+- Added focused Pest coverage for roster shape, selected-workspace isolation, permissions, localization, invitation, removal, and owner protection.
+
+### Changed Files
+
+- `app/Http/Controllers/Settings/MembersController.php`
+- `app/Http/Controllers/WorkspaceController.php`
+- `resources/js/pages/settings/Members.vue`
+- `resources/js/layouts/settings/Layout.vue`
+- `lang/en/members.php`, `lang/lt/members.php`, `lang/ru/members.php`
+- `tests/Feature/SettingsMembersTest.php`
+- `docs/progress.md`
+
+### Scope And Decisions
+
+- Repair the Inertia member payload mismatch that renders the count but crashes before displaying the roster.
+- Replace the members page with a responsive, accessible workspace roster and invitation flow using the existing Vue, Tailwind CSS 4, Reka UI, and Wayfinder stack.
+- Keep every member query and mutation scoped to the selected authorized workspace, expose only the fields required by the page, and prevent removal of the owner or current user.
+- Add semantic English, Lithuanian, and Russian copy with English fallback.
+- Preserve all unrelated sidebar, NativePHP, attachment, task, profile, preferences, package, and planning changes already in the worktree.
+
+### Migrations And Packages
+
+No migration or package was added, removed, or changed.
+
+### Verification
+
+- The six focused regressions failed first for the missing roster props, locale copy, redirect contract, and undefined removal request, then passed after implementation: 6 tests and 78 assertions.
+- `php artisan test --compact`: passed, 130 tests and 512 assertions.
+- Scoped Pint and Larastan for the changed PHP files: passed with zero errors.
+- Targeted ESLint and Prettier verification for the two changed Vue files: passed.
+- `npm run build`: passed; Vite generated the production bundle and emitted only the existing optional `fontaine` notice.
+- `git diff --check`: passed.
+- Authenticated Chromium verification at 1440px and 390px showed Demo User, Alice Chen, and Bob Smith; search and the removal confirmation worked; the mobile document had no horizontal overflow; no page or console error occurred.
+- Full Vue type checking remains red with 9 existing errors outside the members files. Full Larastan remains red with 364 existing errors, full ESLint with 72 existing errors, and full Prettier verification with 15 existing files; all phase-scoped checks pass.
+
+### Known Limitations
+
+- The wider repository quality-gate baseline remains red as recorded above; this phase did not modify those unrelated files.
+- Concurrent profile, preferences, task, sidebar, NativePHP, attachment, package, route, and planning work remains outside this phase.
+
+### Git Delivery
+
+Implementation commit `81a40ce` (`fix: rebuild workspace members roster`) was pushed successfully to `origin/main`. The phase-related progress update remains uncommitted because `docs/progress.md` also contains staged and unstaged work from concurrent phases; committing the whole file would include unrelated changes.
 
 ## NativePHP Mobile 3 Upgrade Guide Reconciliation
 
@@ -346,6 +631,7 @@ No application migration or Composer/npm package was added, removed, or upgraded
 - Commit `0366361` (`chore: reconcile NativePHP installation guide`) contains only the root ignore rule, NativePHP build-code configuration, focused installation tests, and phase progress.
 - Push to `origin main` succeeded (`c04d7a3..0366361`).
 - Unrelated staged sidebar, navigation, task, project, export, planning, and shared model/middleware work remains excluded and preserved.
+
 ## NativePHP Mobile 3 Configuration Guide Reconciliation
 
 ### Status
@@ -400,6 +686,7 @@ No migration or Composer/npm package was added, removed, or upgraded. NativePHP 
 - Commit `825197b` (`chore: reconcile NativePHP configuration guide`) contains only the example environment, NativePHP configuration, focused test, and phase progress files.
 - Push to `origin main` succeeded (`65dc904..825197b`).
 - Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+
 ## NativePHP Mobile 3 Deployment Guide Reconciliation
 
 ### Status
@@ -512,6 +799,7 @@ No migration or Composer/npm package was added, removed, or upgraded. Axios and 
 - Commit `30433e2` (`chore: reconcile NativePHP development guide`) contains only the hot-file ignore rules, NativePHP hot-reload configuration, focused development test, and phase progress files.
 - Push to `origin main` succeeded (`e277f15..30433e2`).
 - Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+
 ## NativePHP Mobile 3 Command Reference Reconciliation
 
 ### Status
@@ -562,6 +850,7 @@ No migration or Composer/npm package was added, removed, or upgraded. `composer 
 - Commit `1a87b09` (`chore: reconcile NativePHP command reference`) contains only the focused command contracts and phase progress files.
 - Push to `origin main` succeeded (`022b0d7..1a87b09`).
 - Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+
 ## NativePHP Mobile 3 Architecture Overview Reconciliation
 
 ### Status
@@ -615,6 +904,7 @@ No migration or Composer/npm package was added, removed, or upgraded.
 - Commit `6d7bdbb` (`chore: reconcile NativePHP architecture overview`) contains only the focused architecture contracts and phase progress files.
 - Push to `origin main` succeeded (`887d7a7..6d7bdbb`).
 - Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+
 ## NativePHP Mobile 3 Jump Reconciliation
 
 ### Status
@@ -666,3 +956,39 @@ No migration or Composer/npm dependency was added, removed, or upgraded. The exi
 - Commit `6916a9f` (`chore: integrate NativePHP Jump workflow`) contains only the Jump script, focused NativePHP contracts, and phase progress files.
 - Push to `origin main` succeeded (`32c0cd5..6916a9f`).
 - Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+
+## UI Phase: Warm Precision Workspace Pages
+
+### Status
+
+In progress.
+
+### Scope And Decisions
+
+- Redesign Activity, Notifications, Calendar, and Projects as one responsive Warm Precision interface with a restrained orange accent and strong light/dark contrast.
+- Preserve the existing Inertia page contracts, workspace-scoped reads, project creation flow, notification actions, and generated Wayfinder links.
+- Add shared Vue presentation primitives instead of repeating page-local header and metric structures.
+- Move all copy for the four pages to semantic English, Lithuanian, and Russian translations with Laravel's English fallback.
+- Format dates and times with the authenticated user's locale and timezone while keeping supplied page props immutable.
+- Preserve the already staged Wayfinder conversion in `resources/js/pages/projects/Index.vue` and exclude unrelated worktree changes from delivery.
+
+### Planned Files
+
+- Shared workspace page components, translation types, and locale-aware formatting utilities.
+- Activity, Notifications, Calendar, and Projects Inertia pages.
+- English, Lithuanian, and Russian workspace UI translation files and shared Inertia props.
+- Focused Pest coverage for page contracts, translations, notification state changes, and workspace scoping.
+
+### Migrations And Packages
+
+No migration or package change is planned.
+
+### Verification Plan
+
+- Focused Pest feature tests for all four page endpoints and actions.
+- Browser checks at desktop and mobile widths in light and dark modes, including console and JavaScript errors.
+- Pint, Larastan, full Pest, Vue type checking, ESLint, Prettier verification, production build, and `git diff --check`.
+
+### Git Delivery
+
+Commit and push results will be recorded after verification. Existing NativePHP, sidebar, attachment, and planning changes remain outside this phase.

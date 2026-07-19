@@ -33,7 +33,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             abort(403);
         }
 
-        $workspace = $user->currentWorkspace();
+        $workspace = $user->currentWorkspace(
+            (string) $request->session()->get('current_workspace_id'),
+        );
 
         if (! $workspace) {
             return Inertia::render('tasks/Index', [
@@ -52,7 +54,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             abort(403);
         }
 
-        $workspace = $user->currentWorkspace();
+        $workspace = $user->currentWorkspace(
+            (string) $request->session()->get('current_workspace_id'),
+        );
 
         if (! $workspace) {
             return Inertia::render('projects/Index', ['projects' => ['data' => []], 'workspace' => ['id' => '', 'name' => '']]);
@@ -68,7 +72,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             abort(403);
         }
 
-        $workspace = $user->currentWorkspace();
+        $workspace = $user->currentWorkspace(
+            (string) $request->session()->get('current_workspace_id'),
+        );
         $todos = $workspace ? $workspace->todos()->active()->whereNotNull('due_date')->get()->toArray() : [];
 
         return inertia('calendar/Index', ['todos' => $todos]);
@@ -81,7 +87,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             abort(403);
         }
 
-        $workspace = $user->currentWorkspace();
+        $workspace = $user->currentWorkspace(
+            (string) $request->session()->get('current_workspace_id'),
+        );
 
         if (! $workspace) {
             return inertia('activity/Index', ['activities' => ['data' => []]]);

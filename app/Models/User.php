@@ -68,8 +68,16 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasOne(UserPreference::class);
     }
 
-    public function currentWorkspace(): ?Workspace
+    public function currentWorkspace(?string $workspaceId = null): ?Workspace
     {
+        if ($workspaceId) {
+            $selectedWorkspace = $this->workspaces()->whereKey($workspaceId)->first();
+
+            if ($selectedWorkspace) {
+                return $selectedWorkspace;
+            }
+        }
+
         return $this->workspaces()->first();
     }
 }
