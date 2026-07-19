@@ -2316,5 +2316,6 @@ No migration or Composer/npm package change was made.
 
 - Implementation commit: `605977d` (`fix: unify creation dialog controls`).
 - Implementation push: successful to `origin/main`.
-- Documentation commit: pending.
-- Documentation push: pending.
+- Documentation commit: `e3a8462` (`docs: record creation dialog unification`).
+- Documentation push: successful to `origin/main`.
+- This final delivery record is committed and pushed separately so the phase commits remain focused.
