@@ -343,4 +343,6 @@ No application migration or Composer/npm package was added, removed, or upgraded
 
 ### Git Delivery
 
-Commit and push status will be recorded after verification. Unrelated staged and unstaged work remains excluded.
+- Commit `0366361` (`chore: reconcile NativePHP installation guide`) contains only the root ignore rule, NativePHP build-code configuration, focused installation tests, and phase progress.
+- Push to `origin main` succeeded (`c04d7a3..0366361`).
+- Unrelated staged sidebar, navigation, task, project, export, planning, and shared model/middleware work remains excluded and preserved.
