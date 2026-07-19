@@ -1160,3 +1160,43 @@ No migration or Composer/npm package change is planned.
 ### Git Delivery
 
 Commit message: `fix: clean board and keyboard guards`. Push to `origin main` will be attempted immediately after the isolated commit. Unrelated worktree changes remain excluded.
+
+## ESLint Cleanup Final Verification
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Cleared the tracked ESLint baseline in three small code batches without disabling rules or running a broad formatter.
+- Used dead-code removal, configured import ordering, explicit control-flow braces, and required statement separation to address the underlying findings.
+- Preserved a top-level type-import correction in the concurrent untracked `resources/js/composables/useTaskDetailState.ts` file without staging the unrelated feature implementation.
+- Kept all other active localization, workspace UI, calendar, notification, and data-transfer changes outside the lint commits.
+
+### Changed Files
+
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package was added, removed, or upgraded.
+
+### Verification
+
+- Final `npm run lint:check` passed with zero errors and zero warnings in the current worktree.
+- Final `npm run build` passed; Vite emitted only the existing optional `fontaine` notice.
+- Scoped `git diff --check` passed for every lint batch and the preserved concurrent type-import correction.
+- No `eslint-disable` comment was needed.
+
+### Known Limitations
+
+- The corrected task-detail composable remains untracked as part of an active concurrent feature and is intentionally excluded from this delivery record's commit.
+- Unrelated active worktree changes remain the responsibility of their owning phases.
+
+### Git Delivery
+
+- Commit `613c80d` (`fix: remove dead frontend bindings`) was pushed to `origin main`.
+- Commit `bdac5ae` (`fix: normalize task UI control flow`) was pushed to `origin main`.
+- Commit `4ed0952` (`fix: clean board and keyboard guards`) was pushed to `origin main`.
+- This final delivery record will be committed as `docs: record ESLint cleanup delivery` and pushed separately to `origin main`.
