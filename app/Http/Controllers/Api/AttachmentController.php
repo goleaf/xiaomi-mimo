@@ -1,0 +1,47 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Actions\DeleteAttachment;
+use App\Actions\UploadAttachment;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\AttachmentResource;
+use App\Models\Attachment;
+use App\Models\Todo;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Storage;
+
+class AttachmentController extends Controller
+{
+    public function index(Todo $todo): AnonymousResourceCollection
+    {
+        $this->authorize('view', $todo);
+
+        return AttachmentResource::collection($todo->attachments()->with('user')->get());
+    }
+
+    public function store(Request $request, Todo $todo, UploadAttachment $action): JsonResponse
+    {
+        $request->validate(['file' => 'required|file|max:10240']);
+        $attachment = $action->handle($todo, $request->user(), $request->file('file'));
+
+        return response()->json(['attachment' => new AttachmentResource($attachment)], 201);
+    }
+
+    public function destroy(Attachment $attachment, DeleteAttachment $action): JsonResponse
+    {
+        $this->authorize('delete', $attachment);
+        $action->handle($attachment);
+
+        return response()->json(null, 204);
+    }
+
+    public function download(Attachment $attachment)
+    {
+        $this->authorize('view', $attachment);
+
+        return Storage::disk('public')->download($attachment->path, $attachment->filename);
+    }
+}

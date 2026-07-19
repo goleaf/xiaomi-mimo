@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChecklistController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\LabelController;
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\ReminderController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\WorkspaceController;
@@ -64,5 +66,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/workspaces/{workspace}/tags', [TagController::class, 'index']);
     Route::post('/workspaces/{workspace}/tags', [TagController::class, 'store']);
     Route::put('/tags/{tag}', [TagController::class, 'update']);
+
+    // Reminders
+    Route::get('/tasks/{todo}/reminders', [ReminderController::class, 'index']);
+    Route::post('/tasks/{todo}/reminders', [ReminderController::class, 'store']);
+    Route::delete('/reminders/{reminder}', [ReminderController::class, 'destroy']);
+
+    // Attachments
+    Route::get('/tasks/{todo}/attachments', [AttachmentController::class, 'index']);
+    Route::post('/tasks/{todo}/attachments', [AttachmentController::class, 'store']);
+    Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy']);
+    Route::get('/attachments/{attachment}/download', [AttachmentController::class, 'download']);
     Route::delete('/tags/{tag}', [TagController::class, 'destroy']);
 });

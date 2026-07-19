@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Attachment;
 use App\Models\Comment;
 use App\Models\Project;
+use App\Models\Reminder;
 use App\Models\Todo;
 use App\Models\Workspace;
 use App\Policies\AttachmentPolicy;
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
+        Reminder::class => ReminderPolicy::class,
         Workspace::class => WorkspacePolicy::class,
         Project::class => ProjectPolicy::class,
         Todo::class => TodoPolicy::class,
