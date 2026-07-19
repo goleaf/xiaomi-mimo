@@ -2067,4 +2067,6 @@ No migration or Composer/npm package change was made.
 
 ### Git Delivery
 
-Pending.
+- Implementation commit: `4012e46` (`feat: edit task labels`).
+- Implementation push: successful to `origin/main`.
+- This delivery record is committed and pushed separately so the feature commit remains focused.
