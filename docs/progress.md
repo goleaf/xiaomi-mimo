@@ -1426,19 +1426,22 @@ No migration or Composer/npm package change was made.
 
 ### Status
 
-Completed with two known static-analysis failures. All runtime tests, frontend linting, frontend formatting, and production bundling pass.
+Completed with every requested verification command passing.
+
+- Critical findings: 0 resolved, 2 partially resolved, and 4 open.
+- High findings: 4 resolved, 1 partially resolved, and 5 open.
 
 ### Exact Verification Results
 
 | Command | Exit | Current status |
 | --- | ---: | --- |
 | `vendor/bin/pint --dirty --format agent` | 0 | Passed with no reported findings. |
-| `php artisan test --compact` | 0 | Passed: 196 tests and 1,181 assertions. |
-| `vendor/bin/phpstan analyse --no-progress` | 1 | Failed with 327 application-wide errors. Leading categories remain missing iterable value types, Eloquent model/factory return inference, undefined relation methods/properties, and enum assignment mismatches. |
-| `npm run types:check` | 2 | Failed only at `resources/js/composables/useAutosave.ts:1`: `@vueuse/core` does not export the imported `debounce` member. |
+| `php artisan test --compact` | 0 | Passed: 328 tests and 1,423 assertions. |
+| `vendor/bin/phpstan analyse --no-progress` | 0 | Passed with zero errors. |
+| `npm run types:check` | 0 | Passed with zero Vue/TypeScript errors. |
 | `npm run lint:check` | 0 | Passed with zero ESLint errors or warnings. |
 | `npm run format:check` | 0 | Passed; all files under `resources/` match Prettier style. |
-| `npm run build` | 0 | Passed; Vite transformed 3,358 modules and built the production bundle. The optional `fontaine` fallback notice and plugin timing advisory remain non-blocking. |
+| `npm run build` | 0 | Passed; Vite transformed 3,362 modules and built the production bundle. The optional `fontaine` fallback notice remains non-blocking. |
 
 ### Original Critical Findings
 
@@ -1449,7 +1452,7 @@ Completed with two known static-analysis failures. All runtime tests, frontend l
 | Checklist, label, tag, reminder, and attachment writes lack complete policy authorization. | Partially resolved | Attachment upload/download/delete now uses an authorized request plus `AttachmentPolicy`; checklist, label, tag, and reminder-create mutations still lack complete policy/scoped-child authorization. Finish policies and attacker/victim API/web tests for every child type. |
 | Backup endpoints lack owner policy/path safety and copy only the main WAL-mode SQLite file. | Open | `BackupController` still exposes physical paths and accepts route filenames; `BackupService` still uses direct `File::copy()` for the main database. Redesign backup/restore around owner authorization, canonical identifiers, SQLite-safe snapshots, validation, and isolated restore tests. |
 | Invitations create users with the known password `password` and no acceptance token. | Open | `InviteToWorkspace` still calls `firstOrCreate()` with `bcrypt('password')`; no invitation model/token acceptance flow exists. Replace account creation with expiring single-use invitations and acceptance tests. |
-| Live SQLite domain referential integrity is not enforced. | Open | The live schema still reports no foreign keys for representative domain tables, while UUID migrations still use `uuid()->constrained()`. Add populated-safe SQLite rebuild migrations, UUID-correct morph keys, checks, preflight validation, and schema/integrity tests. |
+| Live SQLite domain referential integrity is not enforced. | Partially resolved | The applied corrective migration now enforces foreign keys across the core workspace domain, and the live database passes `PRAGMA foreign_key_check`; todo parent links and UUID-backed passkey/notification/Sanctum morph references remain incomplete, and domain `CHECK` constraints are still absent. Finish those schema contracts with populated-upgrade and integrity tests. |
 
 ### Original High Findings
 
@@ -1471,7 +1474,7 @@ Completed with two known static-analysis failures. All runtime tests, frontend l
 - Security first: close the two cross-workspace task ID findings, complete child policies/scoped binding, and add attacker/victim atomicity tests.
 - Then address invitation and API token security before exposing those flows beyond trusted local use.
 - Treat backup/restore and SQLite referential integrity as schema/storage phases requiring isolated databases and populated-safe migration tests.
-- Clear the single Vue type error independently; plan the 327 Larastan findings as small typed batches rather than a baseline or suppression pass.
+- Keep the now-green Pint, Pest, Larastan, Vue type, ESLint, Prettier, and production-build gates green while security/schema phases proceed.
 - Decide whether the board is being removed permanently or implemented as an accessible keyboard-capable feature before re-exposing a board preference.
 
 ### Session Git Delivery
@@ -1484,8 +1487,9 @@ The ESLint and formatting work attributable to this conversation is present on `
 4. `13ec033` — `docs: record ESLint cleanup delivery`
 5. `be44072` — `style: format keyboard composables`
 6. `de61ce9` — `docs: record frontend formatting cleanup`
+7. `b700964` — `docs: record verification and audit handoff`
 
-This handoff is committed and pushed separately. Commits from interleaved workspace, localization, data-transfer, and design phases are current-state evidence but are not claimed as part of the ESLint/formatting commit chain.
+This repeat verification is committed and pushed separately. Commits from interleaved workspace, localization, data-transfer, design, and static-analysis phases are current-state evidence but are not claimed as part of the ESLint/formatting commit chain.
 
 ## UI Phase: Projects-Style Settings Shell
 
