@@ -1,0 +1,20 @@
+[harness]
+name = "claude"
+model = "sonnet"
+
+[evolution]
+mode = "skill_only"
+iterations = 20
+frontier_size = 3
+concurrency = 4
+no_improvement_limit = 5
+
+[dataset]
+path = "data/laravel_questions.csv"
+question_column = "question"
+answer_column = "answer"
+train_ratio = 0.18
+val_ratio = 0.12
+
+[scorer]
+type = "multi_tolerance"

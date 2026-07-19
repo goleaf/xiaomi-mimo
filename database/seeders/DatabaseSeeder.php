@@ -74,5 +74,7 @@ class DatabaseSeeder extends Seeder
                 'due_date' => $data['due_date'] ?? fake()->dateTimeBetween('now', '+14 days'),
             ]);
         }
+
+        $this->call(ActivityLogSeeder::class);
     }
 }
