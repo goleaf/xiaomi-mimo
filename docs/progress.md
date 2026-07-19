@@ -450,4 +450,6 @@ No migration or Composer/npm package was added, removed, or upgraded. Axios and 
 
 ### Git Delivery
 
-Commit and push results are pending. Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+- Commit `30433e2` (`chore: reconcile NativePHP development guide`) contains only the hot-file ignore rules, NativePHP hot-reload configuration, focused development test, and phase progress files.
+- Push to `origin main` succeeded (`e277f15..30433e2`).
+- Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
