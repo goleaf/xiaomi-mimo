@@ -612,4 +612,6 @@ No migration or Composer/npm package was added, removed, or upgraded.
 
 ### Git Delivery
 
-Commit and push results are pending. Unrelated staged and unstaged application work remains untouched and excluded.
+- Commit `6d7bdbb` (`chore: reconcile NativePHP architecture overview`) contains only the focused architecture contracts and phase progress files.
+- Push to `origin main` succeeded (`887d7a7..6d7bdbb`).
+- Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
