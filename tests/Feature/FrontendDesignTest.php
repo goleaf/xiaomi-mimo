@@ -158,6 +158,67 @@ test('segmented controls use the projects muted and card surface contract', func
         ->not->toContain('bg-white');
 });
 
+test('shared authentication controls use the warm precision interaction contract', function () {
+    expect(File::get(resource_path('js/components/PasswordInput.vue')))
+        ->toContain('focus-visible:ring-orange-500/25')
+        ->toContain(':aria-pressed="showPassword"')
+        ->toContain("'auth.common.show_password'")
+        ->toContain("'auth.common.hide_password'")
+        ->not->toContain(':tabindex="-1"')
+        ->and(File::get(resource_path('js/components/TextLink.vue')))
+        ->toContain('text-orange-700')
+        ->toContain('focus-visible:ring-orange-500')
+        ->not->toContain('decoration-neutral')
+        ->and(File::get(resource_path('js/pages/auth/Login.vue')))
+        ->not->toContain('tabindex=')
+        ->and(File::get(resource_path('js/pages/auth/Register.vue')))
+        ->not->toContain('tabindex=')
+        ->and(File::get(resource_path('js/pages/auth/TwoFactorChallenge.vue')))
+        ->toContain('focus-visible:ring-orange-500')
+        ->not->toContain('decoration-neutral')
+        ->and(File::get(resource_path('js/components/ui/input-otp/InputOTPSlot.vue')))
+        ->toContain('data-[active=true]:border-orange-500')
+        ->toContain('data-[active=true]:ring-orange-500/20')
+        ->toContain('first:rounded-l-xl')
+        ->toContain('motion-reduce:animate-none');
+});
+
+test('shared navigation feedback uses localized labels and the projects orange accent', function () {
+    expect(File::get(resource_path('js/app.ts')))
+        ->toContain("color: '#ea580c'")
+        ->not->toContain("color: '#4B5563'")
+        ->and(File::get(resource_path('js/components/ui/spinner/Spinner.vue')))
+        ->toContain("t('common.states.loading')")
+        ->and(File::get(resource_path('js/components/ui/breadcrumb/Breadcrumb.vue')))
+        ->toContain("t('common.navigation.breadcrumb')")
+        ->and(File::get(resource_path('js/components/ui/sidebar/SidebarRail.vue')))
+        ->toContain("t('common.navigation.toggle_sidebar')")
+        ->toContain('hover:after:bg-orange-500')
+        ->and(File::get(resource_path('js/components/UserInfo.vue')))
+        ->toContain('bg-orange-500/10')
+        ->toContain('text-orange-800');
+});
+
+test('shared interaction accessibility copy exists in every supported language', function (string $locale) {
+    $copy = require lang_path("{$locale}/ui.php");
+
+    expect(data_get($copy, 'common.navigation.breadcrumb'))
+        ->toBeString()
+        ->not->toBeEmpty()
+        ->and(data_get($copy, 'common.navigation.toggle_sidebar'))
+        ->toBeString()
+        ->not->toBeEmpty()
+        ->and(data_get($copy, 'common.states.loading'))
+        ->toBeString()
+        ->not->toBeEmpty()
+        ->and(data_get($copy, 'auth.common.show_password'))
+        ->toBeString()
+        ->not->toBeEmpty()
+        ->and(data_get($copy, 'auth.common.hide_password'))
+        ->toBeString()
+        ->not->toBeEmpty();
+})->with(['en', 'lt', 'ru']);
+
 test('list pages share the warm precision empty state', function (string $page) {
     expect(File::get(resource_path("js/pages/{$page}")))
         ->toContain('EmptyState');

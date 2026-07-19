@@ -31,12 +31,15 @@ return [
             'generic' => 'Что-то пошло не так.',
         ],
         'navigation' => [
+            'breadcrumb' => 'Навигационная цепочка',
             'dashboard' => 'Обзор',
             'documentation' => 'Документация',
             'menu' => 'Меню навигации',
             'repository' => 'Репозиторий',
+            'toggle_sidebar' => 'Переключить боковую панель',
         ],
         'states' => [
+            'loading' => 'Загрузка',
             'not_set' => 'Не задано',
             'selected' => 'Выбрано: :count',
             'unassigned' => 'Не назначено',
@@ -52,9 +55,11 @@ return [
             'email' => 'Электронная почта',
             'email_placeholder' => 'name@example.com',
             'eyebrow' => 'Доступ к пространству',
+            'hide_password' => 'Скрыть пароль',
             'name' => 'Имя',
             'name_placeholder' => 'Имя и фамилия',
             'password' => 'Пароль',
+            'show_password' => 'Показать пароль',
         ],
         'confirm_password' => [
             'description' => 'Это защищённый раздел приложения. Перед продолжением подтвердите пароль.',

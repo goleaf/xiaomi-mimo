@@ -31,12 +31,15 @@ return [
             'generic' => 'Įvyko klaida.',
         ],
         'navigation' => [
+            'breadcrumb' => 'Naršymo kelias',
             'dashboard' => 'Apžvalga',
             'documentation' => 'Dokumentacija',
             'menu' => 'Naršymo meniu',
             'repository' => 'Saugykla',
+            'toggle_sidebar' => 'Perjungti šoninę juostą',
         ],
         'states' => [
+            'loading' => 'Įkeliama',
             'not_set' => 'Nenustatyta',
             'selected' => 'Pasirinkta: :count',
             'unassigned' => 'Nepriskirta',
@@ -52,9 +55,11 @@ return [
             'email' => 'El. pašto adresas',
             'email_placeholder' => 'vardas@pavyzdys.lt',
             'eyebrow' => 'Prieiga prie darbo erdvės',
+            'hide_password' => 'Slėpti slaptažodį',
             'name' => 'Vardas',
             'name_placeholder' => 'Vardas ir pavardė',
             'password' => 'Slaptažodis',
+            'show_password' => 'Rodyti slaptažodį',
         ],
         'confirm_password' => [
             'description' => 'Tai saugi programos sritis. Prieš tęsdami patvirtinkite slaptažodį.',

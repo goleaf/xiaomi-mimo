@@ -40,7 +40,6 @@ setLayoutProps({
                     type="text"
                     required
                     autofocus
-                    :tabindex="1"
                     autocomplete="name"
                     name="name"
                     :placeholder="t('auth.common.name_placeholder')"
@@ -54,7 +53,6 @@ setLayoutProps({
                     id="email"
                     type="email"
                     required
-                    :tabindex="2"
                     autocomplete="email"
                     name="email"
                     :placeholder="t('auth.common.email_placeholder')"
@@ -67,7 +65,6 @@ setLayoutProps({
                 <PasswordInput
                     id="password"
                     required
-                    :tabindex="3"
                     autocomplete="new-password"
                     name="password"
                     :placeholder="t('auth.common.password')"
@@ -83,7 +80,6 @@ setLayoutProps({
                 <PasswordInput
                     id="password_confirmation"
                     required
-                    :tabindex="4"
                     autocomplete="new-password"
                     name="password_confirmation"
                     :placeholder="t('auth.common.confirm_password')"
@@ -95,7 +91,6 @@ setLayoutProps({
             <Button
                 type="submit"
                 class="mt-2 w-full"
-                tabindex="5"
                 :disabled="processing"
                 data-test="register-user-button"
             >
@@ -106,12 +101,9 @@ setLayoutProps({
 
         <div class="text-center text-sm text-muted-foreground">
             {{ t('auth.register.has_account') }}
-            <TextLink
-                :href="login()"
-                class="underline underline-offset-4"
-                :tabindex="6"
-                >{{ t('auth.register.login') }}</TextLink
-            >
+            <TextLink :href="login()" class="underline underline-offset-4">{{
+                t('auth.register.login')
+            }}</TextLink>
         </div>
     </Form>
 </template>

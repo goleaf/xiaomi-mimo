@@ -22,11 +22,11 @@ const slot = computed(() => context?.value.slots[props.index])
     v-bind="forwarded"
     data-slot="input-otp-slot"
     :data-active="slot?.isActive"
-    :class="cn('data-[active=true]:border-ring data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:ring-destructive/20 dark:data-[active=true]:aria-invalid:ring-destructive/40 aria-invalid:border-destructive data-[active=true]:aria-invalid:border-destructive dark:bg-input/30 border-input relative flex h-9 w-9 items-center justify-center border-y border-r text-sm shadow-xs transition-all outline-none first:rounded-l-md first:border-l last:rounded-r-md data-[active=true]:z-10 data-[active=true]:ring-[3px]', props.class)"
+    :class="cn('data-[active=true]:border-orange-500 data-[active=true]:ring-orange-500/20 data-[active=true]:aria-invalid:ring-destructive/20 dark:data-[active=true]:aria-invalid:ring-destructive/40 aria-invalid:border-destructive data-[active=true]:aria-invalid:border-destructive dark:bg-input/30 border-input relative flex size-11 items-center justify-center border-y border-r text-sm font-medium shadow-xs transition-all outline-none first:rounded-l-xl first:border-l last:rounded-r-xl data-[active=true]:z-10 data-[active=true]:ring-[3px]', props.class)"
   >
     {{ slot?.char }}
     <div v-if="slot?.hasFakeCaret" class="pointer-events-none absolute inset-0 flex items-center justify-center">
-      <div class="animate-caret-blink bg-foreground h-4 w-px duration-1000" />
+      <div class="animate-caret-blink bg-foreground h-4 w-px duration-1000 motion-reduce:animate-none" />
     </div>
   </div>
 </template>

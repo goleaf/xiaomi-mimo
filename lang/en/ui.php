@@ -31,12 +31,15 @@ return [
             'generic' => 'Something went wrong.',
         ],
         'navigation' => [
+            'breadcrumb' => 'Breadcrumb',
             'dashboard' => 'Dashboard',
             'documentation' => 'Documentation',
             'menu' => 'Navigation menu',
             'repository' => 'Repository',
+            'toggle_sidebar' => 'Toggle sidebar',
         ],
         'states' => [
+            'loading' => 'Loading',
             'not_set' => 'Not set',
             'selected' => ':count selected',
             'unassigned' => 'Unassigned',
@@ -52,9 +55,11 @@ return [
             'email' => 'Email address',
             'email_placeholder' => 'email@example.com',
             'eyebrow' => 'Workspace access',
+            'hide_password' => 'Hide password',
             'name' => 'Name',
             'name_placeholder' => 'Full name',
             'password' => 'Password',
+            'show_password' => 'Show password',
         ],
         'confirm_password' => [
             'description' => 'This is a secure area of the application. Please confirm your password before continuing.',

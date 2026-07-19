@@ -89,7 +89,7 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
                     <span>{{ t('auth.two_factor.or_you_can') }} </span>
                     <button
                         type="button"
-                        class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                        class="cursor-pointer rounded-sm font-medium text-orange-700 underline decoration-orange-500/35 underline-offset-4 transition-colors duration-200 hover:text-orange-800 hover:decoration-orange-500 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none dark:text-orange-300 dark:hover:text-orange-200"
                         @click="() => toggleRecoveryMode(clearErrors)"
                     >
                         {{ authConfigContent.buttonText }}
@@ -121,7 +121,7 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
                     <span>{{ t('auth.two_factor.or_you_can') }} </span>
                     <button
                         type="button"
-                        class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                        class="cursor-pointer rounded-sm font-medium text-orange-700 underline decoration-orange-500/35 underline-offset-4 transition-colors duration-200 hover:text-orange-800 hover:decoration-orange-500 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none dark:text-orange-300 dark:hover:text-orange-200"
                         @click="() => toggleRecoveryMode(clearErrors)"
                     >
                         {{ authConfigContent.buttonText }}

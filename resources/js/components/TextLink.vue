@@ -4,7 +4,6 @@ import { Link } from '@inertiajs/vue3';
 
 type Props = {
     href: LinkComponentBaseProps['href'];
-    tabindex?: number;
     method?: Method;
     as?: string;
 };
@@ -15,10 +14,9 @@ defineProps<Props>();
 <template>
     <Link
         :href="href"
-        :tabindex="tabindex"
         :method="method"
         :as="as"
-        class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+        class="rounded-sm font-medium text-orange-700 underline decoration-orange-500/35 underline-offset-4 transition-colors duration-200 hover:text-orange-800 hover:decoration-orange-500 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none dark:text-orange-300 dark:hover:text-orange-200"
     >
         <slot />
     </Link>

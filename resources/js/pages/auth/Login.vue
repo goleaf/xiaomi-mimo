@@ -54,7 +54,6 @@ defineProps<{
                     name="email"
                     required
                     autofocus
-                    :tabindex="1"
                     autocomplete="email"
                     :placeholder="t('auth.common.email_placeholder')"
                 />
@@ -70,7 +69,6 @@ defineProps<{
                         v-if="canResetPassword"
                         :href="request()"
                         class="text-sm"
-                        :tabindex="5"
                     >
                         {{ t('auth.login.forgot_password') }}
                     </TextLink>
@@ -79,7 +77,6 @@ defineProps<{
                     id="password"
                     name="password"
                     required
-                    :tabindex="2"
                     autocomplete="current-password"
                     :placeholder="t('auth.common.password')"
                 />
@@ -88,7 +85,7 @@ defineProps<{
 
             <div class="flex items-center justify-between">
                 <Label for="remember" class="flex items-center space-x-3">
-                    <Checkbox id="remember" name="remember" :tabindex="3" />
+                    <Checkbox id="remember" name="remember" />
                     <span>{{ t('auth.login.remember') }}</span>
                 </Label>
             </div>
@@ -96,7 +93,6 @@ defineProps<{
             <Button
                 type="submit"
                 class="mt-4 w-full"
-                :tabindex="4"
                 :disabled="processing"
                 data-test="login-button"
             >
@@ -107,7 +103,7 @@ defineProps<{
 
         <div class="text-center text-sm text-muted-foreground">
             {{ t('auth.login.no_account') }}
-            <TextLink :href="register()" :tabindex="5">{{
+            <TextLink :href="register()">{{
                 t('auth.login.sign_up')
             }}</TextLink>
         </div>
