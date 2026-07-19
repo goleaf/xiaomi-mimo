@@ -2206,4 +2206,6 @@ No migration or Composer/npm package change was made.
 
 - Implementation commit: `1741221` (`fix: polish shared control states`).
 - Implementation push: successful to `origin/main`.
-- Documentation delivery will be committed separately so the implementation commit remains focused.
+- Documentation commit: `43b26ca` (`docs: record shared control polish`).
+- Documentation push: successful to `origin/main`.
+- This final delivery record is committed and pushed separately so the phase commits remain focused.
