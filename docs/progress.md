@@ -397,4 +397,6 @@ No migration or Composer/npm package was added, removed, or upgraded. NativePHP 
 
 ### Git Delivery
 
-Commit and push results are pending. Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+- Commit `825197b` (`chore: reconcile NativePHP configuration guide`) contains only the example environment, NativePHP configuration, focused test, and phase progress files.
+- Push to `origin main` succeeded (`65dc904..825197b`).
+- Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
