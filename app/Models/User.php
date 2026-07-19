@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\HasUuid;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,6 +22,7 @@ use Laravel\Sanctum\HasApiTokens;
  */
 class User extends Authenticatable implements PasskeyUser
 {
+    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasUuid, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     protected $fillable = ['name', 'email', 'password'];
@@ -36,11 +38,13 @@ class User extends Authenticatable implements PasskeyUser
         ];
     }
 
+    /** @return HasMany<Workspace, $this> */
     public function ownedWorkspaces(): HasMany
     {
         return $this->hasMany(Workspace::class, 'owner_id');
     }
 
+    /** @return BelongsToMany<Workspace, $this> */
     public function workspaces(): BelongsToMany
     {
         return $this->belongsToMany(Workspace::class, 'workspace_members')
@@ -48,21 +52,25 @@ class User extends Authenticatable implements PasskeyUser
             ->withTimestamps();
     }
 
+    /** @return HasMany<Todo, $this> */
     public function assignedTodos(): HasMany
     {
         return $this->hasMany(Todo::class, 'assigned_to');
     }
 
+    /** @return HasMany<Comment, $this> */
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
     }
 
+    /** @return HasMany<ActivityLog, $this> */
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class);
     }
 
+    /** @return HasOne<UserPreference, $this> */
     public function preferences(): HasOne
     {
         return $this->hasOne(UserPreference::class);

@@ -5,11 +5,14 @@ namespace App\Models;
 use App\Concerns\HasUuid;
 use App\Enums\TodoPriority;
 use App\Enums\TodoStatus;
+use Database\Factories\TodoFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -37,6 +40,7 @@ use Illuminate\Support\Carbon;
  */
 class Todo extends Model
 {
+    /** @use HasFactory<TodoFactory> */
     use HasFactory, HasUuid, SoftDeletes;
 
     protected $fillable = [
@@ -62,83 +66,111 @@ class Todo extends Model
         ];
     }
 
+    /** @return BelongsTo<Project, $this> */
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
+    /** @return BelongsTo<Workspace, $this> */
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
+    /** @return BelongsTo<Todo, $this> */
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Todo::class, 'parent_id');
     }
 
+    /** @return HasMany<Todo, $this> */
     public function subtasks(): HasMany
     {
         return $this->hasMany(Todo::class, 'parent_id');
     }
 
+    /** @return HasMany<Comment, $this> */
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
     }
 
+    /** @return HasMany<Checklist, $this> */
     public function checklists(): HasMany
     {
         return $this->hasMany(Checklist::class);
     }
 
+    /** @return HasMany<Reminder, $this> */
     public function reminders(): HasMany
     {
         return $this->hasMany(Reminder::class);
     }
 
+    /** @return HasMany<Attachment, $this> */
     public function attachments(): HasMany
     {
         return $this->hasMany(Attachment::class);
     }
 
+    /** @return BelongsToMany<Label, $this> */
     public function labels(): BelongsToMany
     {
         return $this->belongsToMany(Label::class, 'todo_label');
     }
 
+    /** @return BelongsToMany<Tag, $this> */
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'todo_tag');
     }
 
-    public function activityLogs(): HasMany
+    /** @return MorphMany<ActivityLog, $this> */
+    public function activityLogs(): MorphMany
     {
         return $this->morphMany(ActivityLog::class, 'subject');
     }
 
-    public function scopeActive($query)
+    /**
+     * @param  Builder<Todo>  $query
+     * @return Builder<Todo>
+     */
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_archived', false);
     }
 
-    public function scopeForWorkspace($query, string $workspaceId)
+    /**
+     * @param  Builder<Todo>  $query
+     * @return Builder<Todo>
+     */
+    public function scopeForWorkspace(Builder $query, string $workspaceId): Builder
     {
         return $query->where('workspace_id', $workspaceId);
     }
 
-    public function scopeOverdue($query)
+    /**
+     * @param  Builder<Todo>  $query
+     * @return Builder<Todo>
+     */
+    public function scopeOverdue(Builder $query): Builder
     {
         return $query->where('due_date', '<', now()->toDateString())
             ->where('status', '!=', TodoStatus::Completed);
     }
 
-    public function scopeCompletedToday($query)
+    /**
+     * @param  Builder<Todo>  $query
+     * @return Builder<Todo>
+     */
+    public function scopeCompletedToday(Builder $query): Builder
     {
         return $query->whereDate('completed_at', now()->toDateString());
     }

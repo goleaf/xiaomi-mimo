@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Concerns\HasUuid;
+use Database\Factories\ProjectFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Project extends Model
 {
+    /** @use HasFactory<ProjectFactory> */
     use HasFactory, HasUuid;
 
     protected $fillable = ['workspace_id', 'name', 'description', 'color', 'icon', 'is_archived', 'position'];
@@ -29,22 +32,32 @@ class Project extends Model
         return ['is_archived' => 'boolean'];
     }
 
+    /** @return BelongsTo<Workspace, $this> */
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
     }
 
+    /** @return HasMany<Todo, $this> */
     public function todos(): HasMany
     {
         return $this->hasMany(Todo::class);
     }
 
-    public function scopeActive($query)
+    /**
+     * @param  Builder<Project>  $query
+     * @return Builder<Project>
+     */
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_archived', false);
     }
 
-    public function scopeArchived($query)
+    /**
+     * @param  Builder<Project>  $query
+     * @return Builder<Project>
+     */
+    public function scopeArchived(Builder $query): Builder
     {
         return $query->where('is_archived', true);
     }
