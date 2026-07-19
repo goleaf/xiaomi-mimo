@@ -9,6 +9,7 @@ import {
 } from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
 import InputError from '@/components/InputError.vue';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -186,7 +187,9 @@ onBeforeUnmount(clearAvatarPreview);
         <Card>
             <CardHeader>
                 <div class="flex items-start gap-3">
-                    <div class="rounded-lg bg-primary/10 p-2 text-primary">
+                    <div
+                        class="flex size-10 items-center justify-center rounded-xl border border-orange-500/15 bg-orange-500/[0.08] text-orange-700 dark:text-orange-300"
+                    >
                         <Camera class="size-5" aria-hidden="true" />
                     </div>
                     <div class="space-y-1">
@@ -221,6 +224,7 @@ onBeforeUnmount(clearAvatarPreview);
                             type="file"
                             name="avatar"
                             accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                            :aria-invalid="Boolean(avatarForm.errors.avatar)"
                             @change="selectAvatar"
                         />
 
@@ -277,14 +281,22 @@ onBeforeUnmount(clearAvatarPreview);
                         <p class="text-sm text-muted-foreground">
                             {{ labels.avatar.help }}
                         </p>
-                        <progress
+                        <div
                             v-if="avatarForm.progress"
-                            class="h-2 w-full max-w-sm overflow-hidden rounded-full accent-primary"
-                            max="100"
-                            :value="avatarForm.progress.percentage"
+                            class="h-2 w-full max-w-sm overflow-hidden rounded-full bg-muted"
+                            role="progressbar"
+                            :aria-label="labels.avatar.uploading"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            :aria-valuenow="avatarForm.progress.percentage"
                         >
-                            {{ avatarForm.progress.percentage }}%
-                        </progress>
+                            <div
+                                class="h-full rounded-full bg-orange-600 transition-[width] duration-200 motion-reduce:transition-none"
+                                :style="{
+                                    width: `${avatarForm.progress.percentage}%`,
+                                }"
+                            />
+                        </div>
                         <InputError :message="avatarForm.errors.avatar" />
                     </div>
                 </form>
@@ -310,6 +322,7 @@ onBeforeUnmount(clearAvatarPreview);
                             v-model="profileForm.name"
                             name="name"
                             autocomplete="name"
+                            :aria-invalid="Boolean(profileForm.errors.name)"
                             required
                         />
                         <InputError :message="profileForm.errors.name" />
@@ -323,6 +336,7 @@ onBeforeUnmount(clearAvatarPreview);
                             name="email"
                             type="email"
                             autocomplete="email"
+                            :aria-invalid="Boolean(profileForm.errors.email)"
                             required
                         />
                         <InputError :message="profileForm.errors.email" />
@@ -342,55 +356,55 @@ onBeforeUnmount(clearAvatarPreview);
                                     : labels.personal.save
                             }}
                         </Button>
-                        <p
+                        <Alert
                             v-if="profileForm.recentlySuccessful"
-                            class="flex items-center gap-1.5 text-sm text-emerald-600"
-                            aria-live="polite"
+                            variant="success"
+                            class="min-w-0 flex-1 py-2.5"
                         >
-                            <BadgeCheck class="size-4" aria-hidden="true" />
-                            {{ labels.personal.saved }}
-                        </p>
+                            <BadgeCheck aria-hidden="true" />
+                            <AlertDescription class="font-medium">
+                                {{ labels.personal.saved }}
+                            </AlertDescription>
+                        </Alert>
                     </div>
                 </form>
 
-                <div
+                <Alert
                     v-if="canVerifyEmail && !user.email_verified_at"
-                    class="max-w-xl rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-400/20 dark:bg-amber-950/30 dark:text-amber-100"
+                    variant="warning"
+                    class="max-w-xl"
                 >
-                    <div class="flex items-start gap-3">
-                        <CircleAlert
-                            class="mt-0.5 size-5 shrink-0"
-                            aria-hidden="true"
-                        />
-                        <div class="space-y-3">
-                            <p class="text-sm font-medium">
-                                {{ labels.personal.email_unverified }}
-                            </p>
-                            <Form
-                                v-bind="sendVerification.form()"
-                                :options="{ preserveScroll: true }"
-                                v-slot="{ processing }"
+                    <CircleAlert aria-hidden="true" />
+                    <AlertTitle>
+                        {{ labels.personal.email_unverified }}
+                    </AlertTitle>
+                    <AlertDescription class="space-y-3">
+                        <Form
+                            v-bind="sendVerification.form()"
+                            :options="{ preserveScroll: true }"
+                            v-slot="{ processing }"
+                        >
+                            <Button
+                                type="submit"
+                                size="sm"
+                                variant="outline"
+                                :disabled="processing"
                             >
-                                <Button
-                                    type="submit"
-                                    size="sm"
-                                    variant="outline"
-                                    :disabled="processing"
-                                >
-                                    <Spinner v-if="processing" />
-                                    {{ labels.personal.resend_verification }}
-                                </Button>
-                            </Form>
-                            <p
-                                v-if="status === 'verification-link-sent'"
-                                class="text-sm"
-                                aria-live="polite"
-                            >
-                                {{ labels.personal.verification_sent }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                                <Spinner v-if="processing" />
+                                {{ labels.personal.resend_verification }}
+                            </Button>
+                        </Form>
+                        <p
+                            v-if="status === 'verification-link-sent'"
+                            class="flex items-center gap-1.5 font-medium"
+                            role="status"
+                            aria-live="polite"
+                        >
+                            <BadgeCheck class="size-4" aria-hidden="true" />
+                            {{ labels.personal.verification_sent }}
+                        </p>
+                    </AlertDescription>
+                </Alert>
             </CardContent>
         </Card>
 

@@ -11,6 +11,7 @@ import {
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { update as updateTodo } from '@/actions/App/Http/Controllers/TodoController';
+import InputError from '@/components/InputError.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -331,14 +332,12 @@ function priorityBadge(
                                     id="task-title"
                                     v-model="editForm.title"
                                     maxlength="500"
+                                    :aria-invalid="
+                                        Boolean(editForm.errors.title)
+                                    "
                                     autofocus
                                 />
-                                <p
-                                    v-if="editForm.errors.title"
-                                    class="text-sm text-destructive"
-                                >
-                                    {{ editForm.errors.title }}
-                                </p>
+                                <InputError :message="editForm.errors.title" />
                             </div>
 
                             <div class="space-y-2">
@@ -350,21 +349,26 @@ function priorityBadge(
                                     v-model="editForm.description"
                                     rows="4"
                                     :placeholder="labels.descriptionPlaceholder"
+                                    :aria-invalid="
+                                        Boolean(editForm.errors.description)
+                                    "
                                     class="flex min-h-24 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-orange-500 focus-visible:ring-[3px] focus-visible:ring-orange-500/20 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:bg-input/30 dark:aria-invalid:ring-destructive/40"
                                 />
-                                <p
-                                    v-if="editForm.errors.description"
-                                    class="text-sm text-destructive"
-                                >
-                                    {{ editForm.errors.description }}
-                                </p>
+                                <InputError
+                                    :message="editForm.errors.description"
+                                />
                             </div>
 
                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div class="space-y-2">
                                     <Label>{{ labels.status }}</Label>
                                     <Select v-model="editForm.status">
-                                        <SelectTrigger class="w-full">
+                                        <SelectTrigger
+                                            class="w-full"
+                                            :aria-invalid="
+                                                Boolean(editForm.errors.status)
+                                            "
+                                        >
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -379,18 +383,22 @@ function priorityBadge(
                                             }}</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <p
-                                        v-if="editForm.errors.status"
-                                        class="text-sm text-destructive"
-                                    >
-                                        {{ editForm.errors.status }}
-                                    </p>
+                                    <InputError
+                                        :message="editForm.errors.status"
+                                    />
                                 </div>
 
                                 <div class="space-y-2">
                                     <Label>{{ labels.priority }}</Label>
                                     <Select v-model="editForm.priority">
-                                        <SelectTrigger class="w-full">
+                                        <SelectTrigger
+                                            class="w-full"
+                                            :aria-invalid="
+                                                Boolean(
+                                                    editForm.errors.priority,
+                                                )
+                                            "
+                                        >
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -411,12 +419,9 @@ function priorityBadge(
                                             }}</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <p
-                                        v-if="editForm.errors.priority"
-                                        class="text-sm text-destructive"
-                                    >
-                                        {{ editForm.errors.priority }}
-                                    </p>
+                                    <InputError
+                                        :message="editForm.errors.priority"
+                                    />
                                 </div>
 
                                 <div class="space-y-2">
@@ -427,13 +432,13 @@ function priorityBadge(
                                         id="task-due-date"
                                         v-model="editForm.due_date"
                                         type="date"
+                                        :aria-invalid="
+                                            Boolean(editForm.errors.due_date)
+                                        "
                                     />
-                                    <p
-                                        v-if="editForm.errors.due_date"
-                                        class="text-sm text-destructive"
-                                    >
-                                        {{ editForm.errors.due_date }}
-                                    </p>
+                                    <InputError
+                                        :message="editForm.errors.due_date"
+                                    />
                                 </div>
                             </div>
 
@@ -500,13 +505,7 @@ function priorityBadge(
                                 >
                                     {{ labels.noLabelsAvailable }}
                                 </p>
-                                <p
-                                    v-if="labelError"
-                                    role="alert"
-                                    class="text-sm text-destructive"
-                                >
-                                    {{ labelError }}
-                                </p>
+                                <InputError :message="labelError" />
                             </fieldset>
 
                             <div class="flex flex-wrap justify-end gap-2">

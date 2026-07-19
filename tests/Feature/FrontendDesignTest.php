@@ -245,6 +245,66 @@ test('shared controls use warm checked focus and feedback states', function () {
         ->toContain('motion-reduce:transition-none');
 });
 
+test('shared form feedback uses semantic warm precision states', function () {
+    expect(File::get(resource_path('js/components/ui/alert/index.ts')))
+        ->toContain('border-emerald-500/20')
+        ->toContain('bg-emerald-500/[0.07]')
+        ->toContain('border-amber-500/25')
+        ->toContain('bg-amber-500/[0.08]')
+        ->and(File::get(resource_path('js/components/ui/alert/Alert.vue')))
+        ->toContain('props.variant === "success" ? "status" : "alert"')
+        ->and(File::get(resource_path('js/components/InputError.vue')))
+        ->toContain('CircleAlert')
+        ->toContain('text-destructive')
+        ->toContain('role="alert"')
+        ->toContain('aria-live="polite"')
+        ->not->toContain('text-red-');
+});
+
+test('authentication status messages use the shared success surface', function (string $page) {
+    expect(File::get(resource_path("js/pages/auth/{$page}.vue")))
+        ->toContain('<Alert')
+        ->toContain('variant="success"')
+        ->toContain('<AlertDescription')
+        ->not->toContain('text-green-600');
+})->with([
+    'login' => 'Login',
+    'forgot password' => 'ForgotPassword',
+    'verify email' => 'VerifyEmail',
+]);
+
+test('profile feedback uses semantic alerts and deterministic upload progress', function () {
+    expect(File::get(resource_path('js/pages/settings/Profile.vue')))
+        ->toContain('variant="warning"')
+        ->toContain('role="progressbar"')
+        ->toContain('bg-orange-600')
+        ->toContain('motion-reduce:transition-none')
+        ->not->toContain('<progress')
+        ->not->toContain('bg-amber-50')
+        ->and(File::get(resource_path('js/components/DeleteUser.vue')))
+        ->toContain('<Alert variant="destructive">')
+        ->not->toContain('bg-red-50');
+});
+
+test('active forms reuse shared field errors', function (string $component) {
+    expect(File::get(resource_path("js/{$component}")))
+        ->toContain('InputError')
+        ->not->toContain('class="text-sm text-destructive"');
+})->with([
+    'task edit form' => 'pages/tasks/Show.vue',
+    'member invitation form' => 'pages/settings/Members.vue',
+    'security form' => 'pages/settings/Security.vue',
+]);
+
+test('security page consumes the dedicated two factor feature props', function () {
+    expect(File::get(resource_path('js/pages/settings/Security.vue')))
+        ->toContain('canManageTwoFactor: boolean')
+        ->toContain('twoFactorEnabled?: boolean')
+        ->toContain('<Card v-if="canManageTwoFactor">')
+        ->toContain('v-if="twoFactorEnabled"')
+        ->not->toContain('user.two_factor_enabled');
+});
+
 test('shared and page loading states respect reduced motion', function (string $component) {
     expect(File::get(resource_path("js/{$component}")))
         ->toContain('motion-reduce:animate-none');

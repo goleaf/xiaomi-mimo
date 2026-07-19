@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { Head, setLayoutProps, useForm } from '@inertiajs/vue3';
-import { Shield } from '@lucide/vue';
+import { Shield, ShieldCheck } from '@lucide/vue';
 import { ref } from 'vue';
+import InputError from '@/components/InputError.vue';
 import WorkspaceConfirmDialog from '@/components/shared/WorkspaceConfirmDialog.vue';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -13,15 +15,22 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { disable, enable } from '@/routes/two-factor';
 import { update as updatePasswordRoute } from '@/routes/user-password';
 import type { SettingsLayoutProps } from '@/types';
 
-defineProps<{
-    user: { id: string; two_factor_enabled?: boolean };
-}>();
+withDefaults(
+    defineProps<{
+        canManageTwoFactor: boolean;
+        twoFactorEnabled?: boolean;
+    }>(),
+    {
+        twoFactorEnabled: false,
+    },
+);
 
 const toast = useToast();
 const { t } = useUi();
@@ -92,15 +101,14 @@ function disable2FA(): void {
                             id="current_password"
                             v-model="passwordForm.current_password"
                             type="password"
-                            class="h-11 rounded-xl"
+                            :aria-invalid="
+                                Boolean(passwordForm.errors.current_password)
+                            "
                             required
                         />
-                        <p
-                            v-if="passwordForm.errors.current_password"
-                            class="text-sm text-destructive"
-                        >
-                            {{ passwordForm.errors.current_password }}
-                        </p>
+                        <InputError
+                            :message="passwordForm.errors.current_password"
+                        />
                     </div>
                     <div class="space-y-2">
                         <Label for="password">{{
@@ -110,15 +118,12 @@ function disable2FA(): void {
                             id="password"
                             v-model="passwordForm.password"
                             type="password"
-                            class="h-11 rounded-xl"
+                            :aria-invalid="
+                                Boolean(passwordForm.errors.password)
+                            "
                             required
                         />
-                        <p
-                            v-if="passwordForm.errors.password"
-                            class="text-sm text-destructive"
-                        >
-                            {{ passwordForm.errors.password }}
-                        </p>
+                        <InputError :message="passwordForm.errors.password" />
                     </div>
                     <div class="space-y-2">
                         <Label for="password_confirmation">{{
@@ -128,22 +133,30 @@ function disable2FA(): void {
                             id="password_confirmation"
                             v-model="passwordForm.password_confirmation"
                             type="password"
-                            class="h-11 rounded-xl"
+                            :aria-invalid="
+                                Boolean(
+                                    passwordForm.errors.password_confirmation,
+                                )
+                            "
                             required
+                        />
+                        <InputError
+                            :message="passwordForm.errors.password_confirmation"
                         />
                     </div>
                     <Button
                         type="submit"
-                        class="min-h-11 rounded-xl bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-orange-500"
+                        size="lg"
                         :disabled="passwordForm.processing"
                     >
+                        <Spinner v-if="passwordForm.processing" />
                         {{ t('settings.security.update_password') }}
                     </Button>
                 </form>
             </CardContent>
         </Card>
 
-        <Card>
+        <Card v-if="canManageTwoFactor">
             <CardHeader>
                 <div class="flex items-center gap-2">
                     <Shield class="h-5 w-5" />
@@ -157,31 +170,38 @@ function disable2FA(): void {
             </CardHeader>
             <CardContent>
                 <div
-                    v-if="user.two_factor_enabled"
-                    class="flex items-center gap-4"
+                    v-if="twoFactorEnabled"
+                    class="flex flex-col gap-3 sm:flex-row sm:items-center"
                 >
-                    <p class="text-sm font-medium text-green-600">
-                        {{ t('settings.security.enabled_state') }}
-                    </p>
+                    <Alert variant="success" class="flex-1 py-3">
+                        <ShieldCheck aria-hidden="true" />
+                        <AlertDescription class="font-medium">
+                            {{ t('settings.security.enabled_state') }}
+                        </AlertDescription>
+                    </Alert>
                     <Button
                         variant="destructive"
-                        size="sm"
-                        class="min-h-10 rounded-xl"
                         @click="showDisableDialog = true"
                         >{{ t('common.actions.disable') }}</Button
                     >
                 </div>
-                <div v-else class="flex items-center gap-4">
-                    <p class="text-sm text-muted-foreground">
-                        {{ t('settings.security.not_enabled_state') }}
-                    </p>
+                <div
+                    v-else
+                    class="flex flex-col gap-3 sm:flex-row sm:items-center"
+                >
+                    <Alert role="status" class="flex-1 py-3">
+                        <Shield aria-hidden="true" />
+                        <AlertDescription>
+                            {{ t('settings.security.not_enabled_state') }}
+                        </AlertDescription>
+                    </Alert>
                     <Button
-                        size="sm"
-                        class="min-h-10 rounded-xl bg-orange-600 text-white hover:bg-orange-700"
                         :disabled="twoFactorForm.processing"
                         @click="enable2FA"
-                        >{{ t('common.actions.enable') }}</Button
                     >
+                        <Spinner v-if="twoFactorForm.processing" />
+                        {{ t('common.actions.enable') }}
+                    </Button>
                 </div>
             </CardContent>
         </Card>

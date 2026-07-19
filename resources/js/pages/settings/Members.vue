@@ -15,6 +15,7 @@ import {
     invite as inviteWorkspaceMember,
     removeMember as removeWorkspaceMember,
 } from '@/actions/App/Http/Controllers/WorkspaceController';
+import InputError from '@/components/InputError.vue';
 import WorkspaceDialogContent from '@/components/shared/WorkspaceDialogContent.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -393,13 +394,7 @@ function removeMember(): void {
                                     required
                                 />
                             </div>
-                            <p
-                                v-if="inviteForm.errors.email"
-                                class="text-sm text-destructive"
-                                role="alert"
-                            >
-                                {{ inviteForm.errors.email }}
-                            </p>
+                            <InputError :message="inviteForm.errors.email" />
                         </div>
 
                         <div class="space-y-2">
@@ -425,13 +420,7 @@ function removeMember(): void {
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
-                            <p
-                                v-if="inviteForm.errors.role"
-                                class="text-sm text-destructive"
-                                role="alert"
-                            >
-                                {{ inviteForm.errors.role }}
-                            </p>
+                            <InputError :message="inviteForm.errors.role" />
                         </div>
 
                         <Button

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
+import { BadgeCheck } from '@lucide/vue';
 import InputError from '@/components/InputError.vue';
 import PasskeyVerify from '@/components/PasskeyVerify.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TextLink from '@/components/TextLink.vue';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -30,12 +32,12 @@ defineProps<{
 <template>
     <Head :title="t('auth.login.title')" />
 
-    <div
-        v-if="status"
-        class="mb-4 text-center text-sm font-medium text-green-600"
-    >
-        {{ status }}
-    </div>
+    <Alert v-if="status" variant="success" class="mb-4">
+        <BadgeCheck aria-hidden="true" />
+        <AlertDescription class="font-medium">
+            {{ status }}
+        </AlertDescription>
+    </Alert>
 
     <PasskeyVerify />
 

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
+import { BadgeCheck } from '@lucide/vue';
 import TextLink from '@/components/TextLink.vue';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useUi } from '@/composables/useUi';
@@ -22,12 +24,16 @@ defineProps<{
 <template>
     <Head :title="t('auth.verify_email.title')" />
 
-    <div
+    <Alert
         v-if="status === 'verification-link-sent'"
-        class="mb-4 text-center text-sm font-medium text-green-600"
+        variant="success"
+        class="mb-4 text-left"
     >
-        {{ t('auth.verify_email.sent') }}
-    </div>
+        <BadgeCheck aria-hidden="true" />
+        <AlertDescription class="font-medium">
+            {{ t('auth.verify_email.sent') }}
+        </AlertDescription>
+    </Alert>
 
     <Form
         v-bind="send.form()"

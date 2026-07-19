@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
+import { TriangleAlert } from '@lucide/vue';
 import { useTemplateRef } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import WorkspaceDialogContent from '@/components/shared/WorkspaceDialogContent.vue';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -41,83 +43,82 @@ const passwordInput = useTemplateRef('passwordInput');
             :title="labels.title"
             :description="labels.description"
         />
-        <div
-            class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10"
-        >
-            <div class="relative space-y-0.5 text-red-600 dark:text-red-100">
-                <p class="font-medium">{{ labels.warning_title }}</p>
-                <p class="text-sm">{{ labels.warning_description }}</p>
-            </div>
-            <Dialog>
-                <DialogTrigger as-child>
-                    <Button
-                        variant="destructive"
-                        data-test="delete-user-button"
-                        >{{ labels.trigger }}</Button
-                    >
-                </DialogTrigger>
-                <WorkspaceDialogContent
-                    :title="labels.dialog_title"
-                    :description="labels.dialog_description"
-                    :close-label="labels.cancel"
-                    accent="red"
-                >
-                    <Form
-                        v-bind="ProfileController.destroy.form()"
-                        reset-on-success
-                        @error="() => passwordInput?.focus()"
-                        :options="{
-                            preserveScroll: true,
-                        }"
-                        class="space-y-6 px-6 py-6 sm:px-8"
-                        v-slot="{ errors, processing, reset, clearErrors }"
-                    >
-                        <div class="grid gap-2">
-                            <Label for="password" class="sr-only">{{
-                                labels.password
-                            }}</Label>
-                            <PasswordInput
-                                id="password"
-                                name="password"
-                                ref="passwordInput"
-                                :placeholder="labels.password_placeholder"
-                                class="h-11 rounded-xl"
-                            />
-                            <InputError :message="errors.password" />
-                        </div>
-
-                        <DialogFooter
-                            class="gap-2 border-t border-border/70 pt-5 sm:gap-2"
+        <Alert variant="destructive">
+            <TriangleAlert aria-hidden="true" />
+            <AlertTitle>{{ labels.warning_title }}</AlertTitle>
+            <AlertDescription class="space-y-4">
+                <p>{{ labels.warning_description }}</p>
+                <Dialog>
+                    <DialogTrigger as-child>
+                        <Button
+                            variant="destructive"
+                            data-test="delete-user-button"
+                            >{{ labels.trigger }}</Button
                         >
-                            <DialogClose as-child>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    class="min-h-11 cursor-pointer rounded-xl"
-                                    @click="
-                                        () => {
-                                            clearErrors();
-                                            reset();
-                                        }
-                                    "
-                                >
-                                    {{ labels.cancel }}
-                                </Button>
-                            </DialogClose>
+                    </DialogTrigger>
+                    <WorkspaceDialogContent
+                        :title="labels.dialog_title"
+                        :description="labels.dialog_description"
+                        :close-label="labels.cancel"
+                        accent="red"
+                    >
+                        <Form
+                            v-bind="ProfileController.destroy.form()"
+                            reset-on-success
+                            @error="() => passwordInput?.focus()"
+                            :options="{
+                                preserveScroll: true,
+                            }"
+                            class="space-y-6 px-6 py-6 sm:px-8"
+                            v-slot="{ errors, processing, reset, clearErrors }"
+                        >
+                            <div class="grid gap-2">
+                                <Label for="password" class="sr-only">{{
+                                    labels.password
+                                }}</Label>
+                                <PasswordInput
+                                    id="password"
+                                    name="password"
+                                    ref="passwordInput"
+                                    :placeholder="labels.password_placeholder"
+                                    :aria-invalid="Boolean(errors.password)"
+                                />
+                                <InputError :message="errors.password" />
+                            </div>
 
-                            <Button
-                                type="submit"
-                                variant="destructive"
-                                class="min-h-11 cursor-pointer rounded-xl"
-                                :disabled="processing"
-                                data-test="confirm-delete-user-button"
+                            <DialogFooter
+                                class="gap-2 border-t border-border/70 pt-5 sm:gap-2"
                             >
-                                {{ labels.confirm }}
-                            </Button>
-                        </DialogFooter>
-                    </Form>
-                </WorkspaceDialogContent>
-            </Dialog>
-        </div>
+                                <DialogClose as-child>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="lg"
+                                        @click="
+                                            () => {
+                                                clearErrors();
+                                                reset();
+                                            }
+                                        "
+                                    >
+                                        {{ labels.cancel }}
+                                    </Button>
+                                </DialogClose>
+
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    size="lg"
+                                    :disabled="processing"
+                                    data-test="confirm-delete-user-button"
+                                >
+                                    {{ labels.confirm }}
+                                </Button>
+                            </DialogFooter>
+                        </Form>
+                    </WorkspaceDialogContent>
+                </Dialog>
+            </AlertDescription>
+        </Alert>
     </div>
 </template>
