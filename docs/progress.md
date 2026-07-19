@@ -1542,3 +1542,53 @@ No migration or Composer/npm package change is planned.
 
 - Commit `8c0db82` (`feat: align settings with projects design`) was pushed successfully to `origin main`.
 - This final delivery record will be committed as `docs: record projects-style settings delivery` and pushed separately.
+
+## UI Phase: Complete Projects-Style Visual Unification
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Treat `/projects` as the single Warm Precision reference for every reachable page, dialog, drawer, confirmation, form control, empty state, and authentication surface.
+- Introduce shared projects-style dialog and state primitives before migrating feature screens, with viewport-safe mobile scrolling and token-based light/dark styling.
+- Replace browser-native confirmations and checkboxes with accessible application components while preserving existing routes, permissions, validation, and Inertia behavior.
+- Align task details, settings interiors, list states, and guest authentication with the same orange rail, geometric accent, radius, hierarchy, and spacing used by `/projects`.
+- Verify focused frontend contracts, the full test suite, static analysis, formatting, production build, and representative browser routes at desktop/mobile in light/dark mode.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change is planned.
+
+### Changed Files
+
+- Shared projects-style primitives: `WorkspaceDialogContent.vue`, `WorkspaceConfirmDialog.vue`, `EmptyState.vue`, and the localized Sheet close label.
+- Dialogs and destructive flows: project/task/workspace creation, task deletion, account deletion, member removal, passkey removal, two-factor setup/disable, and backup restore.
+- Main experiences: dashboard tokens, task/project lists, task details, workspaces, activity, notifications, and reusable task controls.
+- Settings and guest surfaces: backup, export/import, members, notifications, profile, security, and `AuthSimpleLayout.vue`.
+- English, Lithuanian, and Russian UI catalogs plus `FrontendDesignTest.php`.
+
+### Verification
+
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `php artisan test --compact tests/Feature/FrontendDesignTest.php`: passed, 39 tests and 107 assertions.
+- `php artisan test --compact`: passed on the isolated rerun, 229 tests and 1,267 assertions. An earlier parallel run raced the production build while its Vite manifest was being replaced; the clean post-build rerun passed.
+- `npm run lint:check`: passed with zero ESLint errors or warnings.
+- `npm run format:check`: passed for all files under `resources/`.
+- `npm run build`: passed; Vite transformed 3,362 modules and generated the production bundle. The existing optional `fontaine` notice remains non-blocking.
+- `npm run types:check`: the phase adds no new errors; the repository remains blocked only by the pre-existing `resources/js/composables/useAutosave.ts` import of a non-exported `debounce` member from `@vueuse/core`.
+- `vendor/bin/phpstan analyse --no-progress`: retains the pre-existing application-wide backlog of 327 errors; this visual phase did not add application PHP logic.
+- Browser route matrix: 13 authenticated routes passed at 1440x1000 and 390x844 in both light and dark modes (52 combinations), all with HTTP 200, no horizontal overflow, and no captured console/page errors. The protected security route correctly rendered the projects-style password confirmation screen.
+- Interaction QA: project, workspace, and task creation dialogs all render at 28 px radius with the shared left rail; the mobile dark task dialog fits at 347x790 inside a 390x844 viewport without document overflow. Task detail, destructive confirmation, settings export/import, and guest registration were visually inspected.
+
+### Known Limitations
+
+- The existing Vue type-check and Larastan baselines listed above remain outside this visual phase.
+- Laravel Boost's buffered browser log still contains historical errors from older asset hashes and unrelated route warnings; fresh isolated navigations did not reproduce page or console errors.
+- The optional `fontaine` build notice was not changed because it requires a dependency or build-configuration decision outside this phase.
+
+### Git Delivery
+
+- Commit `8ea6e40` (`feat: unify pages with projects design`) was pushed successfully to `origin main`.
+- This phase record will be committed and pushed separately while preserving unrelated pre-existing progress changes.
