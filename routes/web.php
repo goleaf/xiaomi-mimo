@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::inertia('/', 'Welcome')->name('home');
+Route::get('/', fn () => redirect()->route('dashboard'))->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
