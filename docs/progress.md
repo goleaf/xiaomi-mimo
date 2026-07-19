@@ -48,3 +48,73 @@ The comprehensive finding-by-finding audit belongs to prompt 1. Current producti
 ### Next Phase
 
 Prompt 1: complete evidence-based backend, domain, database, frontend, security, and test audit with classified findings and implementation roadmap.
+
+## Phase 1: Repository Audit And Source-Of-Truth Architecture Plan
+
+### Completed Work
+
+- Re-read `AGENTS.md`, every phase-0 requirements document, installed manifests, routes, controllers, actions, services, Form Requests, resources, policies, models, enums, commands, providers, notifications, middleware, migrations, factories, seeders, Vue pages/layouts/components/composables/stores/types, and all tests.
+- Inspected the Artisan route table and recorded every routed controller method with middleware, request, ability/scope, action/query, response, consumers, duplication, and test gaps.
+- Inspected the live SQLite schema and indexes through Laravel tooling, compared it with migrations, and verified runtime pragmas/integrity.
+- Searched installed-version Laravel, Inertia, Fortify, Sanctum, and Wayfinder documentation through Laravel Boost before documentation edits.
+- Classified backend, database, frontend, security, and testing findings as critical, high, medium, low, or informational with evidence, impact, correction, dependencies, tests, and owning phase.
+- Produced an ordered implementation roadmap without changing production behavior.
+
+### Changed Files
+
+- `docs/current-state.md`
+- `docs/audit/backend.md`
+- `docs/audit/frontend.md`
+- `docs/audit/database.md`
+- `docs/audit/security.md`
+- `docs/audit/testing.md`
+- `docs/architecture.md`
+- `docs/implementation-roadmap.md`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration was added or changed. No Composer or npm package was added, removed, or upgraded.
+
+### Architectural Decisions
+
+- Repair workspace isolation, role permissions, and exact submitted-ID validation before consolidating controllers or changing route contracts.
+- Keep page and API controllers as separate presentation adapters while sharing actions and query objects.
+- Introduce API v1 and a single resource/error contract in phase 3; decide deprecation aliases from an explicit compatibility requirement.
+- Establish final scoped query objects before changing SQLite indexes.
+- Correct live UUID foreign/morph schema defects through populated-data-safe SQLite migrations rather than rewriting deployed migrations.
+- Use official Wayfinder generation as the target and remove the custom global route helper only after all consumers are migrated and typed.
+
+### Security Decisions
+
+- Treat bulk task operations, unguarded child mutations, known-password invitation creation, and HTTP backup/restore as critical risks.
+- Treat the route workspace as the tenant authority; globally existing UUIDs never prove authorization.
+- Require explicit Sanctum abilities and separate API token behavior from web session behavior.
+- Require owner authorization, recent password confirmation, opaque server-side inventory, WAL consistency, integrity checks, locking, and rollback for restore.
+
+### Verification
+
+- Focused `php artisan test --compact tests/Feature/WorkspaceTest.php tests/Feature/TodoTest.php`: passed, 14 tests and 29 assertions.
+- `vendor/bin/pint --dirty --format agent`: passed; no PHP files required formatting.
+- `php artisan test --compact`: passed, 111 tests and 329 assertions.
+- `npm run build`: passed; Vite generated the production bundle and Wayfinder types. It emitted only the existing optional `fontaine` optimization notice.
+- `vendor/bin/phpstan analyse --no-progress`: failed with the same 377 pre-existing application type errors.
+- `npm run types:check`: failed with the same 15 pre-existing TypeScript/Vue errors.
+- `npm run lint:check`: failed with the same 88 pre-existing ESLint errors.
+- `npm run format:check`: failed; the same 19 pre-existing files under `resources/` require formatting.
+- Prompt-1 documentation-only Prettier check: passed for all eight audited/updated architecture files.
+- `git diff --check`: passed.
+
+The production-code failures were not changed in this audit-only phase. No test was added solely to assert documentation content; existing focused and complete suites were used to verify unchanged behavior.
+
+### Known Limitations
+
+- No critical/high finding is fixed yet.
+- The live domain schema has no foreign keys despite migration intent; UUID morph/foreign columns are inconsistent in passkeys, notifications, and Sanctum tokens.
+- The current API remains unversioned and unrestricted by token abilities.
+- The frontend quality gates remain red even though its production build succeeds.
+- The untracked/staged `.mimocode/plans/1784461861035-kind-garden.md` planning artifact is unrelated to this phase and was deliberately not modified or included in the phase commit.
+
+### Next Phase
+
+Prompt 2: implement and test the critical/high workspace isolation, role permission, nested validation, bulk/reorder, scoped binding, and Sanctum ability corrections.
