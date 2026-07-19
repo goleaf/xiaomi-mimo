@@ -1837,3 +1837,60 @@ Completed.
 
 - Commit `d2c6af7` (`fix: complete static analysis contracts`) was pushed successfully to `origin main`.
 - This final phase record will be committed separately while preserving unrelated pre-existing progress changes.
+
+## UI Follow-up Phase: Interaction Surface Consistency
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Re-audit every reachable Inertia page at desktop and mobile widths against the `/projects` visual contract.
+- Normalize the remaining Activity and appearance segmented controls to the shared muted/card treatment.
+- Preserve whole-row task selection while adding a real keyboard-focusable control around nested checkbox and delete actions.
+- Keep all existing routes, data contracts, behavior, translations, and dark/light theme support unchanged.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Changed Files
+
+- `resources/js/pages/activity/Index.vue`
+  - aligned the filter rail with the shared muted/card segmented-control treatment.
+- `resources/js/components/AppearanceTabs.vue`
+  - replaced legacy neutral/white states with shared semantic surface tokens and orange focus states.
+- `resources/js/pages/tasks/Index.vue`
+- `resources/js/pages/projects/Show.vue`
+  - preserved whole-row task selection through a keyboard-focusable overlay button while keeping nested checkbox and delete controls independently interactive.
+- `tests/Feature/FrontendDesignTest.php`
+  - added structural coverage for task-row keyboard interaction and shared segmented-control styling.
+- `docs/progress.md`
+  - recorded the audit, implementation, verification, limitations, and delivery state.
+
+### Verification
+
+- Browser route audit covered 14 authenticated destinations at desktop and mobile widths; every audited page had zero horizontal overflow and no new console or page errors.
+- `/settings/security` correctly redirected to the password-confirmation screen, which retained the shared authentication shell.
+- Keyboard QA confirmed task-row focus, Enter navigation to task detail, and independent delete confirmation behavior.
+- Dark-mode screenshots of Activity and Preferences confirmed the same muted/card/orange visual language as `/projects`.
+- `vendor/bin/pint --dirty --format agent` — passed.
+- `php artisan test --compact tests/Feature/FrontendDesignTest.php` — 45 tests passed, 141 assertions.
+- `npm run types:check` — passed.
+- `npm run lint:check` — passed.
+- `npm run format:check` — passed.
+- `php artisan test --compact` — 331 tests passed, 1440 assertions.
+- `vendor/bin/phpstan analyse --memory-limit=1G --no-progress` — passed with 0 errors.
+- `npm run build` — passed.
+- `git diff --check` — passed.
+
+### Known Limitations
+
+No functional limitation remains in the audited interaction surfaces. Laravel's persisted browser log still contains historical entries from older assets; the current desktop/mobile route audit produced no new browser errors.
+
+### Git Delivery
+
+- Implementation commit: `abf8312` (`fix: align interactive workspace surfaces`).
+- Implementation push: successful to `origin/main`.
+- Documentation commit and push: pending this record update.
