@@ -48,6 +48,37 @@ test('shared shells carry the projects page visual language', function () {
         ->toContain('border-border/80');
 });
 
+test('dormant layouts delegate to the canonical projects style shells', function () {
+    expect(File::get(resource_path('js/layouts/auth/AuthCardLayout.vue')))
+        ->toContain('AuthSimpleLayout')
+        ->not->toContain('bg-muted p-6')
+        ->and(File::get(resource_path('js/layouts/auth/AuthSplitLayout.vue')))
+        ->toContain('AuthSimpleLayout')
+        ->not->toContain('bg-zinc-900')
+        ->and(File::get(resource_path('js/layouts/app/AppHeaderLayout.vue')))
+        ->toContain('AppSidebarLayout')
+        ->not->toContain('variant="header"');
+});
+
+test('the shared state surface supports accessible loading and error variants', function () {
+    expect(File::get(resource_path('js/components/shared/EmptyState.vue')))
+        ->toContain("type EmptyStateStatus = 'empty' | 'loading' | 'error'")
+        ->toContain('aria-busy')
+        ->toContain(':role=')
+        ->toContain("? 'alert'")
+        ->toContain('<Skeleton')
+        ->toContain('<LoaderCircle')
+        ->toContain('<AlertTriangle');
+});
+
+test('autosave uses lifecycle safe Vue watcher cleanup', function () {
+    expect(File::get(resource_path('js/composables/useAutosave.ts')))
+        ->toContain('onCleanup')
+        ->toContain('clearTimeout(timeoutId)')
+        ->not->toContain("from '@vueuse/core'")
+        ->not->toContain('debouncedSave.cancel');
+});
+
 test('workspace dialogs preserve the projects visual contract on every viewport', function () {
     expect(File::get(resource_path('js/components/shared/WorkspaceDialogContent.vue')))
         ->toContain('rounded-[1.75rem]')

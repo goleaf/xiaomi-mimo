@@ -1,5 +1,4 @@
-import { debounce } from '@vueuse/core';
-import { ref, watch, onUnmounted } from 'vue';
+import { ref, watch } from 'vue';
 
 export function useAutosave<T>(
     data: T,
@@ -9,7 +8,7 @@ export function useAutosave<T>(
     const saving = ref(false);
     const lastSaved = ref<Date | null>(null);
 
-    const debouncedSave = debounce(async () => {
+    const save = async (): Promise<void> => {
         saving.value = true;
 
         try {
@@ -18,13 +17,21 @@ export function useAutosave<T>(
         } finally {
             saving.value = false;
         }
-    }, delay);
+    };
 
-    watch(() => data, debouncedSave, { deep: true });
+    watch(
+        () => data,
+        (_value, _oldValue, onCleanup) => {
+            const timeoutId = setTimeout(() => {
+                void save();
+            }, delay);
 
-    onUnmounted(() => {
-        debouncedSave.cancel();
-    });
+            onCleanup(() => {
+                clearTimeout(timeoutId);
+            });
+        },
+        { deep: true },
+    );
 
     return { saving, lastSaved };
 }
