@@ -562,3 +562,54 @@ No migration or Composer/npm package was added, removed, or upgraded. `composer 
 - Commit `1a87b09` (`chore: reconcile NativePHP command reference`) contains only the focused command contracts and phase progress files.
 - Push to `origin main` succeeded (`022b0d7..1a87b09`).
 - Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+## NativePHP Mobile 3 Architecture Overview Reconciliation
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Reconciled the official NativePHP Mobile 3 architecture overview with the installed 3.3.6 package and Laravel 13 application bootstrap.
+- Confirmed the project's PHP constraint accepts the package's embedded PHP 8.4 runtime, the NativePHP package service provider is auto-discovered, and install/run commands are registered.
+- Added focused contracts for the NativePHP 3.3 package range, persistent runtime mode, and native-mode selection of the package-provided `mobile_public` filesystem.
+- Confirmed the development SQLite file is excluded from the application bundle while migrations remain bundled for execution against the native shell's persistent database.
+- Confirmed the SQLite connection enables foreign keys, WAL journaling, normal synchronization, and a bounded busy timeout suitable for the on-device runtime.
+- Confirmed the public storage link points to persistent `storage/app/public` data.
+- Inspected both native shells: Android creates the persistent SQLite file then clears caches, recreates the storage link, and runs migrations; iOS performs version-aware extraction, migrations, cache clearing, and storage-link creation.
+- Preserved the embedded Laravel and SQLite architecture without adding a remote web service, API client, or second application runtime.
+
+### Changed Files
+
+- `tests/Feature/NativePhpMobileTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package was added, removed, or upgraded.
+
+### Verification
+
+- The first focused run exposed two invalid test probes: Composer Semver is not an application dependency, and Laravel's immutable environment repository cannot be changed after bootstrap. Both probes were replaced with dependency-free installed-version checks and a direct native-filesystem configuration contract.
+- `php artisan test --compact tests/Feature/NativePhpMobileTest.php` passed with 16 tests and 277 assertions.
+- `php artisan test --compact` passed with 158 tests and 895 assertions.
+- Scoped Pint passed for the modified NativePHP Pest test, and scoped `git diff --check` passed.
+- File-scoped Larastan reports the same five pre-existing errors on lines before the new architecture coverage; no new line reports an error.
+- `php artisan config:show database.connections.sqlite` confirmed SQLite, foreign keys, 5-second busy timeout, WAL, normal synchronization, and deferred transactions.
+- `php artisan config:show filesystems.links` confirmed `public/storage` targets persistent `storage/app/public`.
+- `./native version` and `native:debug --json` passed with NativePHP 3.3.6, local PHP 8.4.16, embedded PHP 8.4.23, Android Studio 2026.1.2, Gradle 8.13, Java 17.0.16, CocoaPods 1.17.0, and no Xcode.
+- `composer check-platform-reqs --no-dev` passed for PHP 8.4.16 and all production extensions.
+- `composer validate --strict --no-check-publish`, `composer audit --no-interaction`, and `npm audit --omit=dev` passed with no known dependency vulnerabilities.
+- `npm run build` passed; Vite emitted only the existing optional `fontaine` notice.
+- Full Larastan remains red with 364 existing application errors.
+- Full Vue type checking remains red with 9 existing errors, full ESLint with 72 existing errors, and full resource Prettier verification with 13 existing files; no frontend file was changed in this phase.
+
+### Known Limitations
+
+- Native iOS execution remains unavailable on this Intel Mac because full Xcode and Apple silicon are absent; the configured Android toolchain is available.
+- The native shells' actual extraction, migration, cache, symlink, and web-view startup sequence requires a platform build and simulator or physical device for end-to-end confirmation.
+- Native installation, platform-mode frontend builds, native compilation, device or emulator launch, IDE launch, and watchers were not auto-run, per the installed NativePHP project guidance.
+
+### Git Delivery
+
+Commit and push results are pending. Unrelated staged and unstaged application work remains untouched and excluded.

@@ -5,10 +5,14 @@ use App\Actions\UploadAttachment;
 use App\Models\Todo;
 use App\Models\User;
 use App\Providers\NativeServiceProvider;
+use Composer\InstalledVersions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Native\Mobile\NativeServiceProvider as NativePhpPackageServiceProvider;
+use Native\Mobile\Support\BundleExclusions;
+use Native\Mobile\Support\BundleFileManager;
 use Native\Mobile\Traits\CleansEnvFile;
 
 test('the application is configured for the NativePHP on-device runtime', function () {
@@ -519,4 +523,49 @@ test('the NativePHP v3 plugin command contracts are complete', function () {
 
     expect(Artisan::all()['native:plugin:uninstall']->getDefinition()->getArgument('plugin')->isRequired())
         ->toBeTrue();
+});
+
+test('the NativePHP mobile architecture is loaded into Laravel', function () {
+    $composer = json_decode(
+        File::get(base_path('composer.json')),
+        true,
+        flags: JSON_THROW_ON_ERROR,
+    );
+    $nativePhpVersion = InstalledVersions::getVersion('nativephp/mobile') ?? '0.0.0.0';
+
+    expect($composer['require']['php'])->toBe('^8.3')
+        ->and($composer['require']['nativephp/mobile'])->toBe('~3.3.0')
+        ->and(version_compare($nativePhpVersion, '3.3.0.0', '>='))->toBeTrue()
+        ->and(version_compare($nativePhpVersion, '3.4.0.0', '<'))->toBeTrue()
+        ->and(app()->getLoadedProviders())->toHaveKey(NativePhpPackageServiceProvider::class)
+        ->and(config('nativephp.runtime.mode'))->toBe('persistent')
+        ->and(Artisan::all())->toHaveKeys([
+            'native:install',
+            'native:run',
+        ]);
+});
+
+test('the NativePHP shell selects persistent on-device filesystems', function () {
+    $filesystemsConfiguration = File::get(config_path('filesystems.php'));
+
+    expect($filesystemsConfiguration)->toContain(
+        "env('NATIVEPHP_RUNNING', false) ? 'mobile_public' : 'local'",
+        "env('NATIVEPHP_RUNNING', false) ? 'mobile_public' : 'public'",
+    )->and(app()->getLoadedProviders())->toHaveKey(NativePhpPackageServiceProvider::class);
+});
+
+test('the NativePHP shell boot prerequisites remain bundled', function () {
+    $bundleExclusions = BundleFileManager::excludes(config('nativephp.cleanup_exclude_files'));
+    $storageLinks = config('filesystems.links');
+
+    expect(config('database.default'))->toBe('sqlite')
+        ->and(config('database.connections.sqlite.driver'))->toBe('sqlite')
+        ->and(config('database.connections.sqlite.foreign_key_constraints'))->toBeTrue()
+        ->and(config('database.connections.sqlite.journal_mode'))->toBe('WAL')
+        ->and(config('database.connections.sqlite.synchronous'))->toBe('NORMAL')
+        ->and(File::files(database_path('migrations')))->not->toBeEmpty()
+        ->and(BundleExclusions::PROJECT)->toContain('database/database.sqlite')
+        ->and($bundleExclusions)->not->toContain('/database', '/database/migrations')
+        ->and($storageLinks)->toHaveKey(public_path('storage'))
+        ->and($storageLinks[public_path('storage')])->toBe(storage_path('app/public'));
 });
