@@ -2140,3 +2140,70 @@ Vite continues to report the existing optional `fontaine` optimization notice; t
 - Documentation commit: `9fb1573` (`docs: record transient surface unification`).
 - Documentation push: successful to `origin/main`.
 - This final delivery record is committed and pushed separately so the phase commits remain focused.
+
+## Shared Control And Motion Polish
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Complete the `/projects` Warm Precision contract for shared checkbox, alert, skeleton, spinner, link-focus, and compact status surfaces.
+- Keep semantic invalid and disabled states while making checked, focus-visible, loading, and reduced-motion behavior consistent across authentication, tasks, workspace switching, and settings.
+- Reuse the current shared primitives and semantic translations; do not introduce packages, a parallel component system, or page-specific theme variants.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Changed Files
+
+- `resources/js/components/ui/checkbox/Checkbox.vue`
+- `resources/js/components/ui/alert/AlertTitle.vue`
+- `resources/js/components/ui/alert/index.ts`
+- `resources/js/components/ui/badge/index.ts`
+- `resources/js/components/ui/button/index.ts`
+- `resources/js/components/ui/skeleton/Skeleton.vue`
+- `resources/js/components/ui/spinner/Spinner.vue`
+- `resources/js/components/TextLink.vue`
+- `resources/js/components/PasskeyItem.vue`
+- `resources/js/components/TwoFactorRecoveryCodes.vue`
+- `resources/js/components/TwoFactorSetupModal.vue`
+- `resources/js/components/AppearanceTabs.vue`
+- `resources/js/components/shared/EmptyState.vue`
+- `resources/js/components/workspace/WorkspaceSwitcher.vue`
+- `resources/js/layouts/settings/Layout.vue`
+- `resources/js/pages/activity/Index.vue`
+- `resources/js/pages/auth/TwoFactorChallenge.vue`
+- `resources/js/pages/calendar/Index.vue`
+- `resources/js/pages/notifications/Index.vue`
+- `resources/js/pages/projects/Index.vue`
+- `resources/js/pages/settings/Members.vue`
+- `resources/js/pages/tasks/Show.vue`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Verification
+
+- Focused design-contract coverage passed with 70 tests and 291 assertions.
+- Full Pest suite passed with 360 tests and 1,615 assertions.
+- PHPStan passed with 0 errors.
+- Vue TypeScript checking, ESLint, Prettier verification, and the frontend Node test passed.
+- Production build passed after transforming 3,362 modules.
+- Light and dark browser QA on `/settings/notifications` confirmed the shared checked state, semantic card surfaces, and zero horizontal overflow.
+- Mobile browser QA at 390×844 confirmed the settings controls retain their hierarchy and produce zero horizontal overflow.
+- Reduced-motion browser emulation confirmed transition properties and spinner animation resolve to `none`.
+- The browser run produced no console errors or page errors.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+
+### Known Limitations And Next Work
+
+- Vite continues to report the existing optional `fontaine` optimization notice; the production build succeeds.
+- New pages should continue to compose these shared primitives so checked, focus, feedback, loading, and reduced-motion behavior stays aligned with `/projects`.
+
+### Git Delivery
+
+- Implementation commit: `1741221` (`fix: polish shared control states`).
+- Implementation push: successful to `origin/main`.
+- Documentation delivery will be committed separately so the implementation commit remains focused.
