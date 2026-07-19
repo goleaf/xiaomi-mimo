@@ -288,4 +288,6 @@ No application migration or Composer/npm package was added, removed, or upgraded
 
 ### Git Delivery
 
-Commit and push status will be recorded after verification. Unrelated staged and unstaged work remains excluded.
+- Commit `8adf61d` (`chore: configure NativePHP mobile environment`) contains only the NativePHP environment contract, configuration, test, and phase progress files.
+- Push to `origin main` succeeded (`1bc66f1..8adf61d`).
+- Unrelated staged sidebar, navigation, task, project, export, planning, and shared model/middleware work remains excluded and preserved.
