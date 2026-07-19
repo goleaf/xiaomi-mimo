@@ -1540,4 +1540,5 @@ No migration or Composer/npm package change is planned.
 
 ### Git Delivery
 
-The implementation commit and this final delivery record are pending push to `origin main`.
+- Commit `8c0db82` (`feat: align settings with projects design`) was pushed successfully to `origin main`.
+- This final delivery record will be committed as `docs: record projects-style settings delivery` and pushed separately.
