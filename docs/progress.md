@@ -1034,6 +1034,53 @@ No migration or Composer/npm package change is planned.
 
 Commit message: `fix: remove dead frontend bindings`. Push to `origin main` will be attempted immediately after the isolated commit. Unrelated worktree changes remain excluded.
 
+## Task Board Selector Cleanup
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Remove the selectable board mode from the task index because it currently hides the working list without rendering a board.
+- Remove the board choice from the Default View preference so the unavailable mode is not exposed through a second UI selector.
+- Keep the task list, calendar preference, backend preference compatibility, dormant board component, reorder endpoints, and dependencies untouched.
+- Defer a board implementation until the Vue frontend has an approved accessible drag-and-drop architecture; the installed `@dnd-kit/core` and `@dnd-kit/sortable` packages require React and cannot provide Vue keyboard sensors as currently installed.
+
+### Changed Files
+
+- `resources/js/pages/tasks/Index.vue`
+- `resources/js/pages/settings/Preferences.vue`
+- `tests/Feature/TodoTest.php`
+- `tests/Feature/Settings/PreferencesTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package was added, removed, or upgraded.
+
+### Verification
+
+- The initial focused Pest run failed only on the two new source contracts: the task index still exposed the board toggle and Preferences still exposed `value="board"`. This confirmed both regressions before implementation.
+- `php artisan test --compact tests/Feature/TodoTest.php tests/Feature/Settings/PreferencesTest.php` passed with 19 tests and 62 assertions after the UI cleanup.
+- The stable full `php artisan test --compact` run passed with 162 tests and 931 assertions. A preceding parallel run had one transient dashboard failure because Vite was replacing the production manifest concurrently; rerunning against stable build output passed.
+- The post-build dashboard and focused selector run passed with 21 tests and 65 assertions.
+- Scoped Pint passed for the two changed Pest files. Scoped ESLint and Prettier verification passed for both changed Vue files.
+- `npm run build` passed with only the existing optional `fontaine` notice.
+- Full Larastan remains red with 365 existing application errors. Full Vue type checking remains red with 9 existing errors, full ESLint with 46 existing errors, and full resource Prettier verification with 17 existing files; none of the scoped selector files add an ESLint or Prettier failure.
+- `git diff --check` passed.
+
+### Known Limitations
+
+- `BoardView.vue` and the React-only `@dnd-kit` packages remain dormant and unreachable; they were not expanded or deleted because this phase intentionally removes only the dead UI entry points.
+- Backend preference compatibility still accepts the historical `board` value, but neither the task view selector nor the Default View selector offers it.
+
+### Git Delivery
+
+- Commit `fix: remove unavailable board selectors` contains only the two selector removals, focused Pest coverage, and this progress record.
+- Push to `origin main` succeeded.
+- Existing unrelated workspace UI, localization, and lint-cleanup changes remain excluded and preserved.
+
 ## ESLint Cleanup Batch 2: Task UI Control Flow
 
 ### Status

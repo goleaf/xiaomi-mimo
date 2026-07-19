@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { Plus, Search, Trash2, LayoutGrid, List } from '@lucide/vue';
+import { Plus, Search, Trash2 } from '@lucide/vue';
 import { ref, computed } from 'vue';
 import TaskCreateDialog from '@/components/task/TaskCreateDialog.vue';
 import TaskDetail from '@/components/task/TaskDetail.vue';
@@ -38,7 +38,6 @@ const toast = useToast();
 const searchQuery = ref(props.filters.search ?? '');
 const statusFilter = ref(props.filters.status ?? 'all');
 const priorityFilter = ref(props.filters.priority ?? 'all');
-const viewMode = ref<'list' | 'board'>('list');
 const selectedTodo = ref<Todo | null>(null);
 const showCreateDialog = ref(false);
 
@@ -128,26 +127,6 @@ function formatDate(date: string | null): string {
                 <p class="text-muted-foreground">{{ todos.total }} tasks</p>
             </div>
             <div class="flex items-center gap-2">
-                <div class="flex rounded-md border">
-                    <button
-                        :class="[
-                            'px-2 py-1',
-                            viewMode === 'list' ? 'bg-muted' : '',
-                        ]"
-                        @click="viewMode = 'list'"
-                    >
-                        <List class="h-4 w-4" />
-                    </button>
-                    <button
-                        :class="[
-                            'px-2 py-1',
-                            viewMode === 'board' ? 'bg-muted' : '',
-                        ]"
-                        @click="viewMode = 'board'"
-                    >
-                        <LayoutGrid class="h-4 w-4" />
-                    </button>
-                </div>
                 <Button @click="showCreateDialog = true"
                     ><Plus class="mr-2 h-4 w-4" />New Task</Button
                 >
@@ -206,8 +185,7 @@ function formatDate(date: string | null): string {
             >
         </div>
 
-        <!-- List View -->
-        <div v-if="viewMode === 'list'" class="space-y-2">
+        <div class="space-y-2">
             <div
                 v-for="todo in allTodos"
                 :key="todo.id"

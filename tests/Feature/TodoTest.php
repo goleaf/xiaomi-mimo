@@ -170,3 +170,13 @@ test('todo list filters by status', function () {
 
     $response->assertOk();
 });
+
+test('task index exposes only the implemented list view', function () {
+    $taskIndex = file_get_contents(resource_path('js/pages/tasks/Index.vue'));
+
+    expect($taskIndex)
+        ->not->toContain("viewMode = ref<'list' | 'board'>")
+        ->not->toContain("viewMode = 'board'")
+        ->not->toContain('<LayoutGrid')
+        ->not->toContain('v-if="viewMode === \'list\'"');
+});

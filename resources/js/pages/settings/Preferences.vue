@@ -98,7 +98,6 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="list">List</SelectItem>
-                                <SelectItem value="board">Board</SelectItem>
                                 <SelectItem value="calendar"
                                     >Calendar</SelectItem
                                 >
