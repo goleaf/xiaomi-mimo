@@ -2372,3 +2372,56 @@ No migration or Composer/npm package change was made.
 - Documentation commit: `cf90e7b` (`docs: record authentication action unification`).
 - Documentation push: successful to `origin/main`.
 - This final delivery record is committed and pushed separately so the phase commits remain focused.
+
+## Remaining Active Form Action Unification
+
+### Status
+
+- Completed.
+
+### Scope And Decisions
+
+- Align the workspace creation, preference, notification, member invitation, and member removal actions with the 44px shared control rhythm used by `/projects`.
+- Reuse the shared spinner, button sizes, field validation states, and processing guards instead of repeating page-local orange or loading styles.
+- Disable mutable form controls during submission to prevent conflicting edits and duplicate requests.
+- Preserve existing routes, request payloads, translations, permissions, and success behavior.
+- Correct the mobile notification option hierarchy found during visual QA so each title and description remains readable instead of collapsing into adjacent text columns.
+
+### Changed Files
+
+- `resources/js/pages/workspaces/Index.vue`
+- `resources/js/pages/settings/Preferences.vue`
+- `resources/js/pages/settings/Notifications.vue`
+- `resources/js/pages/settings/Members.vue`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Verification
+
+- The initial focused RED run produced four expected failures for the missing shared loading, disabled, invalid, and 44px action contracts; a separate mobile hierarchy contract also failed before the notification copy repair.
+- Focused frontend-design coverage passed after implementation with 101 tests and 410 assertions.
+- Full Pest coverage passed with 391 tests and 1,734 assertions.
+- PHPStan passed with 0 errors.
+- Vue TypeScript checking, ESLint, Prettier verification, and the frontend Node test passed.
+- Production build passed after transforming 3,369 modules.
+- Desktop light browser QA confirmed the workspace dialog and Preferences save action use 44px shared inputs and actions with zero horizontal overflow.
+- Mobile dark browser QA confirmed Notifications and Members use 44px save, invite, input, and select controls with zero horizontal overflow.
+- Visual inspection caught and verified the repaired vertical title/description hierarchy inside all mobile notification option cards.
+- The final browser interactions produced no console errors or page errors; the Boost browser log contained only historical entries dated 2026-07-19.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+
+### Known Limitations And Next Work
+
+- Vite continues to report the existing optional `fontaine` optimization notice; the production build succeeds.
+- Dormant form variants should be reviewed when a route begins rendering them, rather than adding unexercised styling now.
+
+### Git Delivery
+
+- Implementation commit: `88248f0` (`fix: align remaining active form actions`).
+- Implementation push: successful to `origin/main`.
+- Documentation commit: pending.
+- Documentation push: pending.
