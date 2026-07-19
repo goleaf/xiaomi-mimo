@@ -1000,7 +1000,9 @@ No migration or package change was made.
 
 ### Git Delivery
 
-Commit and push results are pending. Existing localization, task, settings, import/export, attachment, NativePHP, and planning changes remain outside this phase.
+- Commit `576d602` (`feat: redesign workspace overview pages`) contains only the Warm Precision pages, shared presentation/translation infrastructure, scoped backend corrections, focused tests, and this phase record.
+- Push to `origin main` succeeded (`13ec033..576d602`).
+- Existing localization, task, settings, import/export, attachment, NativePHP, and planning changes remain outside this phase and are preserved in the worktree.
 
 ## ESLint Cleanup Batch 1: Dead Frontend Bindings
 
