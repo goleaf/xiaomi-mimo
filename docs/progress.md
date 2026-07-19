@@ -235,4 +235,57 @@ Commit `8e120a7` (`chore: reconcile NativePHP 3 upgrade guide`) was pushed succe
 
 - ICU remains disabled to avoid the documented mobile binary size increase; it can be enabled later with `--with-icu` if the application requires PHP `intl` on-device.
 - Platform-mode frontend builds and simulator/emulator launch commands were not auto-run, per the installed NativePHP project guidance.
-- Local iOS compilation remains unavailable on this Intel Mac, and no Android SDK or Apple development team is configured.
+- Local iOS compilation remains unavailable on this Intel Mac; CocoaPods is now installed, but full Xcode and Apple silicon are still unavailable. The Android toolchain is configured in the following environment-setup phase.
+
+## NativePHP Mobile 3 Environment Setup
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Installed Android Studio 2026.1.2.10 and CocoaPods 1.17.0 through Homebrew without trusting or changing unrelated third-party taps.
+- Accepted the Android SDK licenses and installed API 36, Build Tools 36.0.0, Platform Tools 37.0.0, the current Intel Android emulator, and the Google APIs API 36 x86_64 system image.
+- Created the valid `NativePHP_API_36` Pixel 6 AVD while preserving the existing AVD definitions.
+- Pinned normal login shells to Temurin JDK 17 and the local Android SDK through `~/.zprofile`; NativePHP's login-shell diagnostics now detect Java 17, Android Studio, Gradle 8.13, and CocoaPods.
+- Bound the ignored local `.env` to this workstation's JDK and SDK paths and exposed the portable Android environment contract in `.env.example`.
+- Cast environment-overridden Android SDK levels to integers at the configuration boundary.
+- Restored every Homebrew formula removed by Homebrew's automatic post-install cleanup and verified both the existing Homebrew PHP and the normal Laravel Herd PHP paths remain executable.
+- Preserved the fully on-device Laravel, Inertia, Vue, and SQLite architecture with no remote client/server integration.
+
+### Changed Files
+
+- `.env.example`
+- `config/nativephp.php`
+- `tests/Feature/NativePhpMobileTest.php`
+- `docs/progress.md`
+- Ignored/local workstation configuration: `.env`, `~/.zprofile`, Homebrew packages, Android SDK packages, and `~/.android/avd/NativePHP_API_36.avd`.
+
+### Migrations And Packages
+
+No application migration or Composer/npm package was added, removed, or upgraded. All installed packages are workstation-only development dependencies.
+
+### Verification
+
+- The focused environment-contract test failed first because `.env.example` lacked the Android keys, then exposed string SDK levels after local environment wiring; after implementation, `php artisan test --compact tests/Feature/NativePhpMobileTest.php` passed with 4 tests and 32 assertions.
+- `zsh -lic 'php artisan native:debug --json --no-interaction'`: passed with NativePHP 3.3.6, PHP 8.4.16, embedded PHP 8.4.23, Android Studio 2026.1.2, Gradle 8.13, Java 17.0.16, CocoaPods 1.17.0, and no optional native plugins.
+- SDK inspection confirmed Build Tools 36.0.0, Platform Tools 37.0.0, API 36, and the API 36 x86_64 system image; AVD inspection confirmed `NativePHP_API_36` and Hypervisor.Framework acceleration.
+- `adb devices`: passed with an empty device list; no physical Android device is currently connected.
+- Scoped Pint and Larastan for the NativePHP files passed with zero errors.
+- `composer validate --strict --no-check-publish`, `composer audit --no-interaction`, and `npm audit --omit=dev`: passed with no known dependency vulnerabilities.
+- `php artisan test --compact`: passed, 146 tests and 644 assertions.
+- `npm run build`: passed; Vite emitted only the existing optional `fontaine` notice.
+- Scoped `git diff --check` passed.
+- Full Larastan remains red with 364 existing application errors; the NativePHP configuration is clean.
+- Full Vue type checking remains red with 9 existing errors, full ESLint with 72 existing errors, and full resource Prettier verification with 13 existing files; this configuration-only phase introduced none of them.
+
+### Known Limitations
+
+- iOS builds cannot run on this workstation because NativePHP Mobile 3 requires Apple silicon and full Xcode; this Mac is Intel x86_64 and only has Command Line Tools. CocoaPods alone cannot remove that platform limitation.
+- No physical Android device is connected. The API 36 AVD is configured but was not launched.
+- Native platform build, run, emulator-launch, and watch commands were not auto-run, per the installed NativePHP project guidance.
+
+### Git Delivery
+
+Commit and push status will be recorded after verification. Unrelated staged and unstaged work remains excluded.

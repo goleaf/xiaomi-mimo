@@ -68,3 +68,14 @@ test('the NativePHP v3 upgrade contract is configured', function () {
             'native:plugin:validate',
         ]);
 });
+
+test('the NativePHP Android environment contract is documented', function () {
+    $environmentExample = file_get_contents(base_path('.env.example'));
+
+    expect($environmentExample)
+        ->toContain('NATIVEPHP_GRADLE_PATH=')
+        ->toContain('NATIVEPHP_ANDROID_SDK_LOCATION=')
+        ->toContain('NATIVEPHP_ANDROID_COMPILE_SDK=36')
+        ->toContain('NATIVEPHP_ANDROID_MIN_SDK=33')
+        ->toContain('NATIVEPHP_ANDROID_TARGET_SDK=36');
+});
