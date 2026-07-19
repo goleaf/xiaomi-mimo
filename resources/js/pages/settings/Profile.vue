@@ -28,20 +28,20 @@ const passwordForm = useForm({
 const deleteForm = useForm({});
 
 function updateProfile() {
-    profileForm.patch(route('profile.update'), {
+    profileForm.patch("/settings/profile", {
         onSuccess: () => toast.success('Profile updated'),
     });
 }
 
 function updatePassword() {
-    passwordForm.put(route('user-password.update'), {
+    passwordForm.put("/settings/password", {
         onSuccess: () => { toast.success('Password updated'); passwordForm.reset(); },
     });
 }
 
 function deleteAccount() {
     if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-        deleteForm.delete(route('profile.destroy'), {
+        deleteForm.delete("/settings/profile", {
             onSuccess: () => toast.success('Account deleted'),
         });
     }

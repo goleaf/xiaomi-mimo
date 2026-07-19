@@ -2,20 +2,20 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { Card } from '@/components/ui/card';
-import { User, Shield, Palette, Bell, Download, Upload, Users, Database, Globe } from '@lucide/vue';
+import { User, Shield, Palette, Bell, Download, Users, Database, Globe } from '@lucide/vue';
 
 const page = usePage();
 const currentUrl = computed(() => page.url);
 
 const navItems = [
-    { label: 'Profile', href: route('profile.edit'), icon: User },
-    { label: 'Security', href: route('security.edit'), icon: Shield },
-    { label: 'Appearance', href: route('appearance.edit'), icon: Palette },
-    { label: 'Preferences', href: route('preferences.edit'), icon: Globe },
-    { label: 'Notifications', href: route('notifications.edit'), icon: Bell },
-    { label: 'Members', href: route('members.edit'), icon: Users },
-    { label: 'Export / Import', href: route('export.edit', '1'), icon: Download },
-    { label: 'Backup', href: route('backup.edit'), icon: Database },
+    { label: 'Profile', href: '/settings/profile', icon: User },
+    { label: 'Security', href: '/settings/security', icon: Shield },
+    { label: 'Appearance', href: '/settings/appearance', icon: Palette },
+    { label: 'Preferences', href: '/settings/preferences', icon: Globe },
+    { label: 'Notifications', href: '/settings/notifications', icon: Bell },
+    { label: 'Members', href: '/settings/members', icon: Users },
+    { label: 'Export / Import', href: '/settings/export', icon: Download },
+    { label: 'Backup', href: '/settings/backup', icon: Database },
 ];
 </script>
 
@@ -28,7 +28,7 @@ const navItems = [
                 :href="item.href"
                 :class="[
                     'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
-                    currentUrl === item.href
+                    currentUrl.startsWith(item.href)
                         ? 'bg-muted font-medium text-foreground'
                         : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
                 ]"

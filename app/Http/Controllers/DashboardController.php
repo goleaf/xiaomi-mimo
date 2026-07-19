@@ -3,15 +3,34 @@
 namespace App\Http\Controllers;
 
 use App\Enums\TodoStatus;
-use App\Models\Workspace;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Workspace $workspace): Response
+    public function index(Request $request): Response
     {
+        $workspace = $request->user()->currentWorkspace();
+
+        if (! $workspace) {
+            return Inertia::render('Dashboard', [
+                'stats' => [
+                    'today_count' => 0,
+                    'overdue_count' => 0,
+                    'completed_today' => 0,
+                    'total_tasks' => 0,
+                    'completed_total' => 0,
+                    'completion_rate' => 0,
+                ],
+                'todayTasks' => [],
+                'overdueTasks' => [],
+                'upcomingTasks' => [],
+                'weeklyData' => [],
+            ]);
+        }
+
         $todos = $workspace->todos()->active();
 
         $todayTasks = $todos->whereDate('due_date', today())->with('project')->get();

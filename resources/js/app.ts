@@ -20,9 +20,6 @@ createInertiaApp({
         const app = createApp({ render: () => h(App, props) });
         app.use(plugin);
         app.use(pinia);
-        app.config.errorHandler = (err) => {
-            console.error('[VUE ERROR]', err);
-        };
         app.mount(el);
     },
     layout: (name) => {

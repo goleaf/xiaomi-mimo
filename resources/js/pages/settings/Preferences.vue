@@ -22,7 +22,7 @@ const form = useForm({
 });
 
 function submit() {
-    form.put(route('preferences.update'), {
+    form.put("/settings/preferences", {
         onSuccess: () => toast.success('Preferences saved'),
     });
 }

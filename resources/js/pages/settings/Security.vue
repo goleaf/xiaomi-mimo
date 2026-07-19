@@ -22,20 +22,20 @@ const passwordForm = useForm({
 const twoFactorForm = useForm({});
 
 function updatePassword() {
-    passwordForm.put(route('user-password.update'), {
+    passwordForm.put("/settings/password", {
         onSuccess: () => { toast.success('Password updated'); passwordForm.reset(); },
     });
 }
 
 function enable2FA() {
-    twoFactorForm.post(route('two-factor.enable'), {
+    twoFactorForm.post("/user/two-factor-authentication", {
         onSuccess: () => toast.success('Two-factor authentication enabled'),
     });
 }
 
 function disable2FA() {
     if (confirm('Disable two-factor authentication?')) {
-        twoFactorForm.delete(route('two-factor.disable'), {
+        twoFactorForm.delete("/user/two-factor-authentication", {
             onSuccess: () => toast.success('Two-factor authentication disabled'),
         });
     }

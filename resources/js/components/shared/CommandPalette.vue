@@ -21,8 +21,8 @@ const commands: CommandItem[] = [
     { id: 'dashboard', label: 'Go to Dashboard', icon: CheckSquare, action: () => router.visit(route('dashboard')), section: 'Navigation' },
     { id: 'tasks', label: 'Go to Tasks', icon: CheckSquare, action: () => router.visit(route('todos.index', '1')), section: 'Navigation' },
     { id: 'projects', label: 'Go to Projects', icon: Folder, action: () => router.visit(route('projects.index', '1')), section: 'Navigation' },
-    { id: 'settings', label: 'Go to Settings', icon: Settings, action: () => router.visit(route('profile.edit')), section: 'Navigation' },
-    { id: 'logout', label: 'Log Out', icon: LogOut, action: () => router.post(route('logout')), section: 'Account' },
+    { id: 'settings', label: 'Go to Settings', icon: Settings, action: () => router.visit(/settings/profile), section: 'Navigation' },
+    { id: 'logout', label: 'Log Out', icon: LogOut, action: () => router.post(/logout), section: 'Account' },
 ];
 
 const filteredCommands = computed(() => {
