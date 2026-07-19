@@ -1322,3 +1322,48 @@ No migration or Composer/npm package was added, removed, or upgraded.
 - Commit `bdac5ae` (`fix: normalize task UI control flow`) was pushed to `origin main`.
 - Commit `4ed0952` (`fix: clean board and keyboard guards`) was pushed to `origin main`.
 - This final delivery record will be committed as `docs: record ESLint cleanup delivery` and pushed separately to `origin main`.
+
+## Frontend Formatting Cleanup
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Run `npm run format:check` before editing; it reported only the two keyboard composables listed below.
+- Run the project's `npm run format` script through a temporary scoped ignore file so Prettier could write only the explicitly reported files.
+- Keep the cleanup formatting-only: the final commit diff contains line wrapping and indentation changes with no logic, dependency, or generated-file changes.
+- Preserve all unrelated staged and unstaged work in the shared worktree.
+
+### Changed Files
+
+- `resources/js/composables/useKeyboard.ts`
+- `resources/js/composables/useKeyboardShortcuts.ts`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Verification
+
+- `npm run format:check`: passed; all files under `resources/` match Prettier style.
+- `npm run lint:check`: passed as part of `composer run ci:check`.
+- `npm run test:frontend`: passed, 1 test.
+- `npm run build`: passed; Vite transformed 3,358 modules and generated the production bundle. The existing optional `fontaine` notice remains non-blocking.
+- `php artisan test --compact`: passed, 196 tests and 1,181 assertions.
+- `git diff --check`: passed, and the isolated cleanup commit was reviewed as formatting-only.
+- `npm run types:check`: remains blocked by the unrelated `useAutosave.ts` import of a non-exported `debounce` member from `@vueuse/core`.
+- `composer run lint:check`: remains blocked by pre-existing Pint findings in 21 unrelated PHP files.
+- `composer run types:check`: remains blocked by 327 pre-existing Larastan errors.
+
+### Known Limitations
+
+- The repository-wide PHP and Vue type/style baselines listed above remain outside this formatting-only cleanup.
+- The optional `fontaine` build notice was not changed because it is unrelated to formatting.
+
+### Git Delivery
+
+- Commit `be44072` (`style: format keyboard composables`) contains only the two formatting fixes and was pushed to `origin main`.
+- This delivery record is committed and pushed separately so the cleanup commit remains isolated.
