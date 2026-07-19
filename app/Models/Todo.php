@@ -56,7 +56,7 @@ class Todo extends Model
         return [
             'status' => TodoStatus::class,
             'priority' => TodoPriority::class,
-            'due_date' => 'date',
+            'due_date' => 'date:Y-m-d',
             'start_date' => 'date',
             'completed_at' => 'datetime',
             'is_pinned' => 'boolean',

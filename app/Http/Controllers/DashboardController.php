@@ -2,73 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\TodoStatus;
-use Carbon\Carbon;
+use App\Models\User;
+use App\Services\DashboardQuery;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, DashboardQuery $dashboardQuery): Response
     {
-        $workspace = $request->user()->currentWorkspace(
+        $user = $request->user();
+
+        abort_unless($user instanceof User, 403);
+
+        $user->loadMissing('preferences');
+        $workspace = $user->currentWorkspace(
             (string) $request->session()->get('current_workspace_id'),
         );
+        $timezone = $user->preferences?->getAttribute('timezone');
 
-        if (! $workspace) {
-            return Inertia::render('Dashboard', [
-                'stats' => [
-                    'today_count' => 0,
-                    'overdue_count' => 0,
-                    'completed_today' => 0,
-                    'total_tasks' => 0,
-                    'completed_total' => 0,
-                    'completion_rate' => 0,
-                ],
-                'todayTasks' => [],
-                'overdueTasks' => [],
-                'upcomingTasks' => [],
-                'weeklyData' => [],
-            ]);
-        }
-
-        $todos = $workspace->todos()->active();
-
-        $todayTasks = $todos->whereDate('due_date', today())->with('project')->get();
-        $overdueTasks = (clone $todos)->overdue()->with('project')->limit(10)->get();
-        $upcomingTasks = (clone $todos)->where('due_date', '>=', today())
-            ->where('due_date', '<=', now()->addDays(7))
-            ->where('status', '!=', TodoStatus::Completed)
-            ->with('project')->orderBy('due_date')->limit(10)->get();
-
-        $completedToday = (clone $todos)->completedToday()->count();
-        $totalTasks = (clone $todos)->count();
-        $completedTotal = (clone $todos)->where('status', TodoStatus::Completed)->count();
-
-        $weeklyData = collect();
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i);
-            $weeklyData->push([
-                'date' => $date->toDateString(),
-                'completed' => (clone $todos)->whereDate('completed_at', $date)->count(),
-                'created' => (clone $todos)->whereDate('created_at', $date)->count(),
-            ]);
-        }
-
-        return Inertia::render('Dashboard', [
-            'stats' => [
-                'today_count' => $todayTasks->count(),
-                'overdue_count' => $overdueTasks->count(),
-                'completed_today' => $completedToday,
-                'total_tasks' => $totalTasks,
-                'completed_total' => $completedTotal,
-                'completion_rate' => $totalTasks > 0 ? round(($completedTotal / $totalTasks) * 100) : 0,
-            ],
-            'todayTasks' => $todayTasks,
-            'overdueTasks' => $overdueTasks,
-            'upcomingTasks' => $upcomingTasks,
-            'weeklyData' => $weeklyData,
-        ]);
+        return Inertia::render(
+            'Dashboard',
+            $workspace
+                ? $dashboardQuery->forWorkspace(
+                    $workspace,
+                    is_string($timezone) ? $timezone : (string) config('app.timezone'),
+                )
+                : $dashboardQuery->empty(),
+        );
     }
 }
