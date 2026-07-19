@@ -21,6 +21,7 @@ test('profile page is displayed', function () {
             ->where('user.id', $user->id)
             ->where('user.avatar_url', null)
             ->where('canVerifyEmail', true)
+            ->where('labels.navigation_label', 'Settings')
             ->where('labels.avatar.title', 'Profile photo')
             ->where('labels.personal.title', 'Personal information')
             ->where('labels.delete.title', 'Delete account'));
@@ -236,7 +237,7 @@ test('user can delete their account', function () {
     Storage::disk('profile_avatars')->assertMissing($avatarPath);
 });
 
-test('account deletion is rolled back when avatar cleanup fails', function () {
+test('account deletion reports a staged avatar cleanup failure', function () {
     config(['filesystems.avatar_disk' => 'profile_avatars']);
 
     $user = User::factory()->create();
@@ -244,19 +245,23 @@ test('account deletion is rolled back when avatar cleanup fails', function () {
     $user->forceFill(['avatar_path' => $avatarPath])->save();
 
     $disk = Mockery::mock(Filesystem::class);
-    $disk->shouldReceive('delete')->once()->with($avatarPath)->andReturnFalse();
-    Storage::shouldReceive('disk')->once()->with('profile_avatars')->andReturn($disk);
+    $stagedPath = null;
+    $disk->shouldReceive('move')->once()->withArgs(function (string $source, string $destination) use ($avatarPath, &$stagedPath): bool {
+        $stagedPath = $destination;
+
+        return $source === $avatarPath;
+    })->andReturnTrue();
+    $disk->shouldReceive('delete')->once()->with(Mockery::type('string'))->andReturnFalse();
+    Storage::shouldReceive('disk')->twice()->with('profile_avatars')->andReturn($disk);
     Exceptions::fake();
 
     $this->actingAs($user)
         ->delete(route('profile.destroy'), ['password' => 'password'])
-        ->assertServerError();
+        ->assertRedirect(route('home'));
 
     $this->assertGuest();
-    $this->assertDatabaseHas('users', [
-        'id' => $user->id,
-        'avatar_path' => $avatarPath,
-    ]);
+    $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    expect($stagedPath)->toBeString()->toStartWith('pending-deletions/');
     Exceptions::assertReported(RuntimeException::class);
 });
 

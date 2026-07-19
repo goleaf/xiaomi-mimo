@@ -14,13 +14,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class ProfileController extends Controller
 {
@@ -103,14 +104,33 @@ class ProfileController extends Controller
         $user = $this->authenticatedUser($request);
         $avatarPath = $user->getRawOriginal('avatar_path');
         Auth::logout();
+        $stagedAvatarPath = is_string($avatarPath) && $avatarPath !== ''
+            ? $deleteProfileAvatar->stageStoredFile($avatarPath)
+            : null;
 
-        DB::transaction(function () use ($avatarPath, $deleteProfileAvatar, $user): void {
-            $user->delete();
-
-            if (is_string($avatarPath) && $avatarPath !== '') {
-                $deleteProfileAvatar->deleteStoredFile($avatarPath);
+        try {
+            if (! $user->delete()) {
+                throw new RuntimeException('The user account could not be deleted.');
             }
-        });
+        } catch (Throwable $exception) {
+            if (is_string($stagedAvatarPath)) {
+                try {
+                    $deleteProfileAvatar->restoreStagedFile($stagedAvatarPath, $avatarPath);
+                } catch (Throwable $rollbackException) {
+                    report($rollbackException);
+                }
+            }
+
+            throw $exception;
+        }
+
+        if (is_string($stagedAvatarPath)) {
+            try {
+                $deleteProfileAvatar->deleteStoredFile($stagedAvatarPath);
+            } catch (Throwable $cleanupException) {
+                report($cleanupException);
+            }
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

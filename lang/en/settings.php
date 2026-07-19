@@ -4,6 +4,7 @@ return [
     'profile' => [
         'title' => 'Profile',
         'description' => 'Manage your personal information and account photo.',
+        'navigation_label' => 'Settings',
         'avatar' => [
             'title' => 'Profile photo',
             'description' => 'This photo appears in your account menu and throughout the workspace.',

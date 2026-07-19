@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
@@ -36,6 +37,24 @@ class DeleteProfileAvatar
     {
         if (! Storage::disk($this->diskName())->delete($path)) {
             throw new RuntimeException('The profile avatar could not be deleted.');
+        }
+    }
+
+    public function stageStoredFile(string $path): string
+    {
+        $stagedPath = 'pending-deletions/'.Str::uuid().'/'.basename($path);
+
+        if (! Storage::disk($this->diskName())->move($path, $stagedPath)) {
+            throw new RuntimeException('The profile avatar could not be staged for deletion.');
+        }
+
+        return $stagedPath;
+    }
+
+    public function restoreStagedFile(string $stagedPath, string $originalPath): void
+    {
+        if (! Storage::disk($this->diskName())->move($stagedPath, $originalPath)) {
+            throw new RuntimeException('The staged profile avatar could not be restored.');
         }
     }
 

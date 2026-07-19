@@ -4,6 +4,7 @@ return [
     'profile' => [
         'title' => 'Profilis',
         'description' => 'Tvarkykite asmeninę informaciją ir paskyros nuotrauką.',
+        'navigation_label' => 'Nustatymai',
         'avatar' => [
             'title' => 'Profilio nuotrauka',
             'description' => 'Ši nuotrauka rodoma paskyros meniu ir visoje darbo erdvėje.',

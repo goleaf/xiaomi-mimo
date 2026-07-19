@@ -31,6 +31,7 @@ import type { BreadcrumbItem } from '@/types';
 type ProfileLabels = {
     title: string;
     description: string;
+    navigation_label: string;
     avatar: {
         title: string;
         description: string;
@@ -84,13 +85,17 @@ const props = defineProps<{
     labels: ProfileLabels;
 }>();
 
-setLayoutProps<{ breadcrumbs: BreadcrumbItem[] }>({
+setLayoutProps<{
+    breadcrumbs: BreadcrumbItem[];
+    navigationLabel: string;
+}>({
     breadcrumbs: [
         {
             title: props.labels.title,
             href: edit(),
         },
     ],
+    navigationLabel: props.labels.navigation_label,
 });
 
 const toast = useToast();

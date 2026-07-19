@@ -16,6 +16,8 @@ import { edit as editPreferences } from '@/routes/preferences';
 const page = usePage();
 const currentUrl = computed(() => page.url);
 
+defineProps<{ navigationLabel?: string }>();
+
 const navItems = [
     { label: 'Profile', href: editProfile.url(), icon: User },
     { label: 'Security', href: '/settings/security', icon: Shield },
@@ -30,6 +32,7 @@ const navItems = [
 <template>
     <div class="flex flex-col gap-6 lg:flex-row lg:gap-8">
         <nav
+            :aria-label="navigationLabel"
             class="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:w-48 lg:shrink-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0"
         >
             <Link
