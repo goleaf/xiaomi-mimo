@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import type { Todo, TodoStatus } from '@/types/models';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/composables/useToast';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import type { Todo, TodoStatus } from '@/types/models';
 
 const props = defineProps<{ todos: Todo[] }>();
 const emit = defineEmits<{ select: [todo: Todo] }>();
@@ -27,13 +24,19 @@ function priorityColor(priority: string): string {
 }
 
 function formatDate(date: string | null): string {
-    if (!date) return '';
+    if (!date) {
+        return '';
+    }
+
     return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function moveTodo(todoId: string, newStatus: TodoStatus) {
     const todo = props.todos.find((t) => t.id === todoId);
-    if (!todo || todo.status === newStatus) return;
+
+    if (!todo || todo.status === newStatus) {
+        return;
+    }
 
     if (newStatus === 'completed') {
         router.post(route('todos.complete', todoId), {}, {
@@ -63,8 +66,10 @@ function onDragOver(event: DragEvent) {
 
 function onDrop(event: DragEvent, targetStatus: TodoStatus) {
     event.preventDefault();
+
     const todoId = event.dataTransfer?.getData('todo-id');
     const sourceStatus = event.dataTransfer?.getData('todo-status');
+
     if (todoId && sourceStatus !== targetStatus) {
         moveTodo(todoId, targetStatus);
     }

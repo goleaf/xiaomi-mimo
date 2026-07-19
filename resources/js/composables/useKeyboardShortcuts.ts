@@ -20,7 +20,9 @@ function handleKeyDown(event: KeyboardEvent) {
 
         if (ctrlMatch && shiftMatch && altMatch && event.key.toLowerCase() === shortcut.key.toLowerCase()) {
             event.preventDefault();
+
             shortcut.handler(event);
+
             return;
         }
     }

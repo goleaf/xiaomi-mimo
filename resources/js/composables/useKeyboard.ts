@@ -1,5 +1,4 @@
 import { onMounted, onUnmounted } from 'vue';
-import { useUiStore } from '@/stores/ui';
 
 type KeyHandler = () => void;
 
@@ -22,6 +21,7 @@ function handleKeyDown(event: KeyboardEvent) {
     ].filter(Boolean).join('+');
 
     const handler = shortcuts.get(key);
+
     if (handler) {
         event.preventDefault();
         handler();

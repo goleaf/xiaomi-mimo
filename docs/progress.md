@@ -1120,3 +1120,43 @@ No migration or Composer/npm package change is planned.
 ### Git Delivery
 
 Commit message: `fix: normalize task UI control flow`. Push to `origin main` will be attempted immediately after the isolated commit. Unrelated worktree changes remain excluded.
+
+## ESLint Cleanup Batch 3: Board And Keyboard Guards
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Remove unused Vue, drag-and-drop, and store imports from the task board and keyboard helper.
+- Keep the board's existing native drag event implementation intact rather than retaining unused React-oriented sortable helpers.
+- Make guard clauses explicit and separate event-handling statements according to the configured ESLint rules.
+- Avoid whole-file formatting or unrelated behavioral changes.
+
+### Changed Files
+
+- `resources/js/components/task/BoardView.vue`
+- `resources/js/composables/useKeyboard.ts`
+- `resources/js/composables/useKeyboardShortcuts.ts`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change is planned.
+
+### Verification
+
+- The first `npm run lint:check` rerun identified two additional spacing findings inside this batch's guarded blocks; both were corrected without broad formatting.
+- The final batch rerun resolved all 16 targeted board and keyboard findings. The repository total moved from 22 to one while concurrent work resolved the six other prior findings and introduced one type-import finding in a new task-detail composable.
+- `npm run build` passed after both batch checks; Vite emitted only the existing optional `fontaine` notice.
+- Scoped `git diff --check` passed.
+
+### Known Limitations
+
+- One ESLint finding remains in a newly added concurrent file and is deferred to a final isolated batch.
+- Concurrent localization and workspace UI work remains outside this batch.
+
+### Git Delivery
+
+Commit message: `fix: clean board and keyboard guards`. Push to `origin main` will be attempted immediately after the isolated commit. Unrelated worktree changes remain excluded.
