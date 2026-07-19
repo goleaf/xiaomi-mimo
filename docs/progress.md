@@ -559,4 +559,6 @@ No migration or Composer/npm package was added, removed, or upgraded. `composer 
 
 ### Git Delivery
 
-Commit and push results are pending. Unrelated staged and unstaged application work remains untouched and excluded.
+- Commit `1a87b09` (`chore: reconcile NativePHP command reference`) contains only the focused command contracts and phase progress files.
+- Push to `origin main` succeeded (`022b0d7..1a87b09`).
+- Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
