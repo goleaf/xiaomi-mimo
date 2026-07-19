@@ -2265,4 +2265,6 @@ No migration or Composer/npm package change was made.
 
 - Implementation commit: `8e3bd05` (`fix: unify form feedback surfaces`).
 - Implementation push: successful to `origin/main`.
-- Documentation delivery will be committed separately so the implementation commit remains focused.
+- Documentation commit: `7a50f21` (`docs: record form feedback unification`).
+- Documentation push: successful to `origin/main`.
+- This final delivery record is committed and pushed separately so the phase commits remain focused.
