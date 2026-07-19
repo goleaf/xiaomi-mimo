@@ -2536,3 +2536,57 @@ No migration or Composer/npm package change is planned.
 - Documentation commit: `72a3b58` (`docs: record secondary action unification`).
 - Documentation push: successful to `origin/main`.
 - This final delivery record is committed and pushed separately so the phase commits remain focused.
+
+## Page Header Action State Unification
+
+### Status
+
+- Completed.
+
+### Scope And Decisions
+
+- Make every active `WorkspacePageHeader` action use the same shared 44px Button contract as `/projects`.
+- Remove page-local orange, height, radius, shadow, and focus duplication from project, task, notification, and workspace headers.
+- Add shared Spinner feedback, duplicate-submission guards, disabled states, and lifecycle reset to header-level Inertia mutations.
+- Preserve existing routes, payloads, translations, permissions, toast behavior, navigation, and responsive wrapping.
+
+### Changed Files
+
+- `resources/js/pages/notifications/Index.vue`
+- `resources/js/pages/projects/Index.vue`
+- `resources/js/pages/projects/Show.vue`
+- `resources/js/pages/tasks/Index.vue`
+- `resources/js/pages/tasks/Show.vue`
+- `resources/js/pages/workspaces/Index.vue`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change is planned.
+
+### Verification
+
+- The focused RED run produced seven expected failures for six inconsistent page-header button contracts and the missing shared mutation loading states.
+- Focused frontend-design coverage passed after implementation with 113 tests and 482 assertions.
+- Full Pest coverage passed with 403 tests and 1,806 assertions.
+- PHPStan passed with 0 errors.
+- Vue TypeScript checking, ESLint, Prettier verification, and the frontend Node test passed.
+- Production build passed after transforming 3,369 modules.
+- Desktop light browser QA confirmed Projects, Workspaces, and Notifications use 44px header actions with the canonical 12px radius and zero horizontal overflow.
+- Mobile dark browser QA confirmed Project Show and Task Show wrap their 44px actions across two balanced rows at 390x844 with zero horizontal overflow.
+- Live measurements confirmed every rendered header action reports `data-size="lg"`; no page or console errors were produced.
+- Data-changing header actions were not submitted during visual QA; duplicate-submission guards, disabled states, shared Spinner feedback, and `onFinish` resets are protected by focused regression contracts.
+- The Boost browser log contained only historical entries dated 2026-07-19.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+
+### Known Limitations And Next Work
+
+- Vite continues to report the existing optional `fontaine` optimization notice; the production build succeeds.
+- Compact list-row, tab, badge, and icon-only actions intentionally retain their smaller semantic sizes.
+
+### Git Delivery
+
+- Implementation commit: `8027849` (`fix: unify page header action states`).
+- Implementation push: successful to `origin/main`.
+- Documentation commit and push are pending.
