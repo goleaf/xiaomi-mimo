@@ -2070,3 +2070,71 @@ No migration or Composer/npm package change was made.
 - Implementation commit: `4012e46` (`feat: edit task labels`).
 - Implementation push: successful to `origin/main`.
 - This delivery record is committed and pushed separately so the feature commit remains focused.
+
+## Transient Surface Design Unification
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Extend the `/projects` Warm Precision visual language to shared dropdown, select, tooltip, dialog, sheet, toast, and mobile-sidebar surfaces.
+- Standardize semantic borders, generous radii, warm shadows, orange keyboard focus, touch-friendly menu rows, and reduced-motion behavior at the shared primitive level so every consuming page inherits the same treatment.
+- Replace remaining hardcoded accessibility copy in shared transient surfaces with stable English, Lithuanian, and Russian translations.
+- Preserve the existing page architecture and reuse the installed Reka UI and Vue Sonner primitives without adding packages.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Changed Files
+
+- `resources/js/components/ui/dropdown-menu/DropdownMenuContent.vue`
+- `resources/js/components/ui/dropdown-menu/DropdownMenuItem.vue`
+- `resources/js/components/ui/select/SelectContent.vue`
+- `resources/js/components/ui/select/SelectItem.vue`
+- `resources/js/components/ui/tooltip/TooltipContent.vue`
+- `resources/js/components/ui/dialog/DialogContent.vue`
+- `resources/js/components/ui/dialog/DialogOverlay.vue`
+- `resources/js/components/ui/dialog/DialogScrollContent.vue`
+- `resources/js/components/ui/sheet/SheetContent.vue`
+- `resources/js/components/ui/sheet/SheetOverlay.vue`
+- `resources/js/components/ui/sonner/Sonner.vue`
+- `resources/js/components/ui/sidebar/Sidebar.vue`
+- `resources/js/components/ui/sidebar/SidebarTrigger.vue`
+- `resources/js/components/ui/breadcrumb/BreadcrumbEllipsis.vue`
+- `lang/en/ui.php`
+- `lang/lt/ui.php`
+- `lang/ru/ui.php`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Verification
+
+- Light desktop browser QA on `/projects` confirmed the workspace dropdown uses the Warm Precision popover, orange keyboard highlight, pointer rows, and zero horizontal overflow.
+- Light and dark browser QA on `/settings/preferences` confirmed the shared select uses the same rounded semantic surface and orange keyboard highlight; Vue Sonner resolves its theme to the active dark appearance.
+- Collapsed-sidebar QA confirmed the shared tooltip uses the refined rounded inverse surface and warm border/shadow treatment.
+- Mobile QA at 390×844 confirmed the translated sidebar sheet is 288px wide, uses the softened 65% overlay with 2px backdrop blur, and produces zero horizontal overflow.
+- Reduced-motion browser emulation confirmed the dropdown reports `animation-name: none` and a zero-second animation duration.
+- A clean browser reload and dropdown interaction on `/projects` produced no console errors or page errors.
+- `vendor/bin/pint --dirty --format agent` — passed.
+- `php artisan test --compact tests/Feature/FrontendDesignTest.php` — 53 tests passed, 259 assertions.
+- `php artisan test --compact` — 343 tests passed, 1,583 assertions.
+- `vendor/bin/phpstan analyse --memory-limit=1G --no-progress` — passed with 0 errors.
+- `npm run test:frontend` — passed, 1 test.
+- `npm run types:check` — passed.
+- `npm run lint:check` — passed.
+- `npm run format:check` — passed.
+- `npm run build` — passed after transforming 3,362 modules.
+- `git diff --check` — passed.
+
+### Known Limitations
+
+Vite continues to report the existing optional `fontaine` optimization notice; the production build succeeds.
+
+### Git Delivery
+
+- Implementation commit: `1cf3dad` (`fix: unify transient interface surfaces`).
+- Implementation push: successful to `origin/main`.
+- Documentation commit and push: pending this record update.
