@@ -101,7 +101,8 @@ const emit = defineEmits<{ action: [] }>();
         </p>
         <Button
             v-if="actionLabel && status !== 'loading'"
-            class="relative mt-5 min-h-11 cursor-pointer rounded-xl bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-orange-500"
+            size="lg"
+            class="relative mt-5"
             @click="emit('action')"
         >
             {{ actionLabel }}

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, router, setLayoutProps } from '@inertiajs/vue3';
 import { Download, Upload } from '@lucide/vue';
+import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -9,15 +10,20 @@ import {
     CardTitle,
     CardDescription,
 } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { exportMethod, importMethod } from '@/routes';
 import type { SettingsLayoutProps } from '@/types';
 import type { Workspace } from '@/types/models';
 
+type ImportFormat = 'json' | 'csv';
+
 const props = defineProps<{ workspace: Workspace }>();
 const toast = useToast();
 const { t } = useUi();
+const importFormats: ImportFormat[] = ['json', 'csv'];
+const importingFormat = ref<ImportFormat | null>(null);
 
 setLayoutProps<SettingsLayoutProps>({
     settingsEyebrow: t('account.menu.settings'),
@@ -32,22 +38,26 @@ function exportData(format: string) {
     );
 }
 
-function handleImport(event: Event, format: string) {
+function handleImport(event: Event, format: ImportFormat) {
     const input = event.target as HTMLInputElement;
 
-    if (!input.files?.length) {
+    if (!input.files?.length || importingFormat.value) {
         return;
     }
 
     const formData = new FormData();
     formData.append('file', input.files[0]);
     formData.append('format', format);
+    importingFormat.value = format;
+    input.value = '';
 
     router.post(importMethod(props.workspace.id).url, formData, {
         onSuccess: () => toast.success(t('settings.export.import_success')),
+        onFinish: () => {
+            importingFormat.value = null;
+        },
         preserveScroll: true,
     });
-    input.value = '';
 }
 </script>
 
@@ -88,36 +98,29 @@ function handleImport(event: Event, format: string) {
             </CardHeader>
             <CardContent class="grid gap-3 sm:grid-cols-2">
                 <label
+                    v-for="format in importFormats"
+                    :key="format"
                     class="inline-flex min-h-20 cursor-pointer items-center gap-3 rounded-2xl border border-border bg-muted/20 px-4 text-sm font-medium transition-colors focus-within:ring-2 focus-within:ring-orange-500 hover:border-orange-500/25 hover:bg-orange-500/[0.05]"
+                    :class="{
+                        'pointer-events-none opacity-50': importingFormat,
+                    }"
+                    :aria-disabled="Boolean(importingFormat)"
+                    :aria-busy="importingFormat === format"
                 >
                     <input
                         type="file"
-                        accept=".json"
-                        class="hidden"
-                        @change="handleImport($event, 'json')"
+                        :accept="`.${format}`"
+                        class="sr-only"
+                        :disabled="Boolean(importingFormat)"
+                        @change="handleImport($event, format)"
                     />
                     <span
                         class="flex size-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-700 dark:text-orange-300"
                     >
-                        <Upload class="size-4" aria-hidden="true" />
+                        <Spinner v-if="importingFormat === format" />
+                        <Upload v-else class="size-4" aria-hidden="true" />
                     </span>
-                    {{ t('settings.export.import_json') }}
-                </label>
-                <label
-                    class="inline-flex min-h-20 cursor-pointer items-center gap-3 rounded-2xl border border-border bg-muted/20 px-4 text-sm font-medium transition-colors focus-within:ring-2 focus-within:ring-orange-500 hover:border-orange-500/25 hover:bg-orange-500/[0.05]"
-                >
-                    <input
-                        type="file"
-                        accept=".csv"
-                        class="hidden"
-                        @change="handleImport($event, 'csv')"
-                    />
-                    <span
-                        class="flex size-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-700 dark:text-orange-300"
-                    >
-                        <Upload class="size-4" aria-hidden="true" />
-                    </span>
-                    {{ t('settings.export.import_csv') }}
+                    {{ t(`settings.export.import_${format}`) }}
                 </label>
             </CardContent>
         </Card>

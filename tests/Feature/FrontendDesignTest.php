@@ -71,6 +71,35 @@ test('the shared state surface supports accessible loading and error variants', 
         ->toContain('<AlertTriangle');
 });
 
+test('remaining active secondary actions reuse the shared large control rhythm', function () {
+    $emptyState = File::get(resource_path('js/components/shared/EmptyState.vue'));
+    $calendar = File::get(resource_path('js/pages/calendar/Index.vue'));
+    $taskDetail = File::get(resource_path('js/components/task/TaskDetail.vue'));
+
+    expect($emptyState)
+        ->toContain('size="lg"')
+        ->not->toContain('bg-orange-600 text-white hover:bg-orange-700')
+        ->and($calendar)
+        ->toContain('size="lg"')
+        ->not->toContain('class="min-h-11 cursor-pointer rounded-xl"')
+        ->and(substr_count($taskDetail, 'size="lg"'))
+        ->toBeGreaterThanOrEqual(3)
+        ->and($taskDetail)
+        ->not->toContain('class="h-10 rounded-xl text-sm"')
+        ->not->toContain('class="min-h-11 rounded-xl"');
+});
+
+test('data import exposes an inert shared loading state', function () {
+    expect(File::get(resource_path('js/pages/settings/Export.vue')))
+        ->toContain("import { Spinner } from '@/components/ui/spinner'")
+        ->toContain('const importingFormat = ref<ImportFormat | null>(null)')
+        ->toContain(':disabled="Boolean(importingFormat)"')
+        ->toContain(':aria-busy="importingFormat === format"')
+        ->toContain('<Spinner v-if="importingFormat === format" />')
+        ->toContain('onFinish: () =>')
+        ->toContain('pointer-events-none opacity-50');
+});
+
 test('autosave uses lifecycle safe Vue watcher cleanup', function () {
     expect(File::get(resource_path('js/composables/useAutosave.ts')))
         ->toContain('onCleanup')

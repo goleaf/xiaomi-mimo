@@ -391,7 +391,7 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                         <Input
                             v-model="checklistItemDrafts[checklist.id]"
                             :placeholder="t('tasks.detail.add_item')"
-                            class="mt-2 h-10 rounded-xl text-sm"
+                            class="mt-2"
                             @keyup.enter="addChecklistItem(checklist.id)"
                         />
                     </div>
@@ -399,12 +399,11 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                         <Input
                             v-model="checklistName"
                             :placeholder="t('tasks.detail.checklist_name')"
-                            class="h-10 rounded-xl text-sm"
                             @keyup.enter="addChecklist"
                         />
                         <Button
                             variant="outline"
-                            class="rounded-xl"
+                            size="lg"
                             @click="addChecklist"
                         >
                             {{ t('common.actions.add') }}
@@ -442,14 +441,9 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                         <Input
                             v-model="comment"
                             :placeholder="t('tasks.detail.comment_placeholder')"
-                            class="h-10 rounded-xl text-sm"
                             @keyup.enter="addComment"
                         />
-                        <Button
-                            variant="outline"
-                            class="rounded-xl"
-                            @click="addComment"
-                        >
+                        <Button variant="outline" size="lg" @click="addComment">
                             {{ t('common.actions.post') }}
                         </Button>
                     </div>
@@ -460,7 +454,7 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                 >
                     <Button
                         variant="destructive"
-                        class="min-h-11 rounded-xl"
+                        size="lg"
                         @click="showDeleteDialog = true"
                     >
                         <Trash2 class="size-4" aria-hidden="true" />

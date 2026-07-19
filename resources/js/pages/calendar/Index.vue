@@ -327,11 +327,7 @@ function statusLabel(status: TodoStatus): string {
                                 {{ copy.calendar[option] }}
                             </button>
                         </div>
-                        <Button
-                            variant="outline"
-                            class="min-h-11 cursor-pointer rounded-xl"
-                            @click="goToday"
-                        >
+                        <Button variant="outline" size="lg" @click="goToday">
                             {{ copy.calendar.go_today }}
                         </Button>
                     </div>
