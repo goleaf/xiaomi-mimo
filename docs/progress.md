@@ -2137,4 +2137,6 @@ Vite continues to report the existing optional `fontaine` optimization notice; t
 
 - Implementation commit: `1cf3dad` (`fix: unify transient interface surfaces`).
 - Implementation push: successful to `origin/main`.
-- Documentation commit and push: pending this record update.
+- Documentation commit: `9fb1573` (`docs: record transient surface unification`).
+- Documentation push: successful to `origin/main`.
+- This final delivery record is committed and pushed separately so the phase commits remain focused.
