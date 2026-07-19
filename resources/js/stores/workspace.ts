@@ -7,12 +7,15 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     const currentWorkspaceId = ref<string | null>(null);
     const loading = ref(false);
 
-    const currentWorkspace = computed(() =>
-        workspaces.value.find((w) => w.id === currentWorkspaceId.value) ?? workspaces.value[0]
+    const currentWorkspace = computed(
+        () =>
+            workspaces.value.find((w) => w.id === currentWorkspaceId.value) ??
+            workspaces.value[0],
     );
 
     function setWorkspaces(data: Workspace[]) {
         workspaces.value = data;
+
         if (!currentWorkspaceId.value && data.length > 0) {
             currentWorkspaceId.value = data[0].id;
         }
@@ -28,6 +31,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
     function updateWorkspace(id: string, data: Partial<Workspace>) {
         const index = workspaces.value.findIndex((w) => w.id === id);
+
         if (index !== -1) {
             workspaces.value[index] = { ...workspaces.value[index], ...data };
         }
@@ -35,6 +39,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
     function removeWorkspace(id: string) {
         workspaces.value = workspaces.value.filter((w) => w.id !== id);
+
         if (currentWorkspaceId.value === id) {
             currentWorkspaceId.value = workspaces.value[0]?.id ?? null;
         }

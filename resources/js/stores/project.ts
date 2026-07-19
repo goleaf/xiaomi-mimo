@@ -8,15 +8,15 @@ export const useProjectStore = defineStore('project', () => {
     const currentProjectId = ref<string | null>(null);
 
     const currentProject = computed(() =>
-        projects.value.find((p) => p.id === currentProjectId.value)
+        projects.value.find((p) => p.id === currentProjectId.value),
     );
 
     const activeProjects = computed(() =>
-        projects.value.filter((p) => !p.is_archived)
+        projects.value.filter((p) => !p.is_archived),
     );
 
     const archivedProjects = computed(() =>
-        projects.value.filter((p) => p.is_archived)
+        projects.value.filter((p) => p.is_archived),
     );
 
     function setProjects(data: Project[]) {
@@ -29,6 +29,7 @@ export const useProjectStore = defineStore('project', () => {
 
     function updateProject(id: string, data: Partial<Project>) {
         const index = projects.value.findIndex((p) => p.id === id);
+
         if (index !== -1) {
             projects.value[index] = { ...projects.value[index], ...data };
         }
@@ -36,6 +37,7 @@ export const useProjectStore = defineStore('project', () => {
 
     function removeProject(id: string) {
         projects.value = projects.value.filter((p) => p.id !== id);
+
         if (currentProjectId.value === id) {
             currentProjectId.value = null;
         }

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Todo, TodoStatus, TodoPriority } from '@/types/models';
 import type { TodoFilters } from '@/types/api';
+import type { Todo, TodoStatus, TodoPriority } from '@/types/models';
 
 export const useTodoStore = defineStore('todo', () => {
     const todos = ref<Todo[]>([]);
@@ -16,12 +16,16 @@ export const useTodoStore = defineStore('todo', () => {
         if (filters.value.search) {
             const search = filters.value.search.toLowerCase();
             result = result.filter(
-                (t) => t.title.toLowerCase().includes(search) || t.description?.toLowerCase().includes(search)
+                (t) =>
+                    t.title.toLowerCase().includes(search) ||
+                    t.description?.toLowerCase().includes(search),
             );
         }
 
         if (filters.value.project_id) {
-            result = result.filter((t) => t.project_id === filters.value.project_id);
+            result = result.filter(
+                (t) => t.project_id === filters.value.project_id,
+            );
         }
 
         if (filters.value.status) {
@@ -29,37 +33,61 @@ export const useTodoStore = defineStore('todo', () => {
         }
 
         if (filters.value.priority) {
-            result = result.filter((t) => t.priority === filters.value.priority);
+            result = result.filter(
+                (t) => t.priority === filters.value.priority,
+            );
         }
 
         if (filters.value.assigned_to) {
-            result = result.filter((t) => t.assigned_to === filters.value.assigned_to);
+            result = result.filter(
+                (t) => t.assigned_to === filters.value.assigned_to,
+            );
         }
 
         if (filters.value.is_pinned !== undefined) {
-            result = result.filter((t) => t.is_pinned === filters.value.is_pinned);
+            result = result.filter(
+                (t) => t.is_pinned === filters.value.is_pinned,
+            );
         }
 
         if (filters.value.is_favorite !== undefined) {
-            result = result.filter((t) => t.is_favorite === filters.value.is_favorite);
+            result = result.filter(
+                (t) => t.is_favorite === filters.value.is_favorite,
+            );
         }
 
         if (filters.value.overdue) {
             const today = new Date().toISOString().split('T')[0];
-            result = result.filter((t) => t.due_date && t.due_date < today && t.status !== 'completed');
+            result = result.filter(
+                (t) =>
+                    t.due_date &&
+                    t.due_date < today &&
+                    t.status !== 'completed',
+            );
         }
 
         return result;
     });
 
-    const pendingTodos = computed(() => filteredTodos.value.filter((t) => t.status === 'pending'));
-    const inProgressTodos = computed(() => filteredTodos.value.filter((t) => t.status === 'in_progress'));
-    const completedTodos = computed(() => filteredTodos.value.filter((t) => t.status === 'completed'));
+    const pendingTodos = computed(() =>
+        filteredTodos.value.filter((t) => t.status === 'pending'),
+    );
+    const inProgressTodos = computed(() =>
+        filteredTodos.value.filter((t) => t.status === 'in_progress'),
+    );
+    const completedTodos = computed(() =>
+        filteredTodos.value.filter((t) => t.status === 'completed'),
+    );
     const pinnedTodos = computed(() => todos.value.filter((t) => t.is_pinned));
-    const favoriteTodos = computed(() => todos.value.filter((t) => t.is_favorite));
+    const favoriteTodos = computed(() =>
+        todos.value.filter((t) => t.is_favorite),
+    );
     const overdueTodos = computed(() => {
         const today = new Date().toISOString().split('T')[0];
-        return todos.value.filter((t) => t.due_date && t.due_date < today && t.status !== 'completed');
+
+        return todos.value.filter(
+            (t) => t.due_date && t.due_date < today && t.status !== 'completed',
+        );
     });
 
     function setTodos(data: Todo[]) {
@@ -72,6 +100,7 @@ export const useTodoStore = defineStore('todo', () => {
 
     function updateTodo(id: string, data: Partial<Todo>) {
         const index = todos.value.findIndex((t) => t.id === id);
+
         if (index !== -1) {
             todos.value[index] = { ...todos.value[index], ...data };
         }

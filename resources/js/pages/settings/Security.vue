@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { useToast } from '@/composables/useToast';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Shield } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield } from '@lucide/vue';
+import { useToast } from '@/composables/useToast';
 
 const props = defineProps<{
     user: { id: string; two_factor_enabled?: boolean };
@@ -22,21 +28,25 @@ const passwordForm = useForm({
 const twoFactorForm = useForm({});
 
 function updatePassword() {
-    passwordForm.put("/settings/password", {
-        onSuccess: () => { toast.success('Password updated'); passwordForm.reset(); },
+    passwordForm.put('/settings/password', {
+        onSuccess: () => {
+            toast.success('Password updated');
+            passwordForm.reset();
+        },
     });
 }
 
 function enable2FA() {
-    twoFactorForm.post("/user/two-factor-authentication", {
+    twoFactorForm.post('/user/two-factor-authentication', {
         onSuccess: () => toast.success('Two-factor authentication enabled'),
     });
 }
 
 function disable2FA() {
     if (confirm('Disable two-factor authentication?')) {
-        twoFactorForm.delete("/user/two-factor-authentication", {
-            onSuccess: () => toast.success('Two-factor authentication disabled'),
+        twoFactorForm.delete('/user/two-factor-authentication', {
+            onSuccess: () =>
+                toast.success('Two-factor authentication disabled'),
         });
     }
 }
@@ -47,31 +57,68 @@ function disable2FA() {
     <div class="space-y-6">
         <div>
             <h2 class="text-lg font-semibold">Security</h2>
-            <p class="text-sm text-muted-foreground">Manage your account security</p>
+            <p class="text-sm text-muted-foreground">
+                Manage your account security
+            </p>
         </div>
 
         <Card>
             <CardHeader>
                 <CardTitle>Update Password</CardTitle>
-                <CardDescription>Ensure your account is using a long, random password</CardDescription>
+                <CardDescription
+                    >Ensure your account is using a long, random
+                    password</CardDescription
+                >
             </CardHeader>
             <CardContent>
-                <form @submit.prevent="updatePassword" class="space-y-4 max-w-md">
+                <form
+                    @submit.prevent="updatePassword"
+                    class="max-w-md space-y-4"
+                >
                     <div class="space-y-2">
                         <Label for="current_password">Current Password</Label>
-                        <Input id="current_password" v-model="passwordForm.current_password" type="password" required />
-                        <p v-if="passwordForm.errors.current_password" class="text-sm text-destructive">{{ passwordForm.errors.current_password }}</p>
+                        <Input
+                            id="current_password"
+                            v-model="passwordForm.current_password"
+                            type="password"
+                            required
+                        />
+                        <p
+                            v-if="passwordForm.errors.current_password"
+                            class="text-sm text-destructive"
+                        >
+                            {{ passwordForm.errors.current_password }}
+                        </p>
                     </div>
                     <div class="space-y-2">
                         <Label for="password">New Password</Label>
-                        <Input id="password" v-model="passwordForm.password" type="password" required />
-                        <p v-if="passwordForm.errors.password" class="text-sm text-destructive">{{ passwordForm.errors.password }}</p>
+                        <Input
+                            id="password"
+                            v-model="passwordForm.password"
+                            type="password"
+                            required
+                        />
+                        <p
+                            v-if="passwordForm.errors.password"
+                            class="text-sm text-destructive"
+                        >
+                            {{ passwordForm.errors.password }}
+                        </p>
                     </div>
                     <div class="space-y-2">
-                        <Label for="password_confirmation">Confirm Password</Label>
-                        <Input id="password_confirmation" v-model="passwordForm.password_confirmation" type="password" required />
+                        <Label for="password_confirmation"
+                            >Confirm Password</Label
+                        >
+                        <Input
+                            id="password_confirmation"
+                            v-model="passwordForm.password_confirmation"
+                            type="password"
+                            required
+                        />
                     </div>
-                    <Button type="submit" :disabled="passwordForm.processing">Update Password</Button>
+                    <Button type="submit" :disabled="passwordForm.processing"
+                        >Update Password</Button
+                    >
                 </form>
             </CardContent>
         </Card>
@@ -82,15 +129,26 @@ function disable2FA() {
                     <Shield class="h-5 w-5" />
                     <CardTitle>Two-Factor Authentication</CardTitle>
                 </div>
-                <CardDescription>Add additional security with 2FA</CardDescription>
+                <CardDescription
+                    >Add additional security with 2FA</CardDescription
+                >
             </CardHeader>
             <CardContent>
-                <div v-if="user.two_factor_enabled" class="flex items-center gap-4">
-                    <p class="text-sm text-green-600 font-medium">Two-factor authentication is enabled</p>
-                    <Button variant="destructive" size="sm" @click="disable2FA">Disable</Button>
+                <div
+                    v-if="user.two_factor_enabled"
+                    class="flex items-center gap-4"
+                >
+                    <p class="text-sm font-medium text-green-600">
+                        Two-factor authentication is enabled
+                    </p>
+                    <Button variant="destructive" size="sm" @click="disable2FA"
+                        >Disable</Button
+                    >
                 </div>
                 <div v-else class="flex items-center gap-4">
-                    <p class="text-sm text-muted-foreground">Two-factor authentication is not enabled</p>
+                    <p class="text-sm text-muted-foreground">
+                        Two-factor authentication is not enabled
+                    </p>
                     <Button size="sm" @click="enable2FA">Enable</Button>
                 </div>
             </CardContent>

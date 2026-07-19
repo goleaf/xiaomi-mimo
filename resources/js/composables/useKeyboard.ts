@@ -14,6 +14,7 @@ export function useKeyboard() {
     function handleKeyDown(event: KeyboardEvent) {
         const key = buildKey(event);
         const handler = handlers.get(key);
+
         if (handler) {
             event.preventDefault();
             handler(event);
@@ -21,7 +22,9 @@ export function useKeyboard() {
 
         if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
             event.preventDefault();
-            ui.commandPaletteOpen ? ui.closeCommandPalette() : ui.openCommandPalette();
+            ui.commandPaletteOpen
+                ? ui.closeCommandPalette()
+                : ui.openCommandPalette();
         }
 
         if (event.key === 'Escape') {
@@ -33,10 +36,21 @@ export function useKeyboard() {
 
     function buildKey(event: KeyboardEvent): string {
         const parts: string[] = [];
-        if (event.metaKey || event.ctrlKey) parts.push('mod');
-        if (event.shiftKey) parts.push('shift');
-        if (event.altKey) parts.push('alt');
+
+        if (event.metaKey || event.ctrlKey) {
+parts.push('mod');
+}
+
+        if (event.shiftKey) {
+parts.push('shift');
+}
+
+        if (event.altKey) {
+parts.push('alt');
+}
+
         parts.push(event.key.toLowerCase());
+
         return parts.join('+');
     }
 

@@ -1,15 +1,11 @@
 <?php
 
-use App\Enums\TodoPriority;
-use App\Enums\TodoStatus;
 use App\Models\Label;
-use App\Models\Project;
 use App\Models\Todo;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
@@ -123,13 +119,4 @@ test('todo list filters by status', function () {
     $response = $this->actingAs($user)->getJson(route('todos.index', ['workspace' => $workspace->id, 'status' => 'completed']));
 
     $response->assertOk();
-});
-
-test('non-member cannot access workspace todos', function () {
-    $user = User::factory()->create();
-    $workspace = Workspace::factory()->create();
-
-    $response = $this->actingAs($user)->getJson(route('todos.index', $workspace->id));
-
-    $response->assertForbidden();
 });

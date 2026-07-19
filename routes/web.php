@@ -15,6 +15,7 @@ use App\Http\Controllers\TagController;
 use App\Http\Controllers\TodoController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Controllers\WorkspaceController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -24,42 +25,70 @@ Route::inertia('/', 'Welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Helper to get current workspace
-    $ws = fn () => request()->user()->currentWorkspace();
+    // Shortcut routes resolve the authenticated user's current workspace.
+    Route::get('tasks', function (Request $request) {
+        $user = $request->user();
 
-    // Shortcut routes — resolve current workspace
-    Route::get('tasks', function () {
-        $workspace = $this->user()->currentWorkspace();
+        if (! $user instanceof User) {
+            abort(403);
+        }
+
+        $workspace = $user->currentWorkspace();
+
         if (! $workspace) {
             return Inertia::render('tasks/Index', [
                 'todos' => ['data' => [], 'total' => 0, 'current_page' => 1, 'last_page' => 1, 'per_page' => 50],
                 'filters' => [], 'projects' => ['data' => []], 'workspace' => ['id' => ''],
             ]);
         }
-        return app(TodoController::class)->index(request(), $workspace);
-    })->middleware('auth')->name('tasks');
 
-    Route::get('projects', function () {
-        $workspace = $this->user()->currentWorkspace();
+        return app(TodoController::class)->index($request, $workspace);
+    })->name('todos.index');
+
+    Route::get('projects', function (Request $request) {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            abort(403);
+        }
+
+        $workspace = $user->currentWorkspace();
+
         if (! $workspace) {
             return Inertia::render('projects/Index', ['projects' => ['data' => []], 'workspace' => ['id' => '', 'name' => '']]);
         }
-        return app(ProjectController::class)->index(request(), $workspace);
-    })->middleware('auth')->name('projects');
 
-    Route::get('calendar', function () {
-        $workspace = $this->user()->currentWorkspace();
+        return app(ProjectController::class)->index($request, $workspace);
+    })->name('projects');
+
+    Route::get('calendar', function (Request $request) {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            abort(403);
+        }
+
+        $workspace = $user->currentWorkspace();
         $todos = $workspace ? $workspace->todos()->active()->whereNotNull('due_date')->get()->toArray() : [];
-        return inertia('calendar/Index', ['todos' => $todos]);
-    })->middleware('auth')->name('calendar');
 
-    Route::get('activity', function () {
-        $workspace = $this->user()->currentWorkspace();
+        return inertia('calendar/Index', ['todos' => $todos]);
+    })->name('calendar');
+
+    Route::get('activity', function (Request $request) {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            abort(403);
+        }
+
+        $workspace = $user->currentWorkspace();
+
         if (! $workspace) {
             return inertia('activity/Index', ['activities' => ['data' => []]]);
         }
-        return app(ActivityController::class)->index(request(), $workspace);
-    })->middleware('auth')->name('activity');
+
+        return app(ActivityController::class)->index($request, $workspace);
+    })->name('activity');
 
     // Workspaces
     Route::get('workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
@@ -71,8 +100,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('workspaces/{workspace}/members/{userId}', [WorkspaceController::class, 'removeMember'])->name('workspaces.removeMember');
 
     // Projects
-    Route::get('workspaces/{workspace}/projects', [ProjectController::class, 'index'])->name('workspaces.projects.index');
-    Route::post('workspaces/{workspace}/projects', [ProjectController::class, 'store'])->name('workspaces.projects.store');
+    Route::get('workspaces/{workspace}/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::post('workspaces/{workspace}/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('workspaces/{workspace}/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::put('workspaces/{workspace}/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::delete('workspaces/{workspace}/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
@@ -82,7 +111,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('workspaces/{workspace}/projects/reorder', [ProjectController::class, 'reorder'])->name('projects.reorder');
 
     // Todos
-    Route::post('workspaces/{workspace}/tasks', [TodoController::class, 'store'])->name('workspaces.tasks.store');
+    Route::post('workspaces/{workspace}/tasks', [TodoController::class, 'store'])->name('todos.store');
     Route::get('tasks/{todo}', [TodoController::class, 'show'])->name('todos.show');
     Route::put('tasks/{todo}', [TodoController::class, 'update'])->name('todos.update');
     Route::delete('tasks/{todo}', [TodoController::class, 'destroy'])->name('todos.destroy');
@@ -131,7 +160,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('attachments/{attachment}/download', [AttachmentController::class, 'download'])->name('attachments.download');
 
     // Activity
-    Route::get('workspaces/{workspace}/activity', [ActivityController::class, 'index'])->name('workspaces.activity.index');
+    Route::get('workspaces/{workspace}/activity', [ActivityController::class, 'index'])->name('activity.index');
 
     // Notifications
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');

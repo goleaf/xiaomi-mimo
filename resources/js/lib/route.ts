@@ -23,11 +23,21 @@ for (const [path, mod] of Object.entries(routeModules)) {
     const group = parts.length > 1 ? parts[0] : '';
     const funcName = parts.length > 1 ? parts[1] : parts[0];
 
-    const exports = (mod as Record<string, unknown>);
+    const exports = mod as Record<string, unknown>;
+
     for (const [name, value] of Object.entries(exports)) {
-        if (name === 'default' || name.startsWith('_') || name === 'queryParams' || name === 'RouteQueryOptions') continue;
+        if (
+            name === 'default' ||
+            name.startsWith('_') ||
+            name === 'queryParams' ||
+            name === 'RouteQueryOptions'
+        ) {
+continue;
+}
+
         if (typeof value === 'function' && value.definition) {
             const def = value.definition as { url: string };
+
             if (def.url) {
                 // Build the route name: "todos.index", "projects.store", etc.
                 const routeName = group ? `${group}.${name}` : name;
@@ -37,12 +47,20 @@ for (const [path, mod] of Object.entries(routeModules)) {
     }
 }
 
-export function route(name: string, params?: string | string[] | Record<string, unknown>, options?: Record<string, unknown>): string {
+export function route(
+    name: string,
+    params?: string | string[] | Record<string, unknown>,
+    options?: Record<string, unknown>,
+): string {
     let url = routeDefinitions[name];
 
     if (!url) {
         // Try fallback: just use the name as a URL path
-        console.warn(`Route "${name}" not found in Wayfinder. Available:`, Object.keys(routeDefinitions).join(', '));
+        console.warn(
+            `Route "${name}" not found in Wayfinder. Available:`,
+            Object.keys(routeDefinitions).join(', '),
+        );
+
         return `/${name.replace('.', '/')}`;
     }
 

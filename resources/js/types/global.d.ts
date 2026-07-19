@@ -33,5 +33,9 @@ declare module 'vue' {
 }
 
 declare global {
-    function route(name: string, params?: string | string[] | Record<string, unknown>, options?: Record<string, unknown>): string;
+    function route(
+        name: string,
+        params?: string | string[] | Record<string, unknown>,
+        options?: Record<string, unknown>,
+    ): string;
 }

@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
+import {
+    User,
+    Shield,
+    Palette,
+    Bell,
+    Download,
+    Users,
+    Database,
+    Globe,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import { Card } from '@/components/ui/card';
-import { User, Shield, Palette, Bell, Download, Users, Database, Globe } from '@lucide/vue';
 
 const page = usePage();
 const currentUrl = computed(() => page.url);
@@ -37,7 +46,7 @@ const navItems = [
                 {{ item.label }}
             </Link>
         </nav>
-        <div class="flex-1 min-w-0">
+        <div class="min-w-0 flex-1">
             <slot />
         </div>
     </div>
