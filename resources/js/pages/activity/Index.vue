@@ -28,6 +28,30 @@ function formatDate(date: string): string {
         minute: '2-digit',
     });
 }
+
+function eventVerb(event: string): string {
+    const map: Record<string, string> = {
+        created: 'created',
+        updated: 'updated',
+        completed: 'completed',
+        uncompleted: 'uncompleted',
+        deleted: 'deleted',
+        restored: 'restored',
+        archived: 'archived',
+        unarchived: 'unarchived',
+        pinned: 'pinned',
+        unpinned: 'unpinned',
+        favorited: 'favorited',
+        unfavorited: 'unfavorited',
+        attached: 'attached',
+        detached: 'detached',
+    };
+    return map[event] ?? event;
+}
+
+function subjectName(type: string): string {
+    return type.split('\\').pop() ?? type;
+}
 </script>
 
 <template>
@@ -53,9 +77,9 @@ function formatDate(date: string): string {
                             <span class="font-medium">{{
                                 activity.user?.name ?? 'System'
                             }}</span>
-                            {{ activity.event }}d a
+                            {{ eventVerb(activity.event) }} a
                             <span class="font-medium">{{
-                                activity.subject_type
+                                subjectName(activity.subject_type)
                             }}</span>
                         </p>
                         <p class="text-xs text-muted-foreground">

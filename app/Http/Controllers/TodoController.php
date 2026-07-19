@@ -71,14 +71,10 @@ class TodoController extends Controller
         return response()->json(['todo' => new TodoResource($todo)], 201);
     }
 
-    public function show(Todo $todo): Response|JsonResponse
+    public function show(Todo $todo): Response
     {
         $this->authorize('view', $todo);
         $todo->load(['project', 'assignee', 'labels', 'tags', 'comments.user', 'checklists.items', 'attachments.user', 'reminders', 'subtasks']);
-
-        if (request()->expectsJson()) {
-            return response()->json(['todo' => new TodoResource($todo)]);
-        }
 
         return Inertia::render('tasks/Show', [
             'todo' => new TodoResource($todo),
