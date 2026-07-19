@@ -2482,3 +2482,55 @@ No migration or Composer/npm package change was made.
 - Documentation commit: `7982a52` (`docs: record final action state unification`).
 - Documentation push: successful to `origin/main`.
 - This final delivery record is committed and pushed separately so the phase commits remain focused.
+
+## Shared Empty And Secondary Action Unification
+
+### Status
+
+- Completed.
+
+### Scope And Decisions
+
+- Remove the remaining page-local duplication from active empty-state, calendar, task-detail, and import actions.
+- Reuse the shared 44px Button and Spinner contracts established by `/projects` while preserving intentionally compact tabs, badges, and icon-only controls.
+- Prevent duplicate file-import interactions while an Inertia upload is processing and expose its busy state accessibly.
+- Preserve existing routes, payloads, translations, permissions, export behavior, and task behavior.
+
+### Changed Files
+
+- `resources/js/components/shared/EmptyState.vue`
+- `resources/js/components/task/TaskDetail.vue`
+- `resources/js/pages/calendar/Index.vue`
+- `resources/js/pages/settings/Export.vue`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change is planned.
+
+### Verification
+
+- The focused RED run produced two expected failures for duplicated large-action styles and the missing import busy state.
+- Focused frontend-design coverage passed after implementation with 106 tests and 449 assertions.
+- Full Pest coverage passed with 396 tests and 1,773 assertions.
+- PHPStan passed with 0 errors.
+- Vue TypeScript checking, ESLint, Prettier verification, and the frontend Node test passed.
+- Production build passed after transforming 3,369 modules.
+- Desktop light browser QA confirmed the shared task empty-state action is 44px with the canonical 12px radius and orange treatment, while Export/Import retains coherent 80px action cards, visible keyboard-focus file inputs, and zero horizontal overflow.
+- Mobile dark browser QA confirmed the calendar Today action is 44px with the shared 12px radius and zero horizontal overflow at 390x844.
+- Task rows continue to resolve to the canonical task show page during live navigation, so the imported task-detail drawer controls are protected by the focused source contract; the task show page was already covered in the preceding browser phase.
+- No data-changing import was submitted during visual QA; the upload interlock, disabled state, accessible busy state, shared Spinner, and lifecycle reset are covered by the focused regression contract.
+- The final browser interactions produced no console errors or page errors; the Boost browser log contained only historical entries dated 2026-07-19.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+
+### Known Limitations And Next Work
+
+- Vite continues to report the existing optional `fontaine` optimization notice; the production build succeeds.
+- Compact tabs, badges, and icon-only controls intentionally retain their smaller semantic sizes.
+
+### Git Delivery
+
+- Implementation commit: `dea5fca` (`fix: align shared secondary actions`).
+- Implementation push: successful to `origin/main`.
+- Documentation commit and push are pending.
