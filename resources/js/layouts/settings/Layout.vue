@@ -3,7 +3,6 @@ import { Link, usePage } from '@inertiajs/vue3';
 import {
     User,
     Shield,
-    Palette,
     Bell,
     Download,
     Users,
@@ -11,6 +10,7 @@ import {
     Globe,
 } from '@lucide/vue';
 import { computed } from 'vue';
+import { edit as editPreferences } from '@/routes/preferences';
 
 const page = usePage();
 const currentUrl = computed(() => page.url);
@@ -18,8 +18,7 @@ const currentUrl = computed(() => page.url);
 const navItems = [
     { label: 'Profile', href: '/settings/profile', icon: User },
     { label: 'Security', href: '/settings/security', icon: Shield },
-    { label: 'Appearance', href: '/settings/appearance', icon: Palette },
-    { label: 'Preferences', href: '/settings/preferences', icon: Globe },
+    { label: 'Preferences', href: editPreferences.url(), icon: Globe },
     { label: 'Notifications', href: '/settings/notifications', icon: Bell },
     { label: 'Members', href: '/settings/members', icon: Users },
     { label: 'Export / Import', href: '/settings/export', icon: Download },
