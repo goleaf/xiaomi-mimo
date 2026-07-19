@@ -1421,3 +1421,68 @@ No migration or Composer/npm package change was made.
 
 - Commit `be44072` (`style: format keyboard composables`) contains only the two formatting fixes and was pushed to `origin main`.
 - This delivery record is committed and pushed separately so the cleanup commit remains isolated.
+
+## End-To-End Verification And Critical/High Finding Handoff
+
+### Status
+
+Completed with two known static-analysis failures. All runtime tests, frontend linting, frontend formatting, and production bundling pass.
+
+### Exact Verification Results
+
+| Command | Exit | Current status |
+| --- | ---: | --- |
+| `vendor/bin/pint --dirty --format agent` | 0 | Passed with no reported findings. |
+| `php artisan test --compact` | 0 | Passed: 196 tests and 1,181 assertions. |
+| `vendor/bin/phpstan analyse --no-progress` | 1 | Failed with 327 application-wide errors. Leading categories remain missing iterable value types, Eloquent model/factory return inference, undefined relation methods/properties, and enum assignment mismatches. |
+| `npm run types:check` | 2 | Failed only at `resources/js/composables/useAutosave.ts:1`: `@vueuse/core` does not export the imported `debounce` member. |
+| `npm run lint:check` | 0 | Passed with zero ESLint errors or warnings. |
+| `npm run format:check` | 0 | Passed; all files under `resources/` match Prettier style. |
+| `npm run build` | 0 | Passed; Vite transformed 3,358 modules and built the production bundle. The optional `fontaine` fallback notice and plugin timing advisory remain non-blocking. |
+
+### Original Critical Findings
+
+| Finding from `docs/current-state.md` | Status | Current evidence and next work |
+| --- | --- | --- |
+| Bulk task updates/deletes accept global IDs and execute unscoped `Todo::whereIn(...)`. | Open | `BulkActionRequest`, `BulkUpdateTodos`, and `BulkDeleteTodos` still accept/query global IDs. Scope the exact submitted set through the authorized workspace and reject mixed/foreign IDs atomically with regression tests. |
+| Task relationships and label/tag attachment accept globally existing foreign IDs. | Open | Todo requests still use global `exists` rules for projects, assignees, parents, labels, and tags; attach actions still sync global label/tag IDs. Add workspace-scoped validation and cross-workspace rollback tests. |
+| Checklist, label, tag, reminder, and attachment writes lack complete policy authorization. | Partially resolved | Attachment upload/download/delete now uses an authorized request plus `AttachmentPolicy`; checklist, label, tag, and reminder-create mutations still lack complete policy/scoped-child authorization. Finish policies and attacker/victim API/web tests for every child type. |
+| Backup endpoints lack owner policy/path safety and copy only the main WAL-mode SQLite file. | Open | `BackupController` still exposes physical paths and accepts route filenames; `BackupService` still uses direct `File::copy()` for the main database. Redesign backup/restore around owner authorization, canonical identifiers, SQLite-safe snapshots, validation, and isolated restore tests. |
+| Invitations create users with the known password `password` and no acceptance token. | Open | `InviteToWorkspace` still calls `firstOrCreate()` with `bcrypt('password')`; no invitation model/token acceptance flow exists. Replace account creation with expiring single-use invitations and acceptance tests. |
+| Live SQLite domain referential integrity is not enforced. | Open | The live schema still reports no foreign keys for representative domain tables, while UUID migrations still use `uuid()->constrained()`. Add populated-safe SQLite rebuild migrations, UUID-correct morph keys, checks, preflight validation, and schema/integrity tests. |
+
+### Original High Findings
+
+| Finding from `docs/current-state.md` | Status | Current evidence and next work |
+| --- | --- | --- |
+| Workspace member removal uses an undefined variable and can remove final ownership. | Resolved | The controller now uses the bound `userId`, rejects owner/self removal, verifies membership, and focused settings-member tests cover normal removal and owner protection. |
+| Workspace switching stores a session ID that `User::currentWorkspace()` ignores. | Resolved | `currentWorkspace()` now accepts the selected ID, verifies it through the user's membership relation, and callers pass `current_workspace_id`; navigation/page tests cover selected-workspace behavior. |
+| API tokens have unrestricted abilities and API login lacks an explicit limiter. | Open | Auth still creates tokens without abilities and the API login/register routes have no explicit throttle. Define abilities, enforce them per route/action, and add login-rate and token-scope tests. |
+| Nested project/task-child route binding is not scoped to the parent workspace/task. | Open | Routes still bind many projects, todos, checklists, labels, tags, reminders, and attachments globally without scoped bindings or equivalent parent checks. Add scoped bindings plus mismatched-parent tests. |
+| Web/API controllers duplicate behavior, mix Inertia/JSON, and return inconsistent envelopes. | Open | Separate web/API controllers still duplicate domain paths; `TodoController` still branches on `expectsJson()` and endpoint envelopes differ. Consolidate through shared actions/query objects and one versioned JSON contract. |
+| Route closures resolve workspaces, query todos, manufacture props, and invoke controllers. | Open | The main web routes still call controllers through `app(...)` from closures and perform workspace/query/presentation work. Move them to named controller/query-object endpoints. |
+| Model progress accessors and dashboard/project/recurrence paths have excessive-query risks. | Open | `Todo::progress` and `Checklist::progress` still execute queries; dashboard weekly metrics issue per-day queries and no query-budget tests exist. Replace accessor queries with loaded aggregates/query objects and add deterministic query-count coverage. |
+| Import/export/upload workflows lack boundary, content, streaming, and rollback controls. | Resolved | Imports now enforce size/type/record/structure boundaries and transactions; attachments enforce authorized MIME/extension/size pairs; exports stream workspace-scoped lazy queries and neutralize CSV formulas. `DataTransferTest` covers these controls. |
+| Board mode is selectable but not rendered, with mixed/inaccessible drag behavior. | Partially resolved | The unavailable board selector and unused `@dnd-kit` imports were removed, leaving the supported task list honest. The dormant `BoardView` still relies on native pointer drag and has no keyboard-accessible implementation; either remove it or complete the accessible board phase. |
+| Frontend copy/locale/routes and task-detail draft state are inconsistent. | Resolved | Application copy is supplied through English/Lithuanian/Russian catalogs, date/number helpers use user locale/timezone with English fallback, generated Wayfinder routes replace the custom helper/hardcoded settings paths, and task identity changes reset detail/comment/checklist drafts with regression coverage. |
+
+### Next Phase Starting Point
+
+- Security first: close the two cross-workspace task ID findings, complete child policies/scoped binding, and add attacker/victim atomicity tests.
+- Then address invitation and API token security before exposing those flows beyond trusted local use.
+- Treat backup/restore and SQLite referential integrity as schema/storage phases requiring isolated databases and populated-safe migration tests.
+- Clear the single Vue type error independently; plan the 327 Larastan findings as small typed batches rather than a baseline or suppression pass.
+- Decide whether the board is being removed permanently or implemented as an accessible keyboard-capable feature before re-exposing a board preference.
+
+### Session Git Delivery
+
+The ESLint and formatting work attributable to this conversation is present on `origin/main` in this order:
+
+1. `613c80d` — `fix: remove dead frontend bindings`
+2. `bdac5ae` — `fix: normalize task UI control flow`
+3. `4ed0952` — `fix: clean board and keyboard guards`
+4. `13ec033` — `docs: record ESLint cleanup delivery`
+5. `be44072` — `style: format keyboard composables`
+6. `de61ce9` — `docs: record frontend formatting cleanup`
+
+This handoff is committed and pushed separately. Commits from interleaved workspace, localization, data-transfer, and design phases are current-state evidence but are not claimed as part of the ESLint/formatting commit chain.
