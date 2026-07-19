@@ -20,14 +20,14 @@ class NotificationController extends Controller
 
     public function markRead(Request $request, string $id): RedirectResponse
     {
-        $request->user()->notifications()->where('id', $id)->markAsRead();
+        $request->user()->notifications()->whereKey($id)->first()?->markAsRead();
 
         return redirect()->back();
     }
 
     public function markAllRead(Request $request): RedirectResponse
     {
-        $request->user()->unreadNotifications()->markAsRead();
+        $request->user()->unreadNotifications()->update(['read_at' => now()]);
 
         return redirect()->back();
     }

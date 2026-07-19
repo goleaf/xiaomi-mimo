@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ChecklistController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
@@ -65,20 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return app(ProjectController::class)->index($request, $workspace);
     })->name('projects');
 
-    Route::get('calendar', function (Request $request) {
-        $user = $request->user();
-
-        if (! $user instanceof User) {
-            abort(403);
-        }
-
-        $workspace = $user->currentWorkspace(
-            (string) $request->session()->get('current_workspace_id'),
-        );
-        $todos = $workspace ? $workspace->todos()->active()->whereNotNull('due_date')->get()->toArray() : [];
-
-        return inertia('calendar/Index', ['todos' => $todos]);
-    })->name('calendar');
+    Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
 
     Route::get('activity', function (Request $request) {
         $user = $request->user();

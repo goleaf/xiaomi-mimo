@@ -1,5 +1,7 @@
 import type { Auth } from '@/types/auth';
+import type { UserPreference } from '@/types/models';
 import type { SidebarNavigation } from '@/types/navigation';
+import type { WorkspaceUiCopy } from '@/types/workspace-ui';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -20,7 +22,9 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             navigation: SidebarNavigation;
+            preferences: UserPreference | null;
             sidebarOpen: boolean;
+            workspaceUi: WorkspaceUiCopy;
             [key: string]: unknown;
         };
     }

@@ -961,7 +961,7 @@ No migration or Composer/npm dependency was added, removed, or upgraded. The exi
 
 ### Status
 
-In progress.
+Completed.
 
 ### Scope And Decisions
 
@@ -972,26 +972,35 @@ In progress.
 - Format dates and times with the authenticated user's locale and timezone while keeping supplied page props immutable.
 - Preserve the already staged Wayfinder conversion in `resources/js/pages/projects/Index.vue` and exclude unrelated worktree changes from delivery.
 
-### Planned Files
+### Changed Files
 
-- Shared workspace page components, translation types, and locale-aware formatting utilities.
-- Activity, Notifications, Calendar, and Projects Inertia pages.
-- English, Lithuanian, and Russian workspace UI translation files and shared Inertia props.
-- Focused Pest coverage for page contracts, translations, notification state changes, and workspace scoping.
+- Rebuilt the Activity, Notifications, Calendar, and Projects Inertia pages around a shared responsive page header and metric presentation system.
+- Added typed workspace UI props, semantic English, Lithuanian, and Russian copy, and locale/timezone-aware formatting.
+- Added a workspace-scoped calendar controller that supplies normalized date DTOs and fixed scoped notification read actions.
+- Reworked project creation to use the Inertia v3 HTTP client and generated Wayfinder endpoints without adding a dependency.
+- Added focused Pest coverage for page contracts, translations, calendar/project/activity workspace isolation, and notification mutations.
 
 ### Migrations And Packages
 
-No migration or package change is planned.
+No migration or package change was made.
 
-### Verification Plan
+### Verification
 
-- Focused Pest feature tests for all four page endpoints and actions.
-- Browser checks at desktop and mobile widths in light and dark modes, including console and JavaScript errors.
-- Pint, Larastan, full Pest, Vue type checking, ESLint, Prettier verification, production build, and `git diff --check`.
+- `php artisan test --compact tests/Feature/WorkspacePagesTest.php tests/Feature/ActivityPageTest.php tests/Feature/ProjectTest.php tests/Feature/AppNavigationTest.php` passed with 20 tests and 231 assertions.
+- Scoped Larastan passed with zero errors; scoped ESLint and Prettier verification passed for every changed Vue and TypeScript file.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+- Browser verification passed on all four pages at 1440px and 390px in light and dark modes, including filters, notification tabs/actions, calendar views, project creation, horizontal overflow, and JavaScript/page errors.
+- `npm run build` passed after the final mobile-width correction; Vite transformed 3,360 modules and emitted only the existing optional `fontaine` notice.
+- The full Pest suite passed with 188 tests and 1,147 assertions. The existing repository baseline remains red with 341 Larastan errors, seven Vue type errors, one ESLint error, and 24 Prettier files outside this phase.
+
+### Known Limitations
+
+- Full Larastan, Vue type checking, ESLint, and resource-wide Prettier verification remain blocked by unrelated application and concurrent worktree issues; all phase-scoped checks pass.
+- Vite continues to report the existing optional `fontaine` font-fallback optimization notice.
 
 ### Git Delivery
 
-Commit and push results will be recorded after verification. Existing NativePHP, sidebar, attachment, and planning changes remain outside this phase.
+Commit and push results are pending. Existing localization, task, settings, import/export, attachment, NativePHP, and planning changes remain outside this phase.
 
 ## ESLint Cleanup Batch 1: Dead Frontend Bindings
 

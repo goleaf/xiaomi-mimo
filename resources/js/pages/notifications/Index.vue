@@ -1,128 +1,397 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { Bell, BellOff, CheckCheck } from '@lucide/vue';
-import { Badge } from '@/components/ui/badge';
+import {
+    AlertTriangle,
+    Bell,
+    BellOff,
+    Check,
+    CheckCheck,
+    CheckCircle2,
+    Clock3,
+    Inbox,
+    MailOpen,
+    MessageSquareText,
+} from '@lucide/vue';
+import { computed, ref } from 'vue';
+import type { Component } from 'vue';
+import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
+import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/composables/useToast';
+import { useWorkspaceUi } from '@/composables/useWorkspaceUi';
+import {
+    markAllRead as markAllReadRoute,
+    markRead as markReadRoute,
+} from '@/routes/notifications';
 
-defineProps<{
+interface NotificationItem {
+    id: string;
+    type?: string;
+    data: {
+        title?: unknown;
+        body?: unknown;
+        message?: unknown;
+        todo_title?: unknown;
+        reminder_id?: unknown;
+        [key: string]: unknown;
+    };
+    read_at: string | null;
+    created_at: string;
+}
+
+const props = defineProps<{
     notifications: {
-        data: Array<{
-            id: string;
-            data: {
-                message?: string;
-                todo_title?: string;
-                [key: string]: unknown;
-            };
-            read_at: string | null;
-            created_at: string;
-        }>;
+        data: NotificationItem[];
     };
 }>();
 
 const toast = useToast();
+const { copy, formatDate, formatNumber } = useWorkspaceUi();
+const activeTab = ref<'all' | 'unread'>('all');
+const processingIds = ref<Set<string>>(new Set());
+const markingAll = ref(false);
 
-function markRead(id: string) {
-    router.post(
-        route('notifications.markRead', id),
-        {},
-        { preserveScroll: true },
-    );
-}
+const unreadCount = computed(
+    () =>
+        props.notifications.data.filter((notification) => !notification.read_at)
+            .length,
+);
+const readCount = computed(
+    () => props.notifications.data.length - unreadCount.value,
+);
+const visibleNotifications = computed(() =>
+    activeTab.value === 'unread'
+        ? props.notifications.data.filter(
+              (notification) => !notification.read_at,
+          )
+        : props.notifications.data,
+);
 
-function markAllRead() {
+function markRead(id: string): void {
+    if (processingIds.value.has(id)) {
+        return;
+    }
+
+    processingIds.value = new Set([...processingIds.value, id]);
+
     router.post(
-        route('notifications.markAllRead'),
+        markReadRoute({ id }).url,
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success('All notifications marked as read'),
+            onFinish: () => {
+                const next = new Set(processingIds.value);
+                next.delete(id);
+                processingIds.value = next;
+            },
         },
     );
 }
 
-function formatDate(date: string): string {
-    return new Date(date).toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+function markAllRead(): void {
+    if (markingAll.value || unreadCount.value === 0) {
+        return;
+    }
+
+    markingAll.value = true;
+
+    router.post(
+        markAllReadRoute().url,
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => toast.success(copy.value.notifications.marked_all),
+            onFinish: () => {
+                markingAll.value = false;
+            },
+        },
+    );
+}
+
+function notificationTitle(notification: NotificationItem): string {
+    if (typeof notification.data.title === 'string') {
+        return notification.data.title;
+    }
+
+    if (typeof notification.data.todo_title === 'string') {
+        return notification.data.todo_title;
+    }
+
+    return copy.value.notifications.fallback_title;
+}
+
+function notificationBody(notification: NotificationItem): string {
+    if (typeof notification.data.body === 'string') {
+        return notification.data.body;
+    }
+
+    if (typeof notification.data.message === 'string') {
+        return notification.data.message;
+    }
+
+    return copy.value.notifications.fallback_body;
+}
+
+function notificationIcon(notification: NotificationItem): Component {
+    const searchable =
+        `${notificationTitle(notification)} ${notificationBody(notification)}`.toLowerCase();
+
+    if (notification.data.reminder_id || searchable.includes('remind')) {
+        return Clock3;
+    }
+
+    if (searchable.includes('comment')) {
+        return MessageSquareText;
+    }
+
+    if (searchable.includes('complete')) {
+        return CheckCircle2;
+    }
+
+    if (searchable.includes('overdue')) {
+        return AlertTriangle;
+    }
+
+    return Bell;
+}
+
+function notificationTone(notification: NotificationItem): string {
+    if (notification.read_at) {
+        return 'bg-muted text-muted-foreground';
+    }
+
+    const icon = notificationIcon(notification);
+
+    if (icon === AlertTriangle) {
+        return 'bg-red-500/12 text-red-700 dark:text-red-300';
+    }
+
+    if (icon === CheckCircle2) {
+        return 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300';
+    }
+
+    return 'bg-orange-500/12 text-orange-700 dark:text-orange-300';
 }
 </script>
 
 <template>
-    <Head title="Notifications" />
-    <div class="space-y-6 p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-bold">Notifications</h1>
-                <p class="text-muted-foreground">
-                    {{ notifications.data.length }} notification(s)
-                </p>
-            </div>
-            <Button variant="outline" @click="markAllRead"
-                ><CheckCheck class="mr-2 h-4 w-4" />Mark all read</Button
-            >
-        </div>
+    <Head :title="copy.notifications.title" />
 
-        <div class="space-y-3">
-            <Card
-                v-for="notification in notifications.data"
-                :key="notification.id"
-                :class="[
-                    'transition-colors',
-                    !notification.read_at ? 'border-l-2 border-l-primary' : '',
-                ]"
+    <main class="min-h-full bg-muted/20 px-4 py-5 sm:p-6 lg:p-8">
+        <div class="mx-auto flex max-w-[1480px] flex-col gap-6">
+            <WorkspacePageHeader
+                :eyebrow="copy.common.workspace_intelligence"
+                :title="copy.notifications.title"
+                :description="copy.notifications.description"
             >
-                <CardContent class="flex items-center gap-4 py-4">
+                <template #actions>
+                    <Button
+                        class="min-h-11 cursor-pointer rounded-xl bg-orange-600 px-4 text-white shadow-sm hover:bg-orange-700 focus-visible:ring-orange-500"
+                        :disabled="markingAll || unreadCount === 0"
+                        @click="markAllRead"
+                    >
+                        <CheckCheck class="size-4" aria-hidden="true" />
+                        {{ copy.notifications.mark_all }}
+                    </Button>
+                </template>
+
+                <template #metrics>
+                    <WorkspaceMetric
+                        :label="copy.notifications.total"
+                        :value="formatNumber(notifications.data.length)"
+                        :icon="Inbox"
+                        tone="orange"
+                    />
+                    <WorkspaceMetric
+                        :label="copy.notifications.unread"
+                        :value="formatNumber(unreadCount)"
+                        :icon="Bell"
+                        tone="blue"
+                    />
+                    <WorkspaceMetric
+                        :label="copy.notifications.cleared"
+                        :value="formatNumber(readCount)"
+                        :icon="MailOpen"
+                        tone="emerald"
+                    />
+                </template>
+            </WorkspacePageHeader>
+
+            <section
+                class="overflow-hidden rounded-[1.5rem] border border-border/80 bg-card shadow-[0_20px_60px_-52px_rgba(15,23,42,0.6)]"
+            >
+                <div
+                    class="flex flex-col gap-4 border-b border-border/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+                >
                     <div
+                        class="inline-flex w-fit rounded-xl bg-muted p-1"
+                        role="tablist"
+                        :aria-label="copy.common.filters"
+                    >
+                        <button
+                            type="button"
+                            role="tab"
+                            :aria-selected="activeTab === 'all'"
+                            :class="[
+                                'min-h-10 cursor-pointer rounded-lg px-4 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none',
+                                activeTab === 'all'
+                                    ? 'bg-card text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground',
+                            ]"
+                            @click="activeTab = 'all'"
+                        >
+                            {{ copy.notifications.all_tab }}
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
+                            :aria-selected="activeTab === 'unread'"
+                            :class="[
+                                'flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-4 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none',
+                                activeTab === 'unread'
+                                    ? 'bg-card text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground',
+                            ]"
+                            @click="activeTab = 'unread'"
+                        >
+                            {{ copy.notifications.unread_tab }}
+                            <span
+                                v-if="unreadCount"
+                                class="rounded-full bg-orange-500 px-1.5 py-0.5 text-[0.65rem] font-semibold text-white tabular-nums"
+                            >
+                                {{ unreadCount }}
+                            </span>
+                        </button>
+                    </div>
+
+                    <p class="text-xs text-muted-foreground" aria-live="polite">
+                        {{ formatNumber(visibleNotifications.length) }} /
+                        {{ formatNumber(notifications.data.length) }}
+                    </p>
+                </div>
+
+                <div
+                    v-if="visibleNotifications.length"
+                    class="divide-y divide-border/70"
+                >
+                    <article
+                        v-for="notification in visibleNotifications"
+                        :key="notification.id"
                         :class="[
-                            'flex h-8 w-8 items-center justify-center rounded-full',
-                            notification.read_at ? 'bg-muted' : 'bg-primary/10',
+                            'group relative grid animate-in grid-cols-[3rem_minmax(0,1fr)] gap-4 px-4 py-5 transition-colors duration-200 fade-in slide-in-from-bottom-2 motion-reduce:animate-none sm:grid-cols-[3rem_minmax(0,1fr)_auto] sm:items-center sm:px-6',
+                            notification.read_at
+                                ? 'bg-card hover:bg-muted/30'
+                                : 'bg-orange-500/[0.035] hover:bg-orange-500/[0.065]',
                         ]"
                     >
-                        <Bell
-                            :class="[
-                                'h-4 w-4',
-                                notification.read_at
-                                    ? 'text-muted-foreground'
-                                    : 'text-primary',
-                            ]"
+                        <span
+                            v-if="!notification.read_at"
+                            class="absolute inset-y-0 left-0 w-1 bg-orange-500"
+                            aria-hidden="true"
                         />
-                    </div>
-                    <div class="flex-1">
-                        <p class="text-sm">
-                            {{
-                                notification.data.message ??
-                                notification.data.todo_title ??
-                                'Notification'
-                            }}
-                        </p>
-                        <p class="text-xs text-muted-foreground">
-                            {{ formatDate(notification.created_at) }}
-                        </p>
-                    </div>
-                    <Button
-                        v-if="!notification.read_at"
-                        variant="ghost"
-                        size="sm"
-                        @click="markRead(notification.id)"
-                    >
-                        Mark read
-                    </Button>
-                    <Badge v-else variant="secondary">Read</Badge>
-                </CardContent>
-            </Card>
-        </div>
 
-        <div
-            v-if="notifications.data.length === 0"
-            class="flex flex-col items-center justify-center py-12 text-muted-foreground"
-        >
-            <BellOff class="mb-4 h-12 w-12 opacity-50" />
-            <p>No notifications yet</p>
+                        <div
+                            :class="[
+                                'flex size-12 items-center justify-center rounded-2xl',
+                                notificationTone(notification),
+                            ]"
+                        >
+                            <component
+                                :is="notificationIcon(notification)"
+                                class="size-5"
+                                aria-hidden="true"
+                            />
+                        </div>
+
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h2
+                                    :class="[
+                                        'text-sm leading-6',
+                                        notification.read_at
+                                            ? 'font-medium'
+                                            : 'font-semibold',
+                                    ]"
+                                >
+                                    {{ notificationTitle(notification) }}
+                                </h2>
+                                <span
+                                    v-if="!notification.read_at"
+                                    class="size-2 rounded-full bg-orange-500"
+                                    :aria-label="
+                                        copy.notifications.unread_status
+                                    "
+                                />
+                            </div>
+                            <p
+                                class="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground"
+                            >
+                                {{ notificationBody(notification) }}
+                            </p>
+                            <p class="mt-2 text-xs text-muted-foreground/80">
+                                {{
+                                    formatDate(notification.created_at, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    })
+                                }}
+                            </p>
+                        </div>
+
+                        <div
+                            class="col-start-2 flex items-center gap-2 sm:col-start-auto"
+                        >
+                            <Button
+                                v-if="!notification.read_at"
+                                variant="outline"
+                                size="sm"
+                                class="min-h-10 cursor-pointer rounded-xl border-orange-500/25 text-orange-700 hover:bg-orange-500/10 hover:text-orange-800 dark:text-orange-300 dark:hover:text-orange-200"
+                                :disabled="processingIds.has(notification.id)"
+                                @click="markRead(notification.id)"
+                            >
+                                <Check class="size-4" aria-hidden="true" />
+                                {{ copy.notifications.mark_read }}
+                            </Button>
+                            <span
+                                v-else
+                                class="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-muted px-3 text-xs font-medium text-muted-foreground"
+                            >
+                                <Check class="size-3.5" aria-hidden="true" />
+                                {{ copy.notifications.read_status }}
+                            </span>
+                        </div>
+                    </article>
+                </div>
+
+                <div
+                    v-else
+                    class="flex min-h-[28rem] flex-col items-center justify-center px-6 text-center"
+                >
+                    <div
+                        class="flex size-16 items-center justify-center rounded-[1.4rem] bg-orange-500/10 text-orange-700 dark:text-orange-300"
+                    >
+                        <BellOff class="size-7" aria-hidden="true" />
+                    </div>
+                    <h2 class="mt-5 text-lg font-semibold">
+                        {{
+                            activeTab === 'unread'
+                                ? copy.notifications.empty_unread_title
+                                : copy.notifications.empty_title
+                        }}
+                    </h2>
+                    <p
+                        class="mt-2 max-w-md text-sm leading-6 text-muted-foreground"
+                    >
+                        {{
+                            activeTab === 'unread'
+                                ? copy.notifications.empty_unread_description
+                                : copy.notifications.empty_description
+                        }}
+                    </p>
+                </div>
+            </section>
         </div>
-    </div>
+    </main>
 </template>
