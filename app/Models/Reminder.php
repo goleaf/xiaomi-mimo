@@ -8,7 +8,12 @@ use Database\Factories\ReminderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property Carbon $reminded_at
+ * @property ReminderType $type
+ */
 class Reminder extends Model
 {
     /** @use HasFactory<ReminderFactory> */

@@ -26,8 +26,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $description
  * @property TodoStatus $status
  * @property TodoPriority $priority
- * @property string|null $due_date
- * @property string|null $start_date
+ * @property Carbon|null $due_date
+ * @property Carbon|null $start_date
  * @property int|null $estimated_time
  * @property int|null $spent_time
  * @property bool $is_pinned
