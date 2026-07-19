@@ -14,11 +14,18 @@ const registeredShortcuts: Shortcut[] = [];
 
 function handleKeyDown(event: KeyboardEvent) {
     for (const shortcut of registeredShortcuts) {
-        const ctrlMatch = shortcut.ctrl ? (event.metaKey || event.ctrlKey) : !(event.metaKey || event.ctrlKey);
+        const ctrlMatch = shortcut.ctrl
+            ? event.metaKey || event.ctrlKey
+            : !(event.metaKey || event.ctrlKey);
         const shiftMatch = shortcut.shift ? event.shiftKey : !event.shiftKey;
         const altMatch = shortcut.alt ? event.altKey : !event.altKey;
 
-        if (ctrlMatch && shiftMatch && altMatch && event.key.toLowerCase() === shortcut.key.toLowerCase()) {
+        if (
+            ctrlMatch &&
+            shiftMatch &&
+            altMatch &&
+            event.key.toLowerCase() === shortcut.key.toLowerCase()
+        ) {
             event.preventDefault();
 
             shortcut.handler(event);

@@ -18,7 +18,9 @@ function handleKeyDown(event: KeyboardEvent) {
         event.shiftKey ? 'shift' : '',
         event.altKey ? 'alt' : '',
         event.key.toLowerCase(),
-    ].filter(Boolean).join('+');
+    ]
+        .filter(Boolean)
+        .join('+');
 
     const handler = shortcuts.get(key);
 
