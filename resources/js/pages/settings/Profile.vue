@@ -224,6 +224,7 @@ onBeforeUnmount(clearAvatarPreview);
                             type="file"
                             name="avatar"
                             accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                            :disabled="avatarForm.processing"
                             :aria-invalid="Boolean(avatarForm.errors.avatar)"
                             @change="selectAvatar"
                         />
@@ -322,6 +323,7 @@ onBeforeUnmount(clearAvatarPreview);
                             v-model="profileForm.name"
                             name="name"
                             autocomplete="name"
+                            :disabled="profileForm.processing"
                             :aria-invalid="Boolean(profileForm.errors.name)"
                             required
                         />
@@ -336,6 +338,7 @@ onBeforeUnmount(clearAvatarPreview);
                             name="email"
                             type="email"
                             autocomplete="email"
+                            :disabled="profileForm.processing"
                             :aria-invalid="Boolean(profileForm.errors.email)"
                             required
                         />
@@ -345,6 +348,7 @@ onBeforeUnmount(clearAvatarPreview);
                     <div class="flex items-center gap-3">
                         <Button
                             type="submit"
+                            size="lg"
                             :disabled="
                                 profileForm.processing || !profileForm.isDirty
                             "

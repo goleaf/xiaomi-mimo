@@ -16,6 +16,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 
 defineProps<{
     labels: {
@@ -65,6 +66,7 @@ const passwordInput = useTemplateRef('passwordInput');
                         <Form
                             v-bind="ProfileController.destroy.form()"
                             reset-on-success
+                            disable-while-processing
                             @error="() => passwordInput?.focus()"
                             :options="{
                                 preserveScroll: true,
@@ -112,6 +114,7 @@ const passwordInput = useTemplateRef('passwordInput');
                                     :disabled="processing"
                                     data-test="confirm-delete-user-button"
                                 >
+                                    <Spinner v-if="processing" />
                                     {{ labels.confirm }}
                                 </Button>
                             </DialogFooter>

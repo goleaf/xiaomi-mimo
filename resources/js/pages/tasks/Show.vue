@@ -6,7 +6,6 @@ import {
     User,
     MessageSquare,
     Clock,
-    LoaderCircle,
     Pencil,
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
@@ -26,6 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 import { useTaskDetailState } from '@/composables/useTaskDetailState';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
@@ -332,6 +332,7 @@ function priorityBadge(
                                     id="task-title"
                                     v-model="editForm.title"
                                     maxlength="500"
+                                    :disabled="editForm.processing"
                                     :aria-invalid="
                                         Boolean(editForm.errors.title)
                                     "
@@ -349,6 +350,7 @@ function priorityBadge(
                                     v-model="editForm.description"
                                     rows="4"
                                     :placeholder="labels.descriptionPlaceholder"
+                                    :disabled="editForm.processing"
                                     :aria-invalid="
                                         Boolean(editForm.errors.description)
                                     "
@@ -362,7 +364,10 @@ function priorityBadge(
                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div class="space-y-2">
                                     <Label>{{ labels.status }}</Label>
-                                    <Select v-model="editForm.status">
+                                    <Select
+                                        v-model="editForm.status"
+                                        :disabled="editForm.processing"
+                                    >
                                         <SelectTrigger
                                             class="w-full"
                                             :aria-invalid="
@@ -390,7 +395,10 @@ function priorityBadge(
 
                                 <div class="space-y-2">
                                     <Label>{{ labels.priority }}</Label>
-                                    <Select v-model="editForm.priority">
+                                    <Select
+                                        v-model="editForm.priority"
+                                        :disabled="editForm.processing"
+                                    >
                                         <SelectTrigger
                                             class="w-full"
                                             :aria-invalid="
@@ -432,6 +440,7 @@ function priorityBadge(
                                         id="task-due-date"
                                         v-model="editForm.due_date"
                                         type="date"
+                                        :disabled="editForm.processing"
                                         :aria-invalid="
                                             Boolean(editForm.errors.due_date)
                                         "
@@ -512,6 +521,7 @@ function priorityBadge(
                                 <Button
                                     type="button"
                                     variant="outline"
+                                    size="lg"
                                     :disabled="editForm.processing"
                                     @click="cancelEditing"
                                 >
@@ -519,15 +529,13 @@ function priorityBadge(
                                 </Button>
                                 <Button
                                     type="submit"
+                                    size="lg"
                                     :disabled="
                                         editForm.processing ||
                                         !editForm.title.trim()
                                     "
                                 >
-                                    <LoaderCircle
-                                        v-if="editForm.processing"
-                                        class="h-4 w-4 animate-spin motion-reduce:animate-none"
-                                    />
+                                    <Spinner v-if="editForm.processing" />
                                     {{
                                         editForm.processing
                                             ? labels.saving

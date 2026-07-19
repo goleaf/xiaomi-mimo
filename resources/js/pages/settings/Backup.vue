@@ -13,6 +13,7 @@ import {
     CardTitle,
     CardDescription,
 } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import {
@@ -51,10 +52,11 @@ function createBackup() {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success(t('settings.backup.created'));
-                creating.value = false;
             },
             onError: () => {
                 toast.error(t('settings.backup.failed'));
+            },
+            onFinish: () => {
                 creating.value = false;
             },
         },
@@ -124,8 +126,13 @@ function formatDate(timestamp: number): string {
                     })
                 }}</CardDescription>
                 <CardAction>
-                    <Button @click="createBackup" :disabled="creating">
-                        <Download class="size-4" aria-hidden="true" />
+                    <Button
+                        size="lg"
+                        :disabled="creating"
+                        @click="createBackup"
+                    >
+                        <Spinner v-if="creating" />
+                        <Download v-else class="size-4" aria-hidden="true" />
                         {{
                             creating
                                 ? t('settings.backup.creating')

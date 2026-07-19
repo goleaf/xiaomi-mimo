@@ -101,6 +101,7 @@ function disable2FA(): void {
                             id="current_password"
                             v-model="passwordForm.current_password"
                             type="password"
+                            :disabled="passwordForm.processing"
                             :aria-invalid="
                                 Boolean(passwordForm.errors.current_password)
                             "
@@ -118,6 +119,7 @@ function disable2FA(): void {
                             id="password"
                             v-model="passwordForm.password"
                             type="password"
+                            :disabled="passwordForm.processing"
                             :aria-invalid="
                                 Boolean(passwordForm.errors.password)
                             "
@@ -133,6 +135,7 @@ function disable2FA(): void {
                             id="password_confirmation"
                             v-model="passwordForm.password_confirmation"
                             type="password"
+                            :disabled="passwordForm.processing"
                             :aria-invalid="
                                 Boolean(
                                     passwordForm.errors.password_confirmation,
@@ -181,6 +184,7 @@ function disable2FA(): void {
                     </Alert>
                     <Button
                         variant="destructive"
+                        size="lg"
                         @click="showDisableDialog = true"
                         >{{ t('common.actions.disable') }}</Button
                     >
@@ -196,6 +200,7 @@ function disable2FA(): void {
                         </AlertDescription>
                     </Alert>
                     <Button
+                        size="lg"
                         :disabled="twoFactorForm.processing"
                         @click="enable2FA"
                     >

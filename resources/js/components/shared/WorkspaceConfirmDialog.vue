@@ -3,6 +3,7 @@ import { TriangleAlert } from '@lucide/vue';
 import WorkspaceDialogContent from '@/components/shared/WorkspaceDialogContent.vue';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogFooter } from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
 
 withDefaults(
     defineProps<{
@@ -54,7 +55,7 @@ const emit = defineEmits<{
                     <Button
                         type="button"
                         variant="outline"
-                        class="min-h-11 cursor-pointer rounded-xl"
+                        size="lg"
                         :disabled="processing"
                         @click="emit('update:open', false)"
                     >
@@ -63,15 +64,11 @@ const emit = defineEmits<{
                     <Button
                         type="button"
                         :variant="destructive ? 'destructive' : 'default'"
-                        class="min-h-11 cursor-pointer rounded-xl"
-                        :class="
-                            destructive
-                                ? ''
-                                : 'bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-orange-500'
-                        "
+                        size="lg"
                         :disabled="processing"
                         @click="emit('confirm')"
                     >
+                        <Spinner v-if="processing" />
                         {{ confirmLabel }}
                     </Button>
                 </DialogFooter>

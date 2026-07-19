@@ -158,6 +158,54 @@ test('member actions reuse shared loading and large dialog controls', function (
         ->not->toContain('class="min-h-11 cursor-pointer rounded-xl"');
 });
 
+test('shared confirmations use the shared large loading action contract', function () {
+    expect(File::get(resource_path('js/components/shared/WorkspaceConfirmDialog.vue')))
+        ->toContain("import { Spinner } from '@/components/ui/spinner'")
+        ->toContain('<Spinner v-if="processing" />')
+        ->toContain('size="lg"')
+        ->not->toContain('class="min-h-11 cursor-pointer rounded-xl"')
+        ->not->toContain('bg-orange-600 text-white hover:bg-orange-700');
+});
+
+test('account deletion uses inert processing and shared loading feedback', function () {
+    expect(File::get(resource_path('js/components/DeleteUser.vue')))
+        ->toContain("import { Spinner } from '@/components/ui/spinner'")
+        ->toContain('disable-while-processing')
+        ->toContain('<Spinner v-if="processing" />');
+});
+
+test('remaining settings forms expose complete processing states', function () {
+    $backup = File::get(resource_path('js/pages/settings/Backup.vue'));
+    $profile = File::get(resource_path('js/pages/settings/Profile.vue'));
+    $security = File::get(resource_path('js/pages/settings/Security.vue'));
+
+    expect($backup)
+        ->toContain("import { Spinner } from '@/components/ui/spinner'")
+        ->toContain('<Spinner v-if="creating" />')
+        ->toContain('size="lg"')
+        ->and($profile)
+        ->toContain('size="lg"')
+        ->and(substr_count($profile, ':disabled="profileForm.processing"'))
+        ->toBeGreaterThanOrEqual(2)
+        ->and(substr_count($security, ':disabled="passwordForm.processing"'))
+        ->toBeGreaterThanOrEqual(4)
+        ->and(substr_count($security, 'size="lg"'))
+        ->toBeGreaterThanOrEqual(3);
+});
+
+test('task editing uses shared loading actions and locks mutable fields', function () {
+    $source = File::get(resource_path('js/pages/tasks/Show.vue'));
+
+    expect($source)
+        ->toContain("import { Spinner } from '@/components/ui/spinner'")
+        ->toContain('<Spinner v-if="editForm.processing" />')
+        ->not->toContain('LoaderCircle')
+        ->and(substr_count($source, ':disabled="editForm.processing"'))
+        ->toBeGreaterThanOrEqual(7)
+        ->and(substr_count($source, 'size="lg"'))
+        ->toBeGreaterThanOrEqual(2);
+});
+
 test('project creation selectors expose warm precision interaction states', function () {
     expect(File::get(resource_path('js/components/project/ProjectCreateDialog.vue')))
         ->toContain(':aria-invalid="Boolean(form.errors.description)"')
@@ -420,7 +468,6 @@ test('shared and page loading states respect reduced motion', function (string $
     'shared skeleton' => 'components/ui/skeleton/Skeleton.vue',
     'empty state' => 'components/shared/EmptyState.vue',
     'workspace switcher' => 'components/workspace/WorkspaceSwitcher.vue',
-    'task detail' => 'pages/tasks/Show.vue',
     'two factor setup' => 'components/TwoFactorSetupModal.vue',
     'two factor recovery codes' => 'components/TwoFactorRecoveryCodes.vue',
 ]);
