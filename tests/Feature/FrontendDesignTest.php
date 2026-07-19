@@ -340,8 +340,9 @@ test('task rows preserve whole-row selection through a keyboard focusable overla
 ]);
 
 test('segmented controls use the projects muted and card surface contract', function () {
-    expect(File::get(resource_path('js/pages/activity/Index.vue')))
+    expect(File::get(resource_path('js/components/shared/WorkspaceSegmentedControl.vue')))
         ->toContain('rounded-xl bg-muted p-1')
+        ->and(File::get(resource_path('js/components/shared/WorkspaceSegmentedButton.vue')))
         ->toContain("'bg-card text-foreground shadow-sm'")
         ->not->toContain("'bg-foreground text-background'")
         ->and(File::get(resource_path('js/components/AppearanceTabs.vue')))
@@ -349,6 +350,47 @@ test('segmented controls use the projects muted and card surface contract', func
         ->toContain("'bg-card text-foreground shadow-sm'")
         ->toContain('focus-visible:ring-orange-500')
         ->not->toContain('bg-white');
+});
+
+test('active filter pages reuse the shared segmented controls', function (string $page) {
+    expect(File::get(resource_path("js/pages/{$page}")))
+        ->toContain('WorkspaceSegmentedControl')
+        ->toContain('WorkspaceSegmentedButton');
+})->with([
+    'activity filters' => 'activity/Index.vue',
+    'calendar view switcher' => 'calendar/Index.vue',
+    'notification filters' => 'notifications/Index.vue',
+    'project filters' => 'projects/Index.vue',
+]);
+
+test('shared segmented controls preserve the projects visual and accessibility contract', function () {
+    expect(File::get(resource_path('js/components/shared/WorkspaceSegmentedControl.vue')))
+        ->toContain("role?: 'group' | 'tablist'")
+        ->toContain(':aria-label="label"')
+        ->toContain('overflow-x-auto rounded-xl bg-muted p-1')
+        ->toContain("'w-full lg:flex-col'")
+        ->and(File::get(resource_path('js/components/shared/WorkspaceSegmentedButton.vue')))
+        ->toContain('min-h-10 min-w-max')
+        ->toContain("'bg-card text-foreground shadow-sm'")
+        ->toContain('focus-visible:ring-orange-500')
+        ->toContain('motion-reduce:transition-none');
+});
+
+test('shared segmented filter consumers keep the correct selection semantics', function () {
+    expect(File::get(resource_path('js/pages/projects/Index.vue')))
+        ->toContain('role="tab"')
+        ->toContain(':aria-selected="activeFilter === filter.value"')
+        ->and(File::get(resource_path('js/pages/notifications/Index.vue')))
+        ->toContain('role="tab"')
+        ->toContain(':aria-selected="activeTab ===')
+        ->and(File::get(resource_path('js/pages/calendar/Index.vue')))
+        ->toContain(':label="copy.common.filters"')
+        ->toContain('role="tab"')
+        ->toContain(':aria-selected="view === option"')
+        ->and(File::get(resource_path('js/pages/activity/Index.vue')))
+        ->toContain('role="group"')
+        ->toContain('vertical')
+        ->toContain(':aria-pressed="activeFilter === filter.value"');
 });
 
 test('shared authentication controls use the warm precision interaction contract', function () {
@@ -549,10 +591,7 @@ test('segmented and inline controls respect reduced motion', function (string $c
         ->toContain('motion-reduce:transition-none');
 })->with([
     'appearance tabs' => 'components/AppearanceTabs.vue',
-    'projects view switcher' => 'pages/projects/Index.vue',
-    'notification filters' => 'pages/notifications/Index.vue',
-    'activity filters' => 'pages/activity/Index.vue',
-    'calendar view switcher' => 'pages/calendar/Index.vue',
+    'shared segmented button' => 'components/shared/WorkspaceSegmentedButton.vue',
     'settings navigation' => 'layouts/settings/Layout.vue',
     'two factor challenge toggle' => 'pages/auth/TwoFactorChallenge.vue',
 ]);

@@ -12,6 +12,8 @@ import {
 import { computed, ref } from 'vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
+import WorkspaceSegmentedButton from '@/components/shared/WorkspaceSegmentedButton.vue';
+import WorkspaceSegmentedControl from '@/components/shared/WorkspaceSegmentedControl.vue';
 import { Button } from '@/components/ui/button';
 import { useWorkspaceUi } from '@/composables/useWorkspaceUi';
 import { show as todoShow } from '@/routes/todos';
@@ -306,27 +308,18 @@ function statusLabel(status: TodoStatus): string {
                     class="flex flex-col gap-4 border-b border-border/70 px-1 pb-4 lg:flex-row lg:items-center lg:justify-between"
                 >
                     <div class="flex flex-wrap items-center gap-2">
-                        <div
-                            class="inline-flex rounded-xl bg-muted p-1"
-                            role="tablist"
-                        >
-                            <button
+                        <WorkspaceSegmentedControl :label="copy.common.filters">
+                            <WorkspaceSegmentedButton
                                 v-for="option in viewOptions"
                                 :key="option"
-                                type="button"
                                 role="tab"
                                 :aria-selected="view === option"
-                                :class="[
-                                    'min-h-10 cursor-pointer rounded-lg px-3.5 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none motion-reduce:transition-none',
-                                    view === option
-                                        ? 'bg-card text-foreground shadow-sm'
-                                        : 'text-muted-foreground hover:text-foreground',
-                                ]"
+                                :active="view === option"
                                 @click="view = option"
                             >
                                 {{ copy.calendar[option] }}
-                            </button>
-                        </div>
+                            </WorkspaceSegmentedButton>
+                        </WorkspaceSegmentedControl>
                         <Button variant="outline" size="lg" @click="goToday">
                             {{ copy.calendar.go_today }}
                         </Button>

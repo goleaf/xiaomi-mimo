@@ -17,6 +17,8 @@ import type { Component } from 'vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
+import WorkspaceSegmentedButton from '@/components/shared/WorkspaceSegmentedButton.vue';
+import WorkspaceSegmentedControl from '@/components/shared/WorkspaceSegmentedControl.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
@@ -226,35 +228,21 @@ function notificationTone(notification: NotificationItem): string {
                 <div
                     class="flex flex-col gap-4 border-b border-border/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
                 >
-                    <div
-                        class="inline-flex w-fit rounded-xl bg-muted p-1"
-                        role="tablist"
-                        :aria-label="copy.common.filters"
-                    >
-                        <button
-                            type="button"
+                    <WorkspaceSegmentedControl :label="copy.common.filters">
+                        <WorkspaceSegmentedButton
                             role="tab"
                             :aria-selected="activeTab === 'all'"
-                            :class="[
-                                'min-h-10 cursor-pointer rounded-lg px-4 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none motion-reduce:transition-none',
-                                activeTab === 'all'
-                                    ? 'bg-card text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground',
-                            ]"
+                            :active="activeTab === 'all'"
+                            class="px-4"
                             @click="activeTab = 'all'"
                         >
                             {{ copy.notifications.all_tab }}
-                        </button>
-                        <button
-                            type="button"
+                        </WorkspaceSegmentedButton>
+                        <WorkspaceSegmentedButton
                             role="tab"
                             :aria-selected="activeTab === 'unread'"
-                            :class="[
-                                'flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-4 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none motion-reduce:transition-none',
-                                activeTab === 'unread'
-                                    ? 'bg-card text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground',
-                            ]"
+                            :active="activeTab === 'unread'"
+                            class="px-4"
                             @click="activeTab = 'unread'"
                         >
                             {{ copy.notifications.unread_tab }}
@@ -264,8 +252,8 @@ function notificationTone(notification: NotificationItem): string {
                             >
                                 {{ unreadCount }}
                             </span>
-                        </button>
-                    </div>
+                        </WorkspaceSegmentedButton>
+                    </WorkspaceSegmentedControl>
 
                     <p class="text-xs text-muted-foreground" aria-live="polite">
                         {{ formatNumber(visibleNotifications.length) }} /

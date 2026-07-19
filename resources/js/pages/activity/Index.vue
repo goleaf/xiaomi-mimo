@@ -20,6 +20,8 @@ import type { Component } from 'vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
+import WorkspaceSegmentedButton from '@/components/shared/WorkspaceSegmentedButton.vue';
+import WorkspaceSegmentedControl from '@/components/shared/WorkspaceSegmentedControl.vue';
 import { useWorkspaceUi } from '@/composables/useWorkspaceUi';
 import type { ActivityLog } from '@/types/models';
 
@@ -231,22 +233,18 @@ function eventTone(event: string): string {
             >
                 <aside
                     class="min-w-0 overflow-hidden rounded-[1.5rem] border border-border/80 bg-card p-3 lg:sticky lg:top-6"
-                    :aria-label="copy.common.filters"
                 >
-                    <div
-                        class="flex max-w-full gap-1 overflow-x-auto rounded-xl bg-muted p-1 lg:flex-col"
+                    <WorkspaceSegmentedControl
+                        role="group"
+                        :label="copy.common.filters"
+                        vertical
                     >
-                        <button
+                        <WorkspaceSegmentedButton
                             v-for="filter in filters"
                             :key="filter.value"
-                            type="button"
                             :aria-pressed="activeFilter === filter.value"
-                            :class="[
-                                'flex min-h-11 min-w-max cursor-pointer items-center justify-between gap-5 rounded-xl px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none motion-reduce:transition-none lg:w-full',
-                                activeFilter === filter.value
-                                    ? 'bg-card text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                            ]"
+                            :active="activeFilter === filter.value"
+                            wide
                             @click="activeFilter = filter.value"
                         >
                             <span>{{ filter.label }}</span>
@@ -255,8 +253,8 @@ function eventTone(event: string): string {
                             >
                                 {{ formatNumber(filter.count) }}
                             </span>
-                        </button>
-                    </div>
+                        </WorkspaceSegmentedButton>
+                    </WorkspaceSegmentedControl>
                 </aside>
 
                 <section

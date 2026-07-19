@@ -18,6 +18,8 @@ import ProjectCreateDialog from '@/components/project/ProjectCreateDialog.vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
+import WorkspaceSegmentedButton from '@/components/shared/WorkspaceSegmentedButton.vue';
+import WorkspaceSegmentedControl from '@/components/shared/WorkspaceSegmentedControl.vue';
 import { Button } from '@/components/ui/button';
 import { useWorkspaceUi } from '@/composables/useWorkspaceUi';
 import { show as projectShow } from '@/routes/projects';
@@ -158,31 +160,21 @@ function openCreateDialog(): void {
                             </h2>
                         </div>
 
-                        <div
-                            class="inline-flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl bg-muted p-1"
-                            role="tablist"
-                            :aria-label="copy.common.filters"
-                        >
-                            <button
+                        <WorkspaceSegmentedControl :label="copy.common.filters">
+                            <WorkspaceSegmentedButton
                                 v-for="filter in filters"
                                 :key="filter.value"
-                                type="button"
                                 role="tab"
                                 :aria-selected="activeFilter === filter.value"
-                                :class="[
-                                    'flex min-h-10 min-w-max cursor-pointer items-center gap-2 rounded-lg px-3.5 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none motion-reduce:transition-none',
-                                    activeFilter === filter.value
-                                        ? 'bg-card text-foreground shadow-sm'
-                                        : 'text-muted-foreground hover:text-foreground',
-                                ]"
+                                :active="activeFilter === filter.value"
                                 @click="activeFilter = filter.value"
                             >
                                 {{ filter.label }}
                                 <span class="text-xs tabular-nums opacity-65">
                                     {{ formatNumber(filter.count) }}
                                 </span>
-                            </button>
-                        </div>
+                            </WorkspaceSegmentedButton>
+                        </WorkspaceSegmentedControl>
                     </div>
 
                     <div
