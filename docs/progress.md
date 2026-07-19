@@ -183,3 +183,56 @@ Implementation commit `264d8d6` (`feat: integrate NativePHP Mobile 3`) was pushe
 - Platform-mode Vite builds and device launch/watch commands were not executed automatically, as required by the installed NativePHP development guidance.
 - This Intel Mac does not satisfy NativePHP's Apple-silicon iOS development requirement and does not have full Xcode, CocoaPods, Android Studio, or an Android SDK available. Device compilation must be completed on a supported workstation.
 - No Apple development team or product-specific icon/splash assets were supplied, so code signing remains unset and the NativePHP defaults remain in use.
+
+## NativePHP Mobile 3 Upgrade Guide Reconciliation
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Reconciled the installed NativePHP Mobile 3.3 runtime with every applicable step in the official v3 upgrade guide.
+- Replaced the broad `^3.3` dependency constraint with the guide-aligned `~3.3.0` patch line; Composer confirmed 3.3.6 is current within that line.
+- Published `App\Providers\NativeServiceProvider` as the explicit security allow-list for third-party native plugin code.
+- Added the documented Android compile, minimum, and target SDK configuration points with defaults of 36, 33, and 36.
+- Confirmed the repository has no legacy `nativephp.composer.sh` repository or project-level Composer authentication file.
+- Rebuilt both generated native platform shells with `native:install both --force`; embedded PHP remains 8.4.23 with optional ICU disabled.
+- Validated plugin discovery with the v3 commands; no optional native plugins are installed or registered.
+- Preserved the fully on-device Laravel, Inertia, Vue, and SQLite architecture with no remote client/server integration.
+
+### Changed Files
+
+- `composer.json`, `composer.lock`
+- `config/nativephp.php`
+- `app/Providers/NativeServiceProvider.php`
+- `tests/Feature/NativePhpMobileTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No application migration or new package was added. NativePHP remains at 3.3.6 with a patch-line Composer constraint.
+
+### Verification
+
+- The focused upgrade test failed first on the old `^3.3` constraint, then `php artisan test --compact tests/Feature/NativePhpMobileTest.php` passed with 3 tests and 27 assertions.
+- Scoped PHPStan for the NativePHP provider and configuration passed with zero errors.
+- `php artisan native:install both --force --no-interaction`: passed and regenerated both native shells and PHP binaries.
+- `php artisan native:plugin:validate --no-interaction` and `php artisan native:plugin:list --all`: passed; no plugins are installed.
+- `composer validate --strict --no-check-publish`, `composer audit --no-interaction`, and `npm audit --omit=dev`: passed with no known dependency vulnerabilities.
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `php artisan test --compact`: passed, 139 tests and 597 assertions.
+- `npm run build`: passed; Vite emitted only the existing optional `fontaine` notice.
+- Scoped `git diff --check` for this upgrade passed.
+- Full PHPStan remains red with 364 existing application errors; the NativePHP upgrade files are clean.
+- Full Vue type checking remains red with 9 existing errors, full ESLint with 72 existing errors, and full resource Prettier with 13 existing files; this backend/configuration-only upgrade introduced none of them.
+
+### Git Delivery
+
+Commit and push status will be recorded after verification. All concurrent sidebar, settings, task, profile, translation, and planning changes remain outside this phase.
+
+### Known Limitations
+
+- ICU remains disabled to avoid the documented mobile binary size increase; it can be enabled later with `--with-icu` if the application requires PHP `intl` on-device.
+- Platform-mode frontend builds and simulator/emulator launch commands were not auto-run, per the installed NativePHP project guidance.
+- Local iOS compilation remains unavailable on this Intel Mac, and no Android SDK or Apple development team is configured.

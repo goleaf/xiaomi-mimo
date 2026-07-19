@@ -4,6 +4,7 @@ use App\Actions\DeleteAttachment;
 use App\Actions\UploadAttachment;
 use App\Models\Todo;
 use App\Models\User;
+use App\Providers\NativeServiceProvider;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
@@ -46,4 +47,24 @@ test('attachments use the configured on-device filesystem', function () {
 
     expect(app(DeleteAttachment::class)->handle($attachment))->toBeTrue();
     Storage::disk('mobile_public')->assertMissing($attachment->path);
+});
+
+test('the NativePHP v3 upgrade contract is configured', function () {
+    $composer = json_decode(
+        file_get_contents(base_path('composer.json')),
+        true,
+        flags: JSON_THROW_ON_ERROR,
+    );
+
+    expect($composer['require']['nativephp/mobile'])->toBe('~3.3.0')
+        ->and(json_encode($composer, JSON_THROW_ON_ERROR))->not->toContain('nativephp.composer.sh')
+        ->and((new NativeServiceProvider(app()))->plugins())->toBe([])
+        ->and(config('nativephp.android.compile_sdk'))->toBe(36)
+        ->and(config('nativephp.android.min_sdk'))->toBe(33)
+        ->and(config('nativephp.android.target_sdk'))->toBe(36)
+        ->and(Artisan::all())->toHaveKeys([
+            'native:plugin:list',
+            'native:plugin:register',
+            'native:plugin:validate',
+        ]);
 });
