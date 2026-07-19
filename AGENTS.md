@@ -214,3 +214,24 @@ Vue components must have a single root element.
 - IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
 
 </laravel-boost-guidelines>
+
+<xiaomi-mimo-project-contract>
+=== permanent project rules ===
+
+# Xiaomi Mimo Engineering Contract
+
+- Work in the existing `goleaf/xiaomi-mimo` repository on `main`; do not rebuild the application or create a replacement branch or pull request.
+- Preserve Laravel 13, PHP 8.3+, Inertia 3, Vue 3, TypeScript, Pinia, Tailwind CSS 4, Reka UI/shadcn-style components, Fortify, Sanctum, Wayfinder, Pest, Larastan, Pint, and SQLite.
+- SQLite is the only supported relational database. Do not add another database or Redis as an application requirement.
+- Do not introduce Vue Router as a replacement for Inertia, or add Livewire, Volt, React, jQuery, Alpine page logic, Filament, or Nova.
+- Treat source code, migrations, current routes, tests, and the live SQLite schema as the source of truth. Inspect them and search version-specific Laravel Boost documentation before implementation.
+- Workspace isolation is a security boundary. Scope every workspace-owned query and related identifier to the authorized workspace; reject mixed or foreign identifiers atomically.
+- Keep controllers thin. Use authorized Form Requests for writes and complex filters, actions for state changes, focused query objects for complex reads, policies for permissions, and API resources for external JSON.
+- Do not query from Vue components, API resources, model accessors, loops, route closures, or policy methods when loaded relations or explicit scoped queries can avoid it.
+- Use Vue Composition API with `<script setup lang="ts">`, typed props/emits, immutable Inertia props, synchronized local state, and complete asynchronous and accessible interaction states.
+- All user-facing text must use stable semantic translations for English, Lithuanian, and Russian with English fallback and locale/timezone-aware formatting.
+- Every implementation phase must add or update focused Pest tests and run Pint, Larastan, Pest, Vue type checking, ESLint, Prettier verification, and the production build as applicable.
+- Before and after each phase, update `docs/progress.md` with files, migrations, packages, decisions, checks, limitations, next work, commit, and push status.
+- Commit only phase-related files using the required phase message and push to `origin main`; preserve unrelated user changes and record exact push failures.
+
+</xiaomi-mimo-project-contract>
