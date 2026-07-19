@@ -2268,3 +2268,53 @@ No migration or Composer/npm package change was made.
 - Documentation commit: `7a50f21` (`docs: record form feedback unification`).
 - Documentation push: successful to `origin/main`.
 - This final delivery record is committed and pushed separately so the phase commits remain focused.
+
+## Create Dialog Form Unification
+
+### Status
+
+- Completed.
+
+### Scope And Decisions
+
+- Align the active project and task creation dialogs with the Warm Precision form language established on `/projects`.
+- Reuse the shared button, input, select, error, and loading components instead of repeating local control styles.
+- Complete disabled, invalid, loading, keyboard-focus, dark-mode, and reduced-motion states for the affected controls.
+- Preserve the existing submission behavior, validation contract, routes, and translations.
+- Keep dormant dropdown, sidebar, command-palette, and filter variants unchanged because they are not rendered by current application routes.
+
+### Changed Files
+
+- `resources/js/components/project/ProjectCreateDialog.vue`
+- `resources/js/components/task/TaskCreateDialog.vue`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Verification
+
+- Focused frontend-design coverage passed with 83 tests and 354 assertions.
+- Full Pest coverage passed with 373 tests and 1,678 assertions.
+- PHPStan passed with 0 errors.
+- Vue TypeScript checking, ESLint, Prettier verification, and the frontend Node test passed.
+- Production build passed after transforming 3,369 modules.
+- Browser QA confirmed the project dialog in desktop light mode and the task dialog in desktop dark mode use the shared 24px/28px Warm Precision surface, 44px actions, semantic selected states, and zero horizontal overflow.
+- Mobile browser QA at 390×844 confirmed both dialogs resolve to 358px with 16px viewport gutters, internal vertical scrolling, complete footer actions, and zero page or dialog overflow.
+- An empty task-title submission safely confirmed the field error, `aria-invalid="true"`, and semantic alert without persisting data.
+- The final browser interactions produced no console errors or page errors; the Boost browser log contained only older entries from earlier resolved or unrelated sessions.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+
+### Known Limitations And Next Work
+
+- Vite continues to report the existing optional `fontaine` optimization notice; the production build succeeds.
+- Dormant variants should be reviewed when a route begins rendering them, rather than adding unexercised styling now.
+
+### Git Delivery
+
+- Implementation commit: `605977d` (`fix: unify creation dialog controls`).
+- Implementation push: successful to `origin/main`.
+- Documentation commit: pending.
+- Documentation push: pending.
