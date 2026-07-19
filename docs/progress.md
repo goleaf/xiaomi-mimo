@@ -2479,5 +2479,6 @@ No migration or Composer/npm package change was made.
 
 - Implementation commit: `aedd8bf` (`fix: unify final asynchronous action states`).
 - Implementation push: successful to `origin/main`.
-- Documentation commit: pending.
-- Documentation push: pending.
+- Documentation commit: `7982a52` (`docs: record final action state unification`).
+- Documentation push: successful to `origin/main`.
+- This final delivery record is committed and pushed separately so the phase commits remain focused.
