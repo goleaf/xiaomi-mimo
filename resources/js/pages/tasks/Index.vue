@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { Plus, Search, Trash2, LayoutGrid, List, Calendar } from '@lucide/vue';
+import { Plus, Search, Trash2, LayoutGrid, List } from '@lucide/vue';
 import { ref, computed } from 'vue';
 import TaskCreateDialog from '@/components/task/TaskCreateDialog.vue';
 import TaskDetail from '@/components/task/TaskDetail.vue';
@@ -104,18 +104,6 @@ function priorityBadge(priority: string) {
             low: 'outline',
             none: 'outline',
         }[priority] ?? 'outline'
-    );
-}
-
-function priorityColor(priority: string): string {
-    return (
-        {
-            urgent: '#ef4444',
-            high: '#f97316',
-            medium: '#eab308',
-            low: '#3b82f6',
-            none: '#9ca3af',
-        }[priority] ?? '#9ca3af'
     );
 }
 

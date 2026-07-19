@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/composables/useToast';
 
-const props = defineProps<{
+defineProps<{
     user: { id: string; two_factor_enabled?: boolean };
 }>();
 

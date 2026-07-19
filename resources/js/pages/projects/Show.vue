@@ -6,7 +6,6 @@ import TaskCreateDialog from '@/components/task/TaskCreateDialog.vue';
 import TaskDetail from '@/components/task/TaskDetail.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/composables/useToast';
 import { projects } from '@/routes';
@@ -111,14 +110,6 @@ function selectTodo(todo: Todo) {
     );
 }
 
-const priorityColor = (p: string) =>
-    ({
-        urgent: 'bg-red-500',
-        high: 'bg-orange-500',
-        medium: 'bg-yellow-500',
-        low: 'bg-blue-500',
-        none: 'bg-gray-300',
-    })[p] ?? 'bg-gray-300';
 const priorityBadge = (p: string) =>
     ({
         urgent: 'destructive',
@@ -198,7 +189,7 @@ const formatDate = (d: string | null) =>
         <!-- Tasks grouped by status -->
         <div class="space-y-6">
             <div
-                v-for="(group, label) in [
+                v-for="group in [
                     {
                         key: 'in_progress',
                         label: 'In Progress',

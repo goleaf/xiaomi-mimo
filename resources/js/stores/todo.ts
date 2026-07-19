@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { TodoFilters } from '@/types/api';
-import type { Todo, TodoStatus, TodoPriority } from '@/types/models';
+import type { Todo } from '@/types/models';
 
 export const useTodoStore = defineStore('todo', () => {
     const todos = ref<Todo[]>([]);

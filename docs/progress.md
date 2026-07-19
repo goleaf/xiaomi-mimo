@@ -992,3 +992,44 @@ No migration or package change is planned.
 ### Git Delivery
 
 Commit and push results will be recorded after verification. Existing NativePHP, sidebar, attachment, and planning changes remain outside this phase.
+
+## ESLint Cleanup Batch 1: Dead Frontend Bindings
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Remove imports, helpers, and template loop bindings that are not consumed by the rendered pages or Pinia store.
+- Keep behavior unchanged and avoid formatter-driven changes outside the flagged lines.
+- Preserve and exclude the active Warm Precision workspace-page work already present in the worktree.
+
+### Changed Files
+
+- `resources/js/pages/projects/Show.vue`
+- `resources/js/pages/settings/Backup.vue`
+- `resources/js/pages/settings/Notifications.vue`
+- `resources/js/pages/settings/Security.vue`
+- `resources/js/pages/tasks/Index.vue`
+- `resources/js/stores/todo.ts`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change is planned.
+
+### Verification
+
+- `npm run lint:check` removed all 12 findings covered by this batch. The repository total moved from 73 to 62 because a concurrent Notifications-page edit added one new type-import ordering finding while this batch was running.
+- `npm run build` passed; Vite emitted only the existing optional `fontaine` notice.
+- Scoped `git diff --check` passed.
+
+### Known Limitations
+
+- The remaining ESLint findings are intentionally deferred to later small batches.
+- Concurrent Warm Precision workspace-page and task-board work remains outside this batch.
+
+### Git Delivery
+
+Commit message: `fix: remove dead frontend bindings`. Push to `origin main` will be attempted immediately after the isolated commit. Unrelated worktree changes remain excluded.
