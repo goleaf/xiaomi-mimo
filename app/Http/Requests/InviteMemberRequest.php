@@ -12,6 +12,7 @@ class InviteMemberRequest extends FormRequest
         return $this->user()->can('invite', $this->route('workspace'));
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

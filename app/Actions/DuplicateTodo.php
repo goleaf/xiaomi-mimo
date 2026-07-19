@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\TodoStatus;
 use App\Models\Todo;
 
 class DuplicateTodo
@@ -10,7 +11,7 @@ class DuplicateTodo
     {
         $newTodo = $todo->replicate();
         $newTodo->title = $todo->title.' (Copy)';
-        $newTodo->status = 'pending';
+        $newTodo->status = TodoStatus::Pending;
         $newTodo->completed_at = null;
         $newTodo->is_pinned = false;
         $newTodo->is_favorite = false;

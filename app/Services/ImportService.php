@@ -59,6 +59,7 @@ class ImportService
             $projectIdsByName = $workspace->projects()->pluck('id', 'name')->all();
 
             foreach ($projects as $index => $projectData) {
+                $recordLabel = __('data_transfer.import.project_record', ['number' => $index + 1]);
                 $validatedProject = $this->validateRecord(
                     $projectData,
                     [
@@ -67,11 +68,14 @@ class ImportService
                         'color' => ['sometimes', 'string', 'max:7'],
                         'icon' => ['sometimes', 'string', 'max:50'],
                     ],
-                    __('data_transfer.import.project_record', ['number' => $index + 1]),
+                    $recordLabel,
                     ['name', 'description', 'color', 'icon'],
                 );
 
-                $project = $this->createProject->handle($workspace, $validatedProject);
+                $project = $this->createProject->handle(
+                    $workspace,
+                    $this->projectData($validatedProject, $recordLabel),
+                );
                 $projectIdsByName[$project->name] = $project->id;
                 $imported['projects']++;
             }
@@ -324,6 +328,44 @@ class ImportService
                 'detail' => $detail,
             ]));
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{name: string, description?: string|null, color?: string, icon?: string}
+     */
+    private function projectData(array $data, string $recordLabel): array
+    {
+        $name = $data['name'] ?? null;
+
+        if (! is_string($name)) {
+            $this->invalidFile(__('data_transfer.import.invalid_record', [
+                'record' => $recordLabel,
+                'detail' => __('data_transfer.import.invalid_record_fallback'),
+            ]));
+        }
+
+        $projectData = ['name' => $name];
+
+        foreach (['description', 'color', 'icon'] as $key) {
+            if (! array_key_exists($key, $data)) {
+                continue;
+            }
+
+            $value = $data[$key];
+
+            if ($key === 'description' && is_null($value)) {
+                $projectData[$key] = null;
+
+                continue;
+            }
+
+            if (is_string($value)) {
+                $projectData[$key] = $value;
+            }
+        }
+
+        return $projectData;
     }
 
     /** @param array<string, string> $projectIdsByName */

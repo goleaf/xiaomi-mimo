@@ -7,6 +7,7 @@ use App\Models\Workspace;
 
 class CreateProject
 {
+    /** @param array{name: string, description?: string|null, color?: string, icon?: string} $data */
     public function handle(Workspace $workspace, array $data): Project
     {
         $maxPosition = $workspace->projects()->max('position') ?? 0;

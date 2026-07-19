@@ -25,7 +25,7 @@ class WorkspaceController extends Controller
 
     public function store(StoreWorkspaceRequest $request, CreateWorkspace $action): JsonResponse
     {
-        $workspace = $action->handle($request->validated(), $request->user());
+        $workspace = $action->handle($request->workspaceData(), $request->user());
 
         return response()->json(['workspace' => new WorkspaceResource($workspace)], 201);
     }

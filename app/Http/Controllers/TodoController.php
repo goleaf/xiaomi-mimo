@@ -24,6 +24,7 @@ use App\Services\TodoSortService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -67,7 +68,7 @@ class TodoController extends Controller
     public function store(StoreTodoRequest $request, Workspace $workspace, CreateTodo $action): JsonResponse
     {
         $this->authorize('create', [Todo::class, $workspace]);
-        $todo = $action->handle($workspace, $request->validated(), $request->user()->id);
+        $todo = $action->handle($workspace, $request->todoData(), $request->user()->id);
 
         return response()->json(['todo' => new TodoResource($todo)], 201);
     }
@@ -201,6 +202,9 @@ class TodoController extends Controller
             'archive' => (new BulkUpdateTodos)->handle($request->ids, ['is_archived' => true]),
             'restore' => (new BulkUpdateTodos)->handle($request->ids, ['is_archived' => false]),
             'delete' => (new BulkDeleteTodos)->handle($request->ids),
+            default => throw ValidationException::withMessages([
+                'action' => __('validation.in', ['attribute' => 'action']),
+            ]),
         };
 
         return response()->json(null, 204);

@@ -14,6 +14,7 @@ class ReminderNotification extends Notification implements ShouldQueue
 
     public function __construct(public Reminder $reminder) {}
 
+    /** @return list<string> */
     public function via(object $notifiable): array
     {
         return ['mail', 'database'];
@@ -22,12 +23,13 @@ class ReminderNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Task Reminder: ' . $this->reminder->todo->title)
+            ->subject('Task Reminder: '.$this->reminder->todo->title)
             ->line("This is a reminder for your task: {$this->reminder->todo->title}")
             ->action('View Task', url('/'))
             ->line('Thank you for using our application!');
     }
 
+    /** @return array<string, mixed> */
     public function toArray(object $notifiable): array
     {
         return [

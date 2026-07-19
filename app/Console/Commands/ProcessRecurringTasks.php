@@ -2,9 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\TodoStatus;
 use App\Models\Todo;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 
 class ProcessRecurringTasks extends Command
 {
@@ -27,7 +28,7 @@ class ProcessRecurringTasks extends Command
 
             if ($nextDueDate && $nextDueDate->isFuture()) {
                 $newTodo = $todo->replicate();
-                $newTodo->status = 'pending';
+                $newTodo->status = TodoStatus::Pending;
                 $newTodo->completed_at = null;
                 $newTodo->due_date = $nextDueDate;
                 $newTodo->is_pinned = false;

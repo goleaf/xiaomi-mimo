@@ -11,6 +11,7 @@ use App\Models\Workspace;
 use App\Policies\AttachmentPolicy;
 use App\Policies\CommentPolicy;
 use App\Policies\ProjectPolicy;
+use App\Policies\ReminderPolicy;
 use App\Policies\TodoPolicy;
 use App\Policies\WorkspacePolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;

@@ -11,6 +11,7 @@ class StoreCommentRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return ['body' => ['required', 'string', 'max:5000']];

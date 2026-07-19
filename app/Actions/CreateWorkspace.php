@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 
 class CreateWorkspace
 {
+    /** @param array{name: string, description?: string|null} $data */
     public function handle(array $data, User $user): Workspace
     {
         $workspace = Workspace::create([

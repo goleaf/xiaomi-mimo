@@ -7,6 +7,9 @@ use App\Models\Workspace;
 
 class CreateTodo
 {
+    /**
+     * @param  array{title: string, project_id?: string|null, assigned_to?: string|null, parent_id?: string|null, description?: string|null, status?: string, priority?: string, due_date?: string|null, start_date?: string|null, estimated_time?: int|null, label_ids?: list<string>, tag_ids?: list<string>}  $data
+     */
     public function handle(Workspace $workspace, array $data, ?string $userId = null): Todo
     {
         $maxPosition = $workspace->todos()

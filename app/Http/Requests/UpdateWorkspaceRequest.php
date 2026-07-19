@@ -11,6 +11,7 @@ class UpdateWorkspaceRequest extends FormRequest
         return $this->user()->can('update', $this->route('workspace'));
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

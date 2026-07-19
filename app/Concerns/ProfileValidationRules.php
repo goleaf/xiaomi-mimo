@@ -6,6 +6,7 @@ use Illuminate\Validation\Rule;
 
 trait ProfileValidationRules
 {
+    /** @return array<string, mixed> */
     protected function profileRules(?string $userId = null): array
     {
         return [

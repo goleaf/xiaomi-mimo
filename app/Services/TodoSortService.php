@@ -2,17 +2,24 @@
 
 namespace App\Services;
 
+use App\Models\Todo;
 use Illuminate\Database\Eloquent\Builder;
 
 class TodoSortService
 {
+    /**
+     * @param  Builder<Todo>  $query
+     * @return Builder<Todo>
+     */
     public function apply(Builder $query, ?string $sort = null, ?string $direction = 'asc'): Builder
     {
+        $resolvedDirection = $direction === 'desc' ? 'desc' : 'asc';
+
         return match ($sort) {
-            'due_date' => $query->orderBy('due_date', $direction)->orderBy('position'),
+            'due_date' => $query->orderBy('due_date', $resolvedDirection)->orderBy('position'),
             'priority' => $query->orderByRaw("CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END"),
-            'title' => $query->orderBy('title', $direction),
-            'created_at' => $query->orderBy('created_at', $direction),
+            'title' => $query->orderBy('title', $resolvedDirection),
+            'created_at' => $query->orderBy('created_at', $resolvedDirection),
             'status' => $query->orderByRaw("CASE status WHEN 'in_progress' THEN 0 WHEN 'pending' THEN 1 WHEN 'completed' THEN 2 END"),
             default => $query->orderBy('is_pinned', 'desc')->orderBy('position'),
         };

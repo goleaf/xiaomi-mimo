@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\File;
+use Symfony\Component\Finder\SplFileInfo;
 
 class BackupService
 {
@@ -34,6 +35,7 @@ class BackupService
         return File::copy($backupPath, $dbPath);
     }
 
+    /** @return list<array{filename: string, path: string, size: int, created_at: int}> */
     public function listBackups(): array
     {
         $backupDir = storage_path('app/backups');
@@ -42,16 +44,22 @@ class BackupService
             return [];
         }
 
-        return collect(File::files($backupDir))
-            ->filter(fn ($file) => $file->getExtension() === 'sqlite')
-            ->map(fn ($file) => [
-                'filename' => $file->getFilename(),
-                'path' => $file->getPathname(),
-                'size' => $file->getSize(),
-                'created_at' => $file->getCreationTime(),
-            ])
+        $backups = collect(File::files($backupDir))
+            ->filter(fn (SplFileInfo $file): bool => $file->getExtension() === 'sqlite')
+            ->map(function (SplFileInfo $file): array {
+                $size = $file->getSize();
+                $modifiedAt = $file->getMTime();
+
+                return [
+                    'filename' => $file->getFilename(),
+                    'path' => $file->getPathname(),
+                    'size' => $size === false ? 0 : $size,
+                    'created_at' => $modifiedAt === false ? 0 : $modifiedAt,
+                ];
+            })
             ->sortByDesc('created_at')
-            ->values()
-            ->toArray();
+            ->all();
+
+        return array_values($backups);
     }
 }

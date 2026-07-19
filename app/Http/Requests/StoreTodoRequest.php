@@ -14,6 +14,7 @@ class StoreTodoRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
@@ -32,5 +33,39 @@ class StoreTodoRequest extends FormRequest
             'tag_ids' => ['sometimes', 'array'],
             'tag_ids.*' => ['uuid', 'exists:tags,id'],
         ];
+    }
+
+    /**
+     * @return array{title: string, project_id?: string|null, assigned_to?: string|null, parent_id?: string|null, description?: string|null, status?: string, priority?: string, due_date?: string|null, start_date?: string|null, estimated_time?: int|null, label_ids?: list<string>, tag_ids?: list<string>}
+     */
+    public function todoData(): array
+    {
+        $data = ['title' => $this->string('title')->toString()];
+
+        foreach (['project_id', 'assigned_to', 'parent_id', 'description', 'due_date', 'start_date'] as $key) {
+            $value = $this->validated($key);
+            $data[$key] = is_string($value) ? $value : null;
+        }
+
+        foreach (['status', 'priority'] as $key) {
+            $value = $this->validated($key);
+
+            if (is_string($value)) {
+                $data[$key] = $value;
+            }
+        }
+
+        $estimatedTime = $this->validated('estimated_time');
+        $data['estimated_time'] = is_int($estimatedTime) ? $estimatedTime : null;
+
+        foreach (['label_ids', 'tag_ids'] as $key) {
+            $value = $this->validated($key);
+
+            if (is_array($value)) {
+                $data[$key] = array_values(array_filter($value, is_string(...)));
+            }
+        }
+
+        return $data;
     }
 }

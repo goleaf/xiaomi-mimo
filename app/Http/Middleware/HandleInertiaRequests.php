@@ -114,6 +114,7 @@ class HandleInertiaRequests extends Middleware
         return is_array($translations) ? $translations : [];
     }
 
+    /** @return array<string, mixed> */
     private function workspaceUiTranslations(): array
     {
         $translations = __('workspace');

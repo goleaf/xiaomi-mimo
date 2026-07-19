@@ -42,7 +42,7 @@ class TodoController extends Controller
     public function store(StoreTodoRequest $request, Workspace $workspace, CreateTodo $action): JsonResponse
     {
         $this->authorize('create', [Todo::class, $workspace]);
-        $todo = $action->handle($workspace, $request->validated(), $request->user()->id);
+        $todo = $action->handle($workspace, $request->todoData(), $request->user()->id);
 
         return response()->json(['todo' => new TodoResource($todo)], 201);
     }

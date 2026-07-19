@@ -52,7 +52,7 @@ class ProjectController extends Controller
     public function store(StoreProjectRequest $request, Workspace $workspace, CreateProject $action): JsonResponse
     {
         $this->authorize('create', [Project::class, $workspace]);
-        $project = $action->handle($workspace, $request->validated());
+        $project = $action->handle($workspace, $request->projectData());
 
         return response()->json(['project' => new ProjectResource($project)], 201);
     }

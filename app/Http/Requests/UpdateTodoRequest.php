@@ -14,6 +14,7 @@ class UpdateTodoRequest extends FormRequest
         return $this->user()->can('update', $this->route('todo'));
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

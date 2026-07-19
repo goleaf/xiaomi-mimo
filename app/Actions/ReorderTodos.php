@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class ReorderTodos
 {
+    /** @param list<array{id: string, position: int}> $items */
     public function handle(array $items): void
     {
         DB::transaction(function () use ($items) {

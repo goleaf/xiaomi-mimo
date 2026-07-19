@@ -2,10 +2,16 @@
 
 namespace App\Services;
 
+use App\Models\Todo;
 use Illuminate\Database\Eloquent\Builder;
 
 class TodoFilterService
 {
+    /**
+     * @param  Builder<Todo>  $query
+     * @param  array{search?: string|null, project_id?: string|null, status?: string|null, priority?: string|null, assigned_to?: string|null, label_id?: string|null, tag_id?: string|null, is_archived?: bool|null, is_pinned?: bool|null, is_favorite?: bool|null, due_date_from?: string|null, due_date_to?: string|null, created_from?: string|null, created_to?: string|null, overdue?: bool|null, completed_today?: bool|null}  $filters
+     * @return Builder<Todo>
+     */
     public function apply(Builder $query, array $filters): Builder
     {
         if (! empty($filters['search'])) {

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\BackupService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class BackupController extends Controller
 {
@@ -31,7 +31,7 @@ class BackupController extends Controller
         return response()->json(['message' => 'Database restored successfully']);
     }
 
-    public function download(string $filename): Response
+    public function download(string $filename): BinaryFileResponse
     {
         $path = storage_path("app/backups/{$filename}");
 
