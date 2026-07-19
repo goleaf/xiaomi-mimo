@@ -6,6 +6,7 @@ use App\Models\Todo;
 use App\Models\User;
 use App\Providers\NativeServiceProvider;
 use Composer\InstalledVersions;
+use Illuminate\Foundation\Console\ServeCommand;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
@@ -568,4 +569,52 @@ test('the NativePHP shell boot prerequisites remain bundled', function () {
         ->and($bundleExclusions)->not->toContain('/database', '/database/migrations')
         ->and($storageLinks)->toHaveKey(public_path('storage'))
         ->and($storageLinks[public_path('storage')])->toBe(storage_path('app/public'));
+});
+
+test('the NativePHP Jump workflow starts with Vite through one manual script', function () {
+    $package = json_decode(
+        File::get(base_path('package.json')),
+        true,
+        flags: JSON_THROW_ON_ERROR,
+    );
+    $viteConfiguration = File::get(base_path('vite.config.ts'));
+
+    expect($package['scripts']['jump'])->toBe(
+        'concurrently --kill-others --names jump,vite "php artisan native:jump" "vite"',
+    )->and($package['devDependencies'])->toHaveKey('concurrently')
+        ->and($viteConfiguration)->toContain('nativephpHotFile()', 'nativephpMobile()')
+        ->and(ServeCommand::$passthroughVariables)->toContain('JUMP_BRIDGE_PORT', 'JUMP_WS_PORT');
+});
+
+test('the NativePHP Jump command exposes the complete network contract', function () {
+    $definition = Artisan::all()['native:jump']->getDefinition();
+    $exampleEnvironment = File::get(base_path('.env.example'));
+
+    expect($definition->getArguments())->toBeEmpty()
+        ->and(array_keys($definition->getOptions()))->toContain(
+            'host',
+            'ip',
+            'http-port',
+            'ws-port',
+            'bridge-port',
+            'vite-proxy-port',
+            'no-serve',
+            'laravel-port',
+            'no-mdns',
+            'browser',
+        )
+        ->and($definition->getOption('host')->getDefault())->toBe('0.0.0.0')
+        ->and($definition->getOption('no-serve')->getDefault())->toBeFalse()
+        ->and($definition->getOption('no-mdns')->getDefault())->toBeFalse()
+        ->and($definition->getOption('browser')->getDefault())->toBeFalse()
+        ->and(config('nativephp.server.http_port'))->toBe(3000)
+        ->and(config('nativephp.server.ws_port'))->toBe(8081)
+        ->and(config('nativephp.server.service_name'))->toBe('Xiaomi Mimo')
+        ->and(config('nativephp.server.open_browser'))->toBeFalse()
+        ->and($exampleEnvironment)->toContain(
+            'NATIVEPHP_HTTP_PORT=3000',
+            'NATIVEPHP_WS_PORT=8081',
+            'NATIVEPHP_SERVICE_NAME="Xiaomi Mimo"',
+            'NATIVEPHP_OPEN_BROWSER=false',
+        );
 });

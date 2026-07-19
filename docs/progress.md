@@ -615,3 +615,52 @@ No migration or Composer/npm package was added, removed, or upgraded.
 - Commit `6d7bdbb` (`chore: reconcile NativePHP architecture overview`) contains only the focused architecture contracts and phase progress files.
 - Push to `origin main` succeeded (`887d7a7..6d7bdbb`).
 - Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+## NativePHP Mobile 3 Jump Reconciliation
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Reconciled the official Jump workflow with the installed NativePHP Mobile 3.3.6 proxy, managed Laravel server, native bridge, mDNS advertisement, and Vite HMR proxy.
+- Added `npm run jump`, which starts `native:jump` and Vite together through the existing `concurrently` dependency and terminates both processes when either exits.
+- Added focused contracts for every Jump network and fallback option: host/IP selection, HTTP, WebSocket, TCP bridge, Vite proxy, managed/BYO Laravel ports, mDNS disabling, and browser QR fallback.
+- Confirmed Laravel forwards `JUMP_BRIDGE_PORT` and `JUMP_WS_PORT` into the managed `artisan serve` process.
+- Confirmed the existing Vite configuration supplies both the NativePHP hot-file path and NativePHP Mobile plugin; Jump supplies the device-facing HMR proxy without another Vite server or CORS configuration.
+- Kept Jump strictly development-only. The production application remains embedded Laravel plus SQLite and does not depend on a remote client/server deployment.
+
+### Changed Files
+
+- `package.json`
+- `tests/Feature/NativePhpMobileTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm dependency was added, removed, or upgraded. The existing `concurrently` development dependency was reused.
+
+### Verification
+
+- The first focused test run failed only because the new `jump` package script did not exist, confirming the test covered the integration; it passed after the script was added.
+- `php artisan test --compact tests/Feature/NativePhpMobileTest.php` passed with 18 tests and 306 assertions.
+- `php artisan test --compact` passed with 160 tests and 924 assertions.
+- Scoped Pint, package Prettier verification, and scoped `git diff --check` passed.
+- File-scoped Larastan reports the same five pre-existing errors on lines before the new Jump coverage; no new line reports an error.
+- `php artisan help native:jump --format=json` confirmed the complete installed command definition and safe defaults without starting the server.
+- `./native version` and `native:debug --json` passed with NativePHP 3.3.6, local PHP 8.4.16, embedded PHP 8.4.23, Android Studio 2026.1.2, Gradle 8.13, Java 24.0.2, CocoaPods 1.17.0, and no Xcode.
+- `composer validate --strict --no-check-publish`, `composer audit --no-interaction`, `composer check-platform-reqs --no-dev`, and `npm audit --omit=dev` passed with valid dependencies, satisfied production platform requirements, and no known vulnerabilities.
+- `npm run build` passed; Vite emitted only the existing optional `fontaine` notice.
+- Full Larastan remains red with 364 existing application errors.
+- Full Vue type checking remains red with 9 existing errors, full ESLint with 72 existing errors, and full resource Prettier verification with 13 existing files. The only frontend manifest changed in this phase is the formatted `package.json` script entry.
+
+### Known Limitations
+
+- Jump still requires the NativePHP Jump companion app and a physical device on the same local network; that device handshake was not started automatically.
+- The installed 3.3.6 command selects its Jump WebSocket, TCP bridge, and Vite proxy ports independently, defaults them to 3001, 3002, and 3003, and can auto-increment occupied ports. The general `NATIVEPHP_WS_PORT=8081` server setting is not the Jump runtime default; use `--ws-port` when an explicit Jump port is needed.
+- Bring-your-own Laravel server mode requires the caller to expose its selected bridge port as `JUMP_BRIDGE_PORT`; the managed workflow performs this passthrough automatically.
+- Jump, Vite dev mode, native builds, device or emulator launches, IDE launches, and watchers were not auto-run, per the installed NativePHP project guidance.
+
+### Git Delivery
+
+Commit and push results will be recorded after delivery. Unrelated staged and unstaged application work remains untouched and excluded.
