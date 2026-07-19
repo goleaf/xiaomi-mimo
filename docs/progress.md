@@ -2644,5 +2644,7 @@ No migration or Composer/npm package change is planned.
 
 - Implementation commit: `cf518cc` (`fix: unify segmented filters`).
 - Implementation push: successful to `origin/main`.
-- Documentation commit and push are pending.
+- Documentation commit: `dfccb7d` (`docs: record segmented filter unification`).
+- Documentation push: successful to `origin/main`.
 - Unrelated user-authored progress entries remain preserved outside this phase's staged changes.
+- This final delivery record is committed and pushed separately so the phase commits remain focused.
