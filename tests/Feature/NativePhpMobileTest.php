@@ -343,3 +343,180 @@ test('the ephemeral NativePHP platform shell is ignored from the repository root
     expect(file_get_contents(base_path('.gitignore')))
         ->toContain('/nativephp');
 });
+
+test('the NativePHP v3 command reference is registered through Artisan and the shortcut', function () {
+    $documentedCommands = [
+        'native:install',
+        'native:run',
+        'native:watch',
+        'native:jump',
+        'native:open',
+        'native:tail',
+        'native:version',
+        'native:package',
+        'native:release',
+        'native:credentials',
+        'native:check-build-number',
+        'native:plugin:create',
+        'native:plugin:list',
+        'native:plugin:register',
+        'native:plugin:uninstall',
+        'native:plugin:validate',
+        'native:plugin:make-hook',
+        'native:plugin:boost',
+        'native:plugin:install-agent',
+    ];
+    $nativeShortcut = base_path('native');
+
+    expect(Artisan::all())->toHaveKeys($documentedCommands)
+        ->and(is_executable($nativeShortcut))->toBeTrue()
+        ->and(file_get_contents($nativeShortcut))
+        ->toBe(file_get_contents(base_path('vendor/nativephp/mobile/bin/native')));
+});
+
+test('the NativePHP v3 development and release command contracts are complete', function () {
+    $commandContracts = [
+        'native:install' => [
+            'arguments' => ['platform'],
+            'options' => ['no-force', 'with-icu', 'skip-php', 'force'],
+        ],
+        'native:run' => [
+            'arguments' => ['os', 'udid'],
+            'options' => ['build', 'watch', 'start-url', 'no-tty'],
+        ],
+        'native:watch' => [
+            'arguments' => ['platform', 'target'],
+            'options' => ['ios', 'android'],
+        ],
+        'native:jump' => [
+            'arguments' => [],
+            'options' => [
+                'host',
+                'ip',
+                'http-port',
+                'ws-port',
+                'bridge-port',
+                'vite-proxy-port',
+                'no-serve',
+                'laravel-port',
+                'no-mdns',
+            ],
+        ],
+        'native:open' => [
+            'arguments' => ['os'],
+            'options' => [],
+        ],
+        'native:package' => [
+            'arguments' => ['platform'],
+            'options' => [
+                'keystore',
+                'keystore-password',
+                'key-alias',
+                'key-password',
+                'fcm-key',
+                'google-service-key',
+                'build-type',
+                'output',
+                'jump-by',
+                'no-tty',
+                'export-method',
+                'upload-to-app-store',
+                'test-upload',
+                'validate-only',
+                'validate-profile',
+                'rebuild',
+                'clean-caches',
+                'api-key',
+                'api-key-id',
+                'api-issuer-id',
+                'certificate-path',
+                'certificate-password',
+                'provisioning-profile-path',
+                'team-id',
+                'upload-to-play-store',
+                'play-store-track',
+                'test-push',
+                'skip-prepare',
+            ],
+        ],
+        'native:release' => [
+            'arguments' => ['type'],
+            'options' => [],
+        ],
+        'native:credentials' => [
+            'arguments' => ['platform'],
+            'options' => ['reset'],
+        ],
+        'native:check-build-number' => [
+            'arguments' => ['platform'],
+            'options' => ['google-service-key', 'api-key', 'update', 'jump-by'],
+        ],
+    ];
+
+    foreach ($commandContracts as $commandName => $contract) {
+        $definition = Artisan::all()[$commandName]->getDefinition();
+
+        expect(array_keys($definition->getArguments()))
+            ->toContain(...$contract['arguments'])
+            ->and(array_keys($definition->getOptions()))
+            ->toContain(...$contract['options']);
+    }
+
+    expect(Artisan::all()['native:release']->getDefinition()->getArgument('type')->isRequired())
+        ->toBeTrue()
+        ->and(Artisan::all()['native:package']->getDefinition()->getOption('build-type')->getDefault())
+        ->toBe('release')
+        ->and(Artisan::all()['native:package']->getDefinition()->getOption('export-method')->getDefault())
+        ->toBe('app-store')
+        ->and(Artisan::all()['native:package']->getDefinition()->getOption('play-store-track')->getDefault())
+        ->toBe('internal');
+});
+
+test('the NativePHP v3 plugin command contracts are complete', function () {
+    $pluginCommandContracts = [
+        'native:plugin:create' => [
+            'arguments' => [],
+            'options' => [],
+        ],
+        'native:plugin:list' => [
+            'arguments' => [],
+            'options' => ['json', 'all'],
+        ],
+        'native:plugin:register' => [
+            'arguments' => ['plugin'],
+            'options' => ['remove', 'force'],
+        ],
+        'native:plugin:uninstall' => [
+            'arguments' => ['plugin'],
+            'options' => ['force', 'keep-files'],
+        ],
+        'native:plugin:validate' => [
+            'arguments' => ['path'],
+            'options' => [],
+        ],
+        'native:plugin:make-hook' => [
+            'arguments' => [],
+            'options' => [],
+        ],
+        'native:plugin:boost' => [
+            'arguments' => ['plugin'],
+            'options' => ['force'],
+        ],
+        'native:plugin:install-agent' => [
+            'arguments' => [],
+            'options' => ['force', 'all'],
+        ],
+    ];
+
+    foreach ($pluginCommandContracts as $commandName => $contract) {
+        $definition = Artisan::all()[$commandName]->getDefinition();
+
+        expect(array_keys($definition->getArguments()))
+            ->toContain(...$contract['arguments'])
+            ->and(array_keys($definition->getOptions()))
+            ->toContain(...$contract['options']);
+    }
+
+    expect(Artisan::all()['native:plugin:uninstall']->getDefinition()->getArgument('plugin')->isRequired())
+        ->toBeTrue();
+});

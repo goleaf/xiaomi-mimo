@@ -512,3 +512,51 @@ No migration or Composer/npm package was added, removed, or upgraded. Axios and 
 - Commit `30433e2` (`chore: reconcile NativePHP development guide`) contains only the hot-file ignore rules, NativePHP hot-reload configuration, focused development test, and phase progress files.
 - Push to `origin main` succeeded (`e277f15..30433e2`).
 - Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+## NativePHP Mobile 3 Command Reference Reconciliation
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Reconciled the official NativePHP Mobile 3 command reference with the latest installed stable release, NativePHP Mobile 3.3.6.
+- Confirmed all 20 documented development, release, and plugin commands are registered through Laravel Artisan.
+- Confirmed the executable root `./native` shortcut is byte-for-byte identical to the package-provided wrapper, so commands and options delegate to Artisan without a parallel implementation.
+- Added focused command-definition contracts for platform and device arguments, Jump networking controls, development watch/start URL controls, signing, packaging, validation, store-upload controls, and plugin lifecycle operations.
+- Locked release, export-method, and Play Store track defaults to the installed command contract and verified required release and plugin-uninstall arguments.
+- Preserved the self-contained on-device Laravel and SQLite architecture without adding a remote client/server runtime.
+
+### Changed Files
+
+- `tests/Feature/NativePhpMobileTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package was added, removed, or upgraded. `composer outdated nativephp/mobile --direct` confirmed 3.3.6 is the latest stable release.
+
+### Verification
+
+- The focused test failed first only because Pest does not expose an executable-file expectation for strings; the assertion was corrected to use PHP's executable-bit check. `php artisan test --compact tests/Feature/NativePhpMobileTest.php` then passed with 13 tests and 256 assertions.
+- `php artisan test --compact` passed with 155 tests and 874 assertions.
+- Scoped Pint passed for the modified NativePHP Pest test.
+- File-scoped Larastan reports five pre-existing errors on lines before the new command-reference coverage; the newly added command-contract lines introduce no Larastan finding.
+- `./native version`, `./native plugin:list --json`, and `./native plugin:validate` passed without changing application or native state; no NativePHP plugins are installed.
+- Artisan JSON help output confirmed the installed `native:install`, `native:run`, `native:watch`, `native:jump`, `native:open`, `native:package`, release, credentials, build-number, and plugin signatures without invoking their operations.
+- `native:debug --json` passed with NativePHP 3.3.6, embedded PHP 8.4.23, Android Studio 2026.1.2, Gradle 8.13, Java 17.0.16, CocoaPods 1.17.0, and no Xcode.
+- `composer validate --strict --no-check-publish`, `composer audit --no-interaction`, and `npm audit --omit=dev` passed with no known dependency vulnerabilities.
+- `npm run build` passed; Vite emitted only the existing optional `fontaine` notice.
+- Scoped `git diff --check` passed.
+- Full Larastan remains red with 364 existing application errors.
+- Full Vue type checking remains red with 9 existing errors, full ESLint with 72 existing errors, and full resource Prettier verification with 13 existing files; no frontend file was changed in this phase.
+
+### Known Limitations
+
+- The current official page advertises `native:install --fresh` and `--without-icu`, while the latest stable 3.3.6 command exposes `--force`, `--no-force`, `--with-icu`, and `--skip-php`. It also shows `native:check-build-number` without a platform argument, while 3.3.6 requires one. Tests intentionally follow the executable installed package contract rather than inventing application-level replacements for upstream command options.
+- Native iOS operations remain unavailable on this Intel Mac because full Xcode and Apple silicon are absent; the Android toolchain is available.
+- Native builds, IDE/device or emulator launches, Jump servers, watchers, log tailing, credential generation, release version changes, packaging, profile validation, and store uploads were not auto-run, per the installed NativePHP project guidance and because several are long-running or have persistent external consequences.
+
+### Git Delivery
+
+Commit and push results are pending. Unrelated staged and unstaged application work remains untouched and excluded.
