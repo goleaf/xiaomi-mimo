@@ -1736,3 +1736,46 @@ No migration or Composer/npm package change was made.
 
 - Commit `3b00e94` (`fix: type API resource contracts`) was pushed successfully to `origin main`.
 - This final phase record will be committed separately while preserving unrelated pre-existing progress changes.
+
+## Static Analysis Phase: Typed Application Layer
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Add concrete validated-data shapes to actions and services instead of weakening their array parameters to uninformative iterables.
+- Type Todo query pipelines with `Builder<Todo>`, normalize sort direction to Laravel's supported literal values, and preserve filter behavior.
+- Correct real defects exposed by Larastan: the missing `ReminderPolicy` import, the backup file timestamp call, enum assignments, the recurring-task Carbon type, the backup download response type, and the non-exhaustive bulk match.
+- Add standard generic return contracts to Form Requests, translations, and notifications while leaving validation rules and payload keys unchanged.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Changed Files
+
+- Typed application contracts across actions, Form Requests, controllers, middleware, notifications, providers, and services.
+- `app/Console/Commands/ProcessRecurringTasks.php`
+- `app/Concerns/ProfileValidationRules.php`
+- `tests/Feature/ApplicationLayerContractTest.php`
+- `docs/progress.md`
+
+### Verification
+
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `php artisan test --compact tests/Feature/ApplicationLayerContractTest.php tests/Feature/Api/ApiProjectTest.php tests/Feature/Api/ApiTodoTest.php tests/Feature/ProjectTest.php tests/Feature/TodoTest.php tests/Feature/WorkspacePagesTest.php tests/Feature/WorkspaceTest.php`: passed, 44 tests and 228 assertions.
+- `php artisan test --compact`: passed, 296 tests and 1,381 assertions.
+- `vendor/bin/phpstan analyse --no-progress --error-format=json`: reduced the baseline from 97 errors across 64 files to 43 errors across 22 files. All findings under `app/` are resolved.
+- `git diff --check`: passed.
+- No frontend files changed, so Vue type checking, ESLint, Prettier, and the Vite build were not repeated in this backend-only batch.
+
+### Known Limitations
+
+- Factory, seeder, migration, configuration, and route findings remain for the final static-analysis batch.
+
+### Git Delivery
+
+- Commit `eab814b` (`fix: type application layer contracts`) was pushed successfully to `origin main`.
+- This final phase record will be committed separately while preserving unrelated pre-existing progress changes.
