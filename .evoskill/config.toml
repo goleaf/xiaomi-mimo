@@ -1,6 +1,6 @@
 [harness]
 name = "claude"
-model = "sonnet"
+model = "nvidia/nemotron-3-super-120b-a12b"
 
 [evolution]
 mode = "skill_only"
@@ -12,7 +12,7 @@ no_improvement_limit = 5
 [dataset]
 path = "data/laravel_questions.csv"
 question_column = "question"
-answer_column = "answer"
+ground_truth_column = "answer"
 train_ratio = 0.18
 val_ratio = 0.12
 
