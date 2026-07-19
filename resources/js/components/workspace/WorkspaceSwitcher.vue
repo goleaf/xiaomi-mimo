@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { ChevronDown, Check, Plus, Building2 } from '@lucide/vue';
-import { ref, computed } from 'vue';
+import { ChevronDown, Check, Building2 } from '@lucide/vue';
+import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,

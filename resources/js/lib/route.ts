@@ -21,7 +21,6 @@ for (const [path, mod] of Object.entries(routeModules)) {
     // e.g., "../routes/index.ts" -> "" (root)
     const parts = path.replace('../routes/', '').replace('.ts', '').split('/');
     const group = parts.length > 1 ? parts[0] : '';
-    const funcName = parts.length > 1 ? parts[1] : parts[0];
 
     const exports = mod as Record<string, unknown>;
 
@@ -73,6 +72,20 @@ export function route(
     } else if (params && typeof params === 'object') {
         for (const [key, value] of Object.entries(params)) {
             url = url.replace(`{${key}}`, String(value));
+        }
+    }
+
+    const query = options?.query;
+
+    if (query && typeof query === 'object' && !Array.isArray(query)) {
+        const queryString = new URLSearchParams(
+            Object.entries(query)
+                .filter(([, value]) => value !== undefined && value !== null)
+                .map(([key, value]) => [key, String(value)]),
+        ).toString();
+
+        if (queryString) {
+            url += `${url.includes('?') ? '&' : '?'}${queryString}`;
         }
     }
 

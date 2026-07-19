@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Project, Workspace } from '@/types/models';
 
-const props = defineProps<{
+defineProps<{
     projects: { data: Project[] };
     workspace: Workspace;
 }>();

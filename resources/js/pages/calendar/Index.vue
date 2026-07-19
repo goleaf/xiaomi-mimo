@@ -2,7 +2,6 @@
 import { Head } from '@inertiajs/vue3';
 import { ChevronLeft, ChevronRight } from '@lucide/vue';
 import { ref, computed } from 'vue';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Todo } from '@/types/models';
 
@@ -108,21 +107,18 @@ const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                 <h1 class="text-2xl font-bold">Calendar</h1>
                 <div class="flex items-center gap-1">
                     <Button
-                        variant="outline"
                         size="sm"
                         :variant="view === 'month' ? 'default' : 'outline'"
                         @click="view = 'month'"
                         >Month</Button
                     >
                     <Button
-                        variant="outline"
                         size="sm"
                         :variant="view === 'week' ? 'default' : 'outline'"
                         @click="view = 'week'"
                         >Week</Button
                     >
                     <Button
-                        variant="outline"
                         size="sm"
                         :variant="view === 'day' ? 'default' : 'outline'"
                         @click="view = 'day'"

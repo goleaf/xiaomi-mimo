@@ -1,30 +1,13 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import {
-    X,
-    Calendar,
-    User,
-    Tag as TagIcon,
-    Paperclip,
-    MessageSquare,
-    CheckSquare,
-    Clock,
-} from '@lucide/vue';
-import { ref, watch } from 'vue';
+import { X, Calendar, User } from '@lucide/vue';
+import { ref } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/composables/useToast';
-import type {
-    Todo,
-    Comment,
-    Checklist,
-    ChecklistItem,
-    Label,
-    Tag,
-    Attachment,
-} from '@/types/models';
+import type { Todo } from '@/types/models';
 
 const props = defineProps<{ todo: Todo; open: boolean }>();
 const emit = defineEmits<{ close: [] }>();

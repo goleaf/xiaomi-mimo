@@ -11,7 +11,6 @@ import {
     Globe,
 } from '@lucide/vue';
 import { computed } from 'vue';
-import { Card } from '@/components/ui/card';
 
 const page = usePage();
 const currentUrl = computed(() => page.url);

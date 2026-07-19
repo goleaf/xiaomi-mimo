@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { Bell, BellOff, CheckCheck } from '@lucide/vue';
-import { ref } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/composables/useToast';
 
-const props = defineProps<{
+defineProps<{
     notifications: {
         data: Array<{
             id: string;

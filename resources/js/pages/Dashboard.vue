@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { Clock, AlertTriangle, Calendar } from '@lucide/vue';
+import { AlertTriangle, Calendar } from '@lucide/vue';
 import { computed } from 'vue';
 import TaskStats from '@/components/task/TaskStats.vue';
 import { Badge } from '@/components/ui/badge';

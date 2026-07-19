@@ -22,9 +22,12 @@ export function useKeyboard() {
 
         if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
             event.preventDefault();
-            ui.commandPaletteOpen
-                ? ui.closeCommandPalette()
-                : ui.openCommandPalette();
+
+            if (ui.commandPaletteOpen) {
+                ui.closeCommandPalette();
+            } else {
+                ui.openCommandPalette();
+            }
         }
 
         if (event.key === 'Escape') {
