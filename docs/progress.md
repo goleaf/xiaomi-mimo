@@ -455,7 +455,9 @@ No migration or Composer/npm package was added, removed, or upgraded. NativePHP 
 
 ### Git Delivery
 
-Commit and push results are pending. Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+- Commit `2c37d0c` (`chore: reconcile NativePHP deployment guide`) contains only the deployment environment contract, credential ignore rule, NativePHP secret cleanup, focused tests, and phase progress files.
+- Push to `origin main` succeeded (`6c13c56..2c37d0c`).
+- Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
 
 ## NativePHP Mobile 3 Development Guide Reconciliation
 
