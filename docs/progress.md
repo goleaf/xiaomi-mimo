@@ -1683,3 +1683,56 @@ No migration or Composer/npm package change is planned.
 
 - Commit `a1a076c` (`fix: type eloquent model contracts`) was pushed successfully to `origin main`.
 - This final phase record will be committed separately while preserving unrelated pre-existing progress changes.
+
+## Static Analysis Phase: Typed API Resources
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Bind every JSON resource to its concrete Eloquent model with `@mixin` and declare generic `array<string, mixed>` payloads without changing response keys or relation-loading behavior.
+- Preserve the nullable legacy `avatar` payload through explicit attribute access instead of inventing a new API contract.
+- Correct the Todo date and Reminder enum cast annotations exposed by resource analysis.
+- Measure the downstream effect through the complete Larastan report rather than adding suppressions or a baseline file.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Changed Files
+
+- `app/Http/Resources/ActivityLogResource.php`
+- `app/Http/Resources/ChecklistItemResource.php`
+- `app/Http/Resources/ChecklistResource.php`
+- `app/Http/Resources/CommentResource.php`
+- `app/Http/Resources/LabelResource.php`
+- `app/Http/Resources/ProjectResource.php`
+- `app/Http/Resources/ReminderResource.php`
+- `app/Http/Resources/TagResource.php`
+- `app/Http/Resources/TodoResource.php`
+- `app/Http/Resources/UserResource.php`
+- `app/Http/Resources/WorkspaceResource.php`
+- `app/Models/Reminder.php`
+- `app/Models/Todo.php`
+- `tests/Feature/ApiResourceTypingTest.php`
+- `docs/progress.md`
+
+### Verification
+
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `php artisan test --compact tests/Feature/ApiResourceTypingTest.php tests/Feature/Api`: passed, 45 tests and 119 assertions.
+- `php artisan test --compact`: passed, 292 tests and 1,369 assertions.
+- `vendor/bin/phpstan analyse --no-progress -v`: reduced the baseline from 196 errors across 75 files to 97 errors across 64 files. All findings under `app/Http/Resources` are resolved.
+- `git diff --check`: passed.
+- No frontend files changed, so Vue type checking, ESLint, Prettier, and the Vite build were not repeated in this backend-only batch.
+
+### Known Limitations
+
+- 97 Larastan findings remain outside the model and API resource layers.
+
+### Git Delivery
+
+- Commit `3b00e94` (`fix: type API resource contracts`) was pushed successfully to `origin main`.
+- This final phase record will be committed separately while preserving unrelated pre-existing progress changes.
