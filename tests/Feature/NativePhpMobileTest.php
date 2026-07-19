@@ -79,3 +79,28 @@ test('the NativePHP Android environment contract is documented', function () {
         ->toContain('NATIVEPHP_ANDROID_MIN_SDK=33')
         ->toContain('NATIVEPHP_ANDROID_TARGET_SDK=36');
 });
+
+test('the NativePHP installer values are configured', function () {
+    $composer = json_decode(
+        file_get_contents(base_path('composer.json')),
+        true,
+        flags: JSON_THROW_ON_ERROR,
+    );
+    $environmentExample = file_get_contents(base_path('.env.example'));
+
+    expect($composer['require'])->toHaveKey('nativephp/mobile')
+        ->and(config('nativephp.app_id'))->toBe('com.goleaf.xiaomimimo')
+        ->and(config('nativephp.version'))->toBe('DEBUG')
+        ->and(config('nativephp.version_code'))->toBe(1)
+        ->and($environmentExample)->toContain(
+            'NATIVEPHP_APP_ID=com.goleaf.xiaomimimo',
+            'NATIVEPHP_APP_VERSION=DEBUG',
+            'NATIVEPHP_APP_VERSION_CODE=1',
+        )
+        ->and(Artisan::all())->toHaveKey('native:install');
+});
+
+test('the ephemeral NativePHP platform shell is ignored from the repository root', function () {
+    expect(file_get_contents(base_path('.gitignore')))
+        ->toContain('/nativephp');
+});

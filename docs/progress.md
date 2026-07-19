@@ -291,3 +291,56 @@ No application migration or Composer/npm package was added, removed, or upgraded
 - Commit `8adf61d` (`chore: configure NativePHP mobile environment`) contains only the NativePHP environment contract, configuration, test, and phase progress files.
 - Push to `origin main` succeeded (`1bc66f1..8adf61d`).
 - Unrelated staged sidebar, navigation, task, project, export, planning, and shared model/middleware work remains excluded and preserved.
+
+## NativePHP Mobile 3 Installation Guide Reconciliation
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Confirmed `nativephp/mobile` 3.3.6 is installed on the existing `~3.3.0` patch line and the installer command is registered.
+- Confirmed the reverse-DNS application ID `com.goleaf.xiaomimimo`, debug version, and build code are declared in both local and example environments before installation.
+- Cast `NATIVEPHP_APP_VERSION_CODE` to an integer at the configuration boundary so `.env` overrides preserve the numeric build-code contract.
+- Added `/nativephp` to the root `.gitignore`, making the generated Android/iOS platform shell explicitly ephemeral as recommended by the installation guide.
+- Ran `native:install both --force --no-interaction`; it rebuilt both native projects and installed embedded PHP 8.4.23 with the documented default non-ICU binaries.
+- Confirmed the tracked `./native` wrapper reports NativePHP 3.3.6 and the regenerated platform directory contains the Android Gradle and iOS Xcode/CocoaPods projects.
+- Kept `NATIVEPHP_DEVELOPMENT_TEAM` unset because no Apple team ID was provided and this Intel Mac cannot build the iOS shell.
+- Preserved the fully on-device Laravel, Inertia, Vue, and SQLite architecture with no remote client/server integration.
+
+### Changed Files
+
+- `.gitignore`
+- `config/nativephp.php`
+- `tests/Feature/NativePhpMobileTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No application migration or Composer/npm package was added, removed, or upgraded. NativePHP remains at 3.3.6 on the v3 patch line.
+
+### Verification
+
+- The focused RED run failed on the string build code and missing root ignore rule; after implementation, `php artisan test --compact tests/Feature/NativePhpMobileTest.php` passed with 6 tests and 41 assertions.
+- `php artisan native:install both --force --no-interaction`: passed; Android and iOS shells were regenerated with PHP 8.4.23 and ICU disabled.
+- `zsh -lic 'php artisan native:debug --json --no-interaction'`: passed with NativePHP 3.3.6, PHP 8.4.16, embedded PHP 8.4.23, Android Studio 2026.1.2, Gradle 8.13, Java 17.0.16, CocoaPods 1.17.0, and no optional plugins.
+- `./native version --no-interaction`, `native:plugin:validate`, and `native:plugin:list --all`: passed.
+- Browser smoke check for `http://xiaomi-mimo.test`: passed with HTTP 200 at the final `/login` URL before any native launch.
+- Scoped Pint and Larastan for the NativePHP files passed with zero errors.
+- `composer validate --strict --no-check-publish`, `composer audit --no-interaction`, and `npm audit --omit=dev`: passed with no known dependency vulnerabilities.
+- `php artisan test --compact`: passed, 148 tests and 659 assertions.
+- `npm run build`: passed; Vite emitted only the existing optional `fontaine` notice.
+- Scoped `git diff --check` passed.
+- Full Larastan remains red with 364 existing application errors; the installation files are clean.
+- Full Vue type checking remains red with 9 existing errors, full ESLint with 72 existing errors, and full resource Prettier verification with 13 existing files; this installation phase introduced none of them.
+
+### Known Limitations
+
+- iOS compilation remains unavailable on this Intel Mac because NativePHP Mobile 3 requires Apple silicon and full Xcode; no Apple development team ID was supplied.
+- ICU remains disabled because neither the production dependency contract nor application source requires PHP `intl`; rerun the installer with `--with-icu` if that changes.
+- Native build, run, device launch, emulator launch, and watch commands were not auto-run, per the installed NativePHP project guidance.
+
+### Git Delivery
+
+Commit and push status will be recorded after verification. Unrelated staged and unstaged work remains excluded.
