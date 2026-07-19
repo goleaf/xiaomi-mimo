@@ -22,6 +22,7 @@ use App\Models\Workspace;
 use App\Services\TodoFilterService;
 use App\Services\TodoSortService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -78,13 +79,42 @@ class TodoController extends Controller
 
         return Inertia::render('tasks/Show', [
             'todo' => new TodoResource($todo),
+            'labels' => [
+                'editTask' => __('tasks.edit_task'),
+                'cancel' => __('tasks.cancel'),
+                'saveChanges' => __('tasks.save_changes'),
+                'saving' => __('tasks.saving'),
+                'title' => __('tasks.title'),
+                'description' => __('tasks.description'),
+                'descriptionPlaceholder' => __('tasks.description_placeholder'),
+                'status' => __('tasks.status'),
+                'priority' => __('tasks.priority'),
+                'dueDate' => __('tasks.due_date'),
+                'updated' => __('tasks.updated'),
+                'statuses' => [
+                    'pending' => __('tasks.statuses.pending'),
+                    'inProgress' => __('tasks.statuses.in_progress'),
+                    'completed' => __('tasks.statuses.completed'),
+                ],
+                'priorities' => [
+                    'none' => __('tasks.priorities.none'),
+                    'low' => __('tasks.priorities.low'),
+                    'medium' => __('tasks.priorities.medium'),
+                    'high' => __('tasks.priorities.high'),
+                    'urgent' => __('tasks.priorities.urgent'),
+                ],
+            ],
         ]);
     }
 
-    public function update(UpdateTodoRequest $request, Todo $todo, UpdateTodo $action): JsonResponse
+    public function update(UpdateTodoRequest $request, Todo $todo, UpdateTodo $action): JsonResponse|RedirectResponse
     {
         $this->authorize('update', $todo);
         $todo = $action->handle($todo, $request->validated());
+
+        if (! $request->expectsJson()) {
+            return back();
+        }
 
         return response()->json(['todo' => new TodoResource($todo)]);
     }

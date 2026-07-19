@@ -1,39 +1,109 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { router } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import {
     ArrowLeft,
     Calendar,
     User,
-    CheckSquare,
     MessageSquare,
-    Paperclip,
     Clock,
+    LoaderCircle,
+    Pencil,
 } from '@lucide/vue';
 import { ref, computed } from 'vue';
+import { update as updateTodo } from '@/actions/App/Http/Controllers/TodoController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/composables/useToast';
-import type {
-    Todo,
-    Comment as TodoComment,
-    Checklist,
-    ChecklistItem,
-    Label,
-    Tag,
-    Attachment,
-} from '@/types/models';
+import type { Todo, TodoPriority, TodoStatus } from '@/types/models';
 
-const props = defineProps<{ todo: { data: Todo } }>();
+interface TaskShowLabels {
+    editTask: string;
+    cancel: string;
+    saveChanges: string;
+    saving: string;
+    title: string;
+    description: string;
+    descriptionPlaceholder: string;
+    status: string;
+    priority: string;
+    dueDate: string;
+    updated: string;
+    statuses: {
+        pending: string;
+        inProgress: string;
+        completed: string;
+    };
+    priorities: {
+        none: string;
+        low: string;
+        medium: string;
+        high: string;
+        urgent: string;
+    };
+}
+
+const props = defineProps<{
+    todo: { data: Todo };
+    labels: TaskShowLabels;
+}>();
 const toast = useToast();
 const todo = computed(() => props.todo.data);
 
+const editing = ref(false);
 const newComment = ref('');
 const newChecklistName = ref('');
 const newChecklistItemContent = ref('');
+const editForm = useForm({
+    title: todo.value.title,
+    description: todo.value.description ?? '',
+    status: todo.value.status as TodoStatus,
+    priority: todo.value.priority as TodoPriority,
+    due_date: todo.value.due_date ?? '',
+});
+
+function startEditing() {
+    editForm.defaults({
+        title: todo.value.title,
+        description: todo.value.description ?? '',
+        status: todo.value.status,
+        priority: todo.value.priority,
+        due_date: todo.value.due_date ?? '',
+    });
+    editForm.resetAndClearErrors();
+    editing.value = true;
+}
+
+function cancelEditing() {
+    editForm.resetAndClearErrors();
+    editing.value = false;
+}
+
+function submitEdit() {
+    editForm
+        .transform((data) => ({
+            ...data,
+            description: data.description.trim() || null,
+            due_date: data.due_date || null,
+        }))
+        .submit(updateTodo(todo.value), {
+            preserveScroll: true,
+            onSuccess: () => {
+                editForm.defaults();
+                editing.value = false;
+                toast.success(props.labels.updated);
+            },
+        });
+}
 
 function toggleComplete() {
     const routeName =
@@ -45,8 +115,8 @@ function toggleComplete() {
 
 function addComment() {
     if (!newComment.value.trim()) {
-return;
-}
+        return;
+    }
 
     router.post(
         route('comments.store', todo.value.id),
@@ -62,8 +132,8 @@ return;
 
 function addChecklist() {
     if (!newChecklistName.value.trim()) {
-return;
-}
+        return;
+    }
 
     router.post(
         route('checklists.store', todo.value.id),
@@ -79,8 +149,8 @@ return;
 
 function addChecklistItem(checklistId: string) {
     if (!newChecklistItemContent.value.trim()) {
-return;
-}
+        return;
+    }
 
     router.post(
         route('checklistItems.store', checklistId),
@@ -107,8 +177,8 @@ function goBack() {
 }
 function formatDate(date: string | null): string {
     if (!date) {
-return 'Not set';
-}
+        return 'Not set';
+    }
 
     return new Date(date).toLocaleDateString('en-US', {
         month: 'short',
@@ -116,14 +186,15 @@ return 'Not set';
         year: 'numeric',
     });
 }
-const priorityBadge = (p: string) =>
-    ({
-        urgent: 'destructive',
-        high: 'destructive',
-        medium: 'secondary',
-        low: 'outline',
-        none: 'outline',
-    })[p] ?? 'outline';
+function priorityBadge(
+    priority: TodoPriority,
+): 'destructive' | 'secondary' | 'outline' {
+    if (priority === 'urgent' || priority === 'high') {
+        return 'destructive';
+    }
+
+    return priority === 'medium' ? 'secondary' : 'outline';
+}
 </script>
 
 <template>
@@ -149,6 +220,10 @@ const priorityBadge = (p: string) =>
                     >
                 </div>
             </div>
+            <Button v-if="!editing" variant="outline" @click="startEditing">
+                <Pencil class="h-4 w-4" />
+                {{ labels.editTask }}
+            </Button>
             <Button
                 :variant="todo.status === 'completed' ? 'outline' : 'default'"
                 @click="toggleComplete"
@@ -156,6 +231,154 @@ const priorityBadge = (p: string) =>
                 {{ todo.status === 'completed' ? 'Reopen' : 'Complete' }}
             </Button>
         </div>
+
+        <Card v-if="editing">
+            <CardHeader>
+                <CardTitle class="text-base">{{ labels.editTask }}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <form class="space-y-4" @submit.prevent="submitEdit">
+                    <div class="space-y-2">
+                        <Label for="task-title">{{ labels.title }}</Label>
+                        <Input
+                            id="task-title"
+                            v-model="editForm.title"
+                            maxlength="500"
+                            autofocus
+                        />
+                        <p
+                            v-if="editForm.errors.title"
+                            class="text-sm text-destructive"
+                        >
+                            {{ editForm.errors.title }}
+                        </p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <Label for="task-description">{{
+                            labels.description
+                        }}</Label>
+                        <textarea
+                            id="task-description"
+                            v-model="editForm.description"
+                            rows="4"
+                            :placeholder="labels.descriptionPlaceholder"
+                            class="flex min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:bg-input/30 dark:aria-invalid:ring-destructive/40"
+                        />
+                        <p
+                            v-if="editForm.errors.description"
+                            class="text-sm text-destructive"
+                        >
+                            {{ editForm.errors.description }}
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div class="space-y-2">
+                            <Label>{{ labels.status }}</Label>
+                            <Select v-model="editForm.status">
+                                <SelectTrigger class="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="pending">{{
+                                        labels.statuses.pending
+                                    }}</SelectItem>
+                                    <SelectItem value="in_progress">{{
+                                        labels.statuses.inProgress
+                                    }}</SelectItem>
+                                    <SelectItem value="completed">{{
+                                        labels.statuses.completed
+                                    }}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <p
+                                v-if="editForm.errors.status"
+                                class="text-sm text-destructive"
+                            >
+                                {{ editForm.errors.status }}
+                            </p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label>{{ labels.priority }}</Label>
+                            <Select v-model="editForm.priority">
+                                <SelectTrigger class="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">{{
+                                        labels.priorities.none
+                                    }}</SelectItem>
+                                    <SelectItem value="low">{{
+                                        labels.priorities.low
+                                    }}</SelectItem>
+                                    <SelectItem value="medium">{{
+                                        labels.priorities.medium
+                                    }}</SelectItem>
+                                    <SelectItem value="high">{{
+                                        labels.priorities.high
+                                    }}</SelectItem>
+                                    <SelectItem value="urgent">{{
+                                        labels.priorities.urgent
+                                    }}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <p
+                                v-if="editForm.errors.priority"
+                                class="text-sm text-destructive"
+                            >
+                                {{ editForm.errors.priority }}
+                            </p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label for="task-due-date">{{
+                                labels.dueDate
+                            }}</Label>
+                            <Input
+                                id="task-due-date"
+                                v-model="editForm.due_date"
+                                type="date"
+                            />
+                            <p
+                                v-if="editForm.errors.due_date"
+                                class="text-sm text-destructive"
+                            >
+                                {{ editForm.errors.due_date }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap justify-end gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            :disabled="editForm.processing"
+                            @click="cancelEditing"
+                        >
+                            {{ labels.cancel }}
+                        </Button>
+                        <Button
+                            type="submit"
+                            :disabled="
+                                editForm.processing || !editForm.title.trim()
+                            "
+                        >
+                            <LoaderCircle
+                                v-if="editForm.processing"
+                                class="h-4 w-4 animate-spin"
+                            />
+                            {{
+                                editForm.processing
+                                    ? labels.saving
+                                    : labels.saveChanges
+                            }}
+                        </Button>
+                    </div>
+                </form>
+            </CardContent>
+        </Card>
 
         <!-- Metadata -->
         <div class="grid grid-cols-2 gap-4">

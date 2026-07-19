@@ -11,7 +11,7 @@ class UpdateTodo
         $fillable = collect($data)->only([
             'project_id', 'assigned_to', 'title', 'description', 'status',
             'priority', 'due_date', 'start_date', 'estimated_time', 'spent_time',
-        ])->filter()->toArray();
+        ])->toArray();
 
         $todo->update($fillable);
 

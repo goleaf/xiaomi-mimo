@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
@@ -40,6 +41,55 @@ test('user can update todo', function () {
 
     $response->assertOk();
     $this->assertDatabaseHas('todos', ['id' => $todo->id, 'title' => 'Updated Title']);
+});
+
+test('task detail form update redirects back to the task page', function () {
+    [$user, $workspace] = createAuthenticatedWorkspace();
+    $todo = Todo::factory()->create(['workspace_id' => $workspace->id]);
+
+    $response = $this->actingAs($user)
+        ->from(route('todos.show', $todo))
+        ->put(route('todos.update', $todo), [
+            'title' => 'Updated from task detail',
+        ]);
+
+    $response->assertRedirect(route('todos.show', $todo));
+    expect($todo->refresh()->title)->toBe('Updated from task detail');
+});
+
+test('user can clear optional task fields', function () {
+    [$user, $workspace] = createAuthenticatedWorkspace();
+    $todo = Todo::factory()->create([
+        'workspace_id' => $workspace->id,
+        'description' => 'Remove this description',
+        'due_date' => now()->addWeek()->toDateString(),
+    ]);
+
+    $this->actingAs($user)
+        ->putJson(route('todos.update', $todo), [
+            'description' => null,
+            'due_date' => null,
+        ])
+        ->assertOk();
+
+    $todo->refresh();
+
+    expect($todo->description)->toBeNull()
+        ->and($todo->due_date)->toBeNull();
+});
+
+test('task detail page provides localized editing labels', function () {
+    [$user, $workspace] = createAuthenticatedWorkspace();
+    $todo = Todo::factory()->create(['workspace_id' => $workspace->id]);
+
+    $this->actingAs($user)
+        ->get(route('todos.show', $todo))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('tasks/Show')
+            ->where('labels.editTask', 'Edit task')
+            ->where('labels.saveChanges', 'Save changes')
+        );
 });
 
 test('user can complete todo', function () {
