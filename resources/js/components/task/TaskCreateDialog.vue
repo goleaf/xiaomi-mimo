@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
-import { useToast } from '@/composables/useToast';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -12,13 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from '@/components/ui/dialog';
+import { useToast } from '@/composables/useToast';
 
 const props = defineProps<{
     open: boolean;
@@ -56,10 +56,16 @@ watch(
 );
 
 function submit() {
-    if (!form.value.title.trim()) return;
+    if (!form.value.title.trim()) {
+        return;
+    }
+
     const data = { ...form.value };
-    if (!data.is_recurring || data.recurring_rule === 'none')
+
+    if (!data.is_recurring || data.recurring_rule === 'none') {
         delete data.recurring_rule;
+    }
+
     delete data.is_recurring;
 
     router.post(route('todos.store', props.workspaceId), data, {

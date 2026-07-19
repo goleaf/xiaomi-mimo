@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { useToast } from '@/composables/useToast';
-import { Button } from '@/components/ui/button';
 import { CheckCircle2, Archive, Trash2, X } from '@lucide/vue';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/composables/useToast';
 
 const props = defineProps<{
     selectedIds: string[];

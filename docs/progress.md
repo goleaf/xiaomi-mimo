@@ -1033,3 +1033,43 @@ No migration or Composer/npm package change is planned.
 ### Git Delivery
 
 Commit message: `fix: remove dead frontend bindings`. Push to `origin main` will be attempted immediately after the isolated commit. Unrelated worktree changes remain excluded.
+
+## ESLint Cleanup Batch 2: Task UI Control Flow
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Normalize imports in four task UI components according to the repository's configured group ordering.
+- Make conditional control flow explicit with braces and required statement separation.
+- Remove the unused Inertia router import from the filter bar instead of suppressing the finding.
+- Preserve component behavior and avoid whole-file formatting.
+
+### Changed Files
+
+- `resources/js/components/task/BulkActions.vue`
+- `resources/js/components/task/RecurringBadge.vue`
+- `resources/js/components/task/TaskCreateDialog.vue`
+- `resources/js/components/task/TaskFilterBar.vue`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change is planned.
+
+### Verification
+
+- `npm run lint:check` resolved all 25 findings in the four targeted task UI components. The repository total moved from 62 to 22 while concurrent calendar work removed 17 additional findings and concurrent project work introduced two type-import findings.
+- `npm run build` passed; Vite emitted only the existing optional `fontaine` notice.
+- Scoped `git diff --check` passed.
+
+### Known Limitations
+
+- The remaining ESLint findings are intentionally deferred to later small batches.
+- Concurrent localization, workspace-page, calendar, project, and task-board work remains outside this batch.
+
+### Git Delivery
+
+Commit message: `fix: normalize task UI control flow`. Push to `origin main` will be attempted immediately after the isolated commit. Unrelated worktree changes remain excluded.

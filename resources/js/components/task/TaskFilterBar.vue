@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { Search, SlidersHorizontal, X } from '@lucide/vue';
 import { ref } from 'vue';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -9,8 +10,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Search, X, SlidersHorizontal } from '@lucide/vue';
 
 const props = defineProps<{
     filters: Record<string, string>;
@@ -26,9 +25,19 @@ const showAdvanced = ref(false);
 
 function applyFilters() {
     const filters: Record<string, string> = {};
-    if (searchQuery.value) filters.search = searchQuery.value;
-    if (statusFilter.value !== 'all') filters.status = statusFilter.value;
-    if (priorityFilter.value !== 'all') filters.priority = priorityFilter.value;
+
+    if (searchQuery.value) {
+        filters.search = searchQuery.value;
+    }
+
+    if (statusFilter.value !== 'all') {
+        filters.status = statusFilter.value;
+    }
+
+    if (priorityFilter.value !== 'all') {
+        filters.priority = priorityFilter.value;
+    }
+
     emit('update', filters);
 }
 

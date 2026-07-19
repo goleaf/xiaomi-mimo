@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { Badge } from '@/components/ui/badge';
 import { Repeat } from '@lucide/vue';
+import { Badge } from '@/components/ui/badge';
 
 defineProps<{ rule: string | null }>();
 
 function formatRule(rule: string): string {
-    if (!rule) return '';
+    if (!rule) {
+        return '';
+    }
+
     const map: Record<string, string> = {
         'FREQ=DAILY': 'Daily',
         'FREQ=WEEKLY': 'Weekly',
@@ -15,6 +18,7 @@ function formatRule(rule: string): string {
         'FREQ=WEEKLY;INTERVAL=2': 'Every 2 weeks',
         'FREQ=MONTHLY;INTERVAL=2': 'Every 2 months',
     };
+
     return map[rule] ?? rule.replace('FREQ=', '').split(';')[0].toLowerCase();
 }
 </script>
