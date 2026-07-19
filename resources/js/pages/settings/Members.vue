@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, setLayoutProps, useForm } from '@inertiajs/vue3';
 import {
     LoaderCircle,
     LockKeyhole,
@@ -9,7 +9,6 @@ import {
     Trash2,
     UserCog,
     UserPlus,
-    UsersRound,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import {
@@ -44,6 +43,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/composables/useToast';
+import type { SettingsLayoutProps } from '@/types';
 
 type WorkspaceRole = 'owner' | 'admin' | 'member';
 
@@ -118,6 +118,26 @@ const removeForm = useForm({});
 const managerCount = computed(
     () => props.members.filter((member) => member.role !== 'member').length,
 );
+
+setLayoutProps<SettingsLayoutProps>({
+    settingsEyebrow: props.copy.eyebrow,
+    settingsTitle: props.copy.title.replace(':workspace', props.workspace.name),
+    settingsDescription: props.copy.description,
+    settingsMetrics: [
+        {
+            label: props.copy.total_members,
+            value: props.members.length,
+            icon: 'users',
+            tone: 'orange',
+        },
+        {
+            label: props.copy.managers,
+            value: managerCount.value,
+            icon: 'shield',
+            tone: 'emerald',
+        },
+    ],
+});
 
 const filteredMembers = computed(() => {
     const query = searchQuery.value.trim().toLocaleLowerCase(props.locale);
@@ -209,73 +229,6 @@ function removeMember(): void {
     <Head :title="copy.page_title" />
 
     <div class="space-y-6 pb-8">
-        <section
-            class="relative overflow-hidden rounded-2xl border bg-card shadow-sm"
-        >
-            <div
-                class="pointer-events-none absolute -top-20 -right-16 size-56 rounded-full border bg-muted/55"
-                aria-hidden="true"
-            />
-            <div
-                class="pointer-events-none absolute top-8 -right-2 size-24 rounded-full border bg-background/70"
-                aria-hidden="true"
-            />
-
-            <div
-                class="relative grid gap-6 p-5 sm:p-7 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end"
-            >
-                <div class="max-w-2xl space-y-4">
-                    <div
-                        class="flex size-11 items-center justify-center rounded-xl border bg-background shadow-xs"
-                    >
-                        <UsersRound class="size-5" aria-hidden="true" />
-                    </div>
-                    <div class="space-y-2">
-                        <p
-                            class="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase"
-                        >
-                            {{ copy.eyebrow }}
-                        </p>
-                        <h1
-                            class="max-w-xl text-2xl font-semibold tracking-tight sm:text-3xl"
-                        >
-                            {{
-                                copy.title.replace(':workspace', workspace.name)
-                            }}
-                        </h1>
-                        <p
-                            class="max-w-xl text-sm leading-6 text-muted-foreground sm:text-base"
-                        >
-                            {{ copy.description }}
-                        </p>
-                    </div>
-                </div>
-
-                <dl class="grid grid-cols-2 gap-2 sm:min-w-72">
-                    <div
-                        class="rounded-xl border bg-background/80 p-4 backdrop-blur-sm"
-                    >
-                        <dt class="text-xs text-muted-foreground">
-                            {{ copy.total_members }}
-                        </dt>
-                        <dd class="mt-1 text-2xl font-semibold tabular-nums">
-                            {{ members.length }}
-                        </dd>
-                    </div>
-                    <div
-                        class="rounded-xl border bg-background/80 p-4 backdrop-blur-sm"
-                    >
-                        <dt class="text-xs text-muted-foreground">
-                            {{ copy.managers }}
-                        </dt>
-                        <dd class="mt-1 text-2xl font-semibold tabular-nums">
-                            {{ managerCount }}
-                        </dd>
-                    </div>
-                </dl>
-            </div>
-        </section>
-
         <div
             class="grid items-start gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.75fr)]"
         >

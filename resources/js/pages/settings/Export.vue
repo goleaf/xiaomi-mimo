@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, setLayoutProps } from '@inertiajs/vue3';
 import { Download, Upload } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,11 +12,18 @@ import {
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { exportMethod, importMethod } from '@/routes';
+import type { SettingsLayoutProps } from '@/types';
 import type { Workspace } from '@/types/models';
 
 const props = defineProps<{ workspace: Workspace }>();
 const toast = useToast();
 const { t } = useUi();
+
+setLayoutProps<SettingsLayoutProps>({
+    settingsEyebrow: t('account.menu.settings'),
+    settingsTitle: t('settings.export.title'),
+    settingsDescription: t('settings.export.description'),
+});
 
 function exportData(format: string) {
     window.location.href = exportMethod([props.workspace.id, format]).url;
@@ -47,15 +54,6 @@ function handleImport(event: Event, format: string) {
 <template>
     <Head :title="t('settings.export.title')" />
     <div class="space-y-6">
-        <div>
-            <h2 class="text-lg font-semibold">
-                {{ t('settings.export.title') }}
-            </h2>
-            <p class="text-sm text-muted-foreground">
-                {{ t('settings.export.description') }}
-            </p>
-        </div>
-
         <Card>
             <CardHeader>
                 <CardTitle>{{ t('settings.export.export_title') }}</CardTitle>

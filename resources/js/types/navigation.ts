@@ -37,3 +37,18 @@ export type SidebarNavigation = {
     projects: Project[];
     labels: SidebarNavigationLabels;
 };
+
+export type SettingsHeaderMetric = {
+    label: string;
+    value: string | number;
+    icon: 'shield' | 'users';
+    tone?: 'orange' | 'blue' | 'emerald' | 'slate';
+};
+
+export type SettingsLayoutProps = {
+    navigationLabel?: string;
+    settingsEyebrow?: string;
+    settingsTitle?: string;
+    settingsDescription?: string;
+    settingsMetrics?: SettingsHeaderMetric[];
+};

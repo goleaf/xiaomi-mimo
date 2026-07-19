@@ -48,7 +48,7 @@ defineProps<{
 
         <div
             v-if="$slots.metrics"
-            class="relative grid divide-y border-t border-border/70 bg-muted/25 sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+            class="relative grid divide-y border-t border-border/70 bg-muted/25 sm:auto-cols-fr sm:grid-flow-col sm:divide-x sm:divide-y-0"
         >
             <slot name="metrics" />
         </div>

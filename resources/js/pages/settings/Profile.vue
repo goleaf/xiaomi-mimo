@@ -9,7 +9,6 @@ import {
     updateAvatar,
 } from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
-import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -25,8 +24,9 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { useInitials } from '@/composables/useInitials';
 import { useToast } from '@/composables/useToast';
+import { useUi } from '@/composables/useUi';
 import { send as sendVerification } from '@/routes/verification';
-import type { BreadcrumbItem } from '@/types';
+import type { BreadcrumbItem, SettingsLayoutProps } from '@/types';
 
 type ProfileLabels = {
     title: string;
@@ -85,10 +85,13 @@ const props = defineProps<{
     labels: ProfileLabels;
 }>();
 
-setLayoutProps<{
-    breadcrumbs: BreadcrumbItem[];
-    navigationLabel: string;
-}>({
+const { t } = useUi();
+
+setLayoutProps<
+    SettingsLayoutProps & {
+        breadcrumbs: BreadcrumbItem[];
+    }
+>({
     breadcrumbs: [
         {
             title: props.labels.title,
@@ -96,6 +99,9 @@ setLayoutProps<{
         },
     ],
     navigationLabel: props.labels.navigation_label,
+    settingsEyebrow: t('account.menu.settings'),
+    settingsTitle: props.labels.title,
+    settingsDescription: props.labels.description,
 });
 
 const toast = useToast();
@@ -188,8 +194,6 @@ onBeforeUnmount(clearAvatarPreview);
     <Head :title="labels.title" />
 
     <div class="max-w-4xl space-y-6">
-        <Heading :title="labels.title" :description="labels.description" />
-
         <Card>
             <CardHeader>
                 <div class="flex items-start gap-3">

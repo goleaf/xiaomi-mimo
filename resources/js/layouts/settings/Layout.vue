@@ -3,14 +3,18 @@ import { Link, usePage } from '@inertiajs/vue3';
 import {
     User,
     Shield,
+    ShieldCheck,
     Bell,
     Download,
     Users,
+    UsersRound,
     Database,
     Globe,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import { edit as editProfile } from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
+import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { useUi } from '@/composables/useUi';
 import { edit as editBackup } from '@/routes/backup';
 import { edit as editExport } from '@/routes/export';
@@ -18,12 +22,13 @@ import { edit as editMembers } from '@/routes/members';
 import { edit as editNotifications } from '@/routes/notifications';
 import { edit as editPreferences } from '@/routes/preferences';
 import { edit as editSecurity } from '@/routes/security';
+import type { SettingsLayoutProps } from '@/types';
 
 const page = usePage();
 const currentUrl = computed(() => page.url);
 const { t } = useUi();
 
-defineProps<{ navigationLabel?: string }>();
+const props = defineProps<SettingsLayoutProps>();
 
 const navItems = computed(() => [
     {
@@ -62,16 +67,55 @@ const navItems = computed(() => [
         icon: Database,
     },
 ]);
+
+const activeNavItem = computed(() =>
+    navItems.value.find((item) => currentUrl.value.startsWith(item.href)),
+);
+
+const pageEyebrow = computed(
+    () => props.settingsEyebrow ?? t('account.menu.settings'),
+);
+const pageTitle = computed(
+    () =>
+        props.settingsTitle ??
+        activeNavItem.value?.label ??
+        t('account.menu.settings'),
+);
+const pageDescription = computed(() => props.settingsDescription ?? '');
+
+const metricIcons = {
+    shield: ShieldCheck,
+    users: UsersRound,
+};
 </script>
 
 <template>
     <main class="min-h-full bg-muted/20 px-4 py-5 sm:p-6 lg:p-8">
-        <div class="mx-auto max-w-[1480px]">
+        <div class="mx-auto max-w-[1480px] space-y-6">
+            <WorkspacePageHeader
+                :eyebrow="pageEyebrow"
+                :title="pageTitle"
+                :description="pageDescription"
+            >
+                <template v-if="settingsMetrics?.length" #metrics>
+                    <WorkspaceMetric
+                        v-for="metric in settingsMetrics"
+                        :key="`${metric.label}-${metric.value}`"
+                        :label="metric.label"
+                        :value="metric.value"
+                        :icon="metricIcons[metric.icon]"
+                        :tone="metric.tone"
+                    />
+                </template>
+            </WorkspacePageHeader>
+
             <div
                 class="flex flex-col gap-6 rounded-[1.5rem] border border-border/80 bg-card p-4 shadow-[0_20px_60px_-52px_rgba(15,23,42,0.6)] sm:p-6 lg:flex-row lg:gap-8"
             >
                 <nav
-                    :aria-label="navigationLabel ?? t('account.menu.settings')"
+                    :aria-label="
+                        props.navigationLabel ?? t('account.menu.settings')
+                    "
                     class="-mx-1 flex gap-1 overflow-x-auto rounded-xl bg-muted/55 p-1 lg:mx-0 lg:w-52 lg:shrink-0 lg:flex-col lg:self-start lg:overflow-visible"
                 >
                     <Link

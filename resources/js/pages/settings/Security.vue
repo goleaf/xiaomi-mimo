@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, setLayoutProps, useForm } from '@inertiajs/vue3';
 import { Shield } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +15,7 @@ import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { disable, enable } from '@/routes/two-factor';
 import { update as updatePasswordRoute } from '@/routes/user-password';
+import type { SettingsLayoutProps } from '@/types';
 
 defineProps<{
     user: { id: string; two_factor_enabled?: boolean };
@@ -22,6 +23,12 @@ defineProps<{
 
 const toast = useToast();
 const { t } = useUi();
+
+setLayoutProps<SettingsLayoutProps>({
+    settingsEyebrow: t('account.menu.settings'),
+    settingsTitle: t('settings.security.title'),
+    settingsDescription: t('settings.security.description'),
+});
 
 const passwordForm = useForm({
     current_password: '',
@@ -58,15 +65,6 @@ function disable2FA() {
 <template>
     <Head :title="t('settings.security.title')" />
     <div class="space-y-6">
-        <div>
-            <h2 class="text-lg font-semibold">
-                {{ t('settings.security.title') }}
-            </h2>
-            <p class="text-sm text-muted-foreground">
-                {{ t('settings.security.description') }}
-            </p>
-        </div>
-
         <Card>
             <CardHeader>
                 <CardTitle>{{

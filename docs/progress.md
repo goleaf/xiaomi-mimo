@@ -1486,3 +1486,58 @@ The ESLint and formatting work attributable to this conversation is present on `
 6. `de61ce9` — `docs: record frontend formatting cleanup`
 
 This handoff is committed and pushed separately. Commits from interleaved workspace, localization, data-transfer, and design phases are current-state evidence but are not claimed as part of the ESLint/formatting commit chain.
+
+## UI Phase: Projects-Style Settings Shell
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Audit every reachable Inertia page against `/projects` at desktop, mobile, and dark-mode breakpoints.
+- Promote the shared Warm Precision project header into the persistent settings layout so every settings route uses the same page hierarchy, orange rail, decorative geometry, spacing, and responsive behavior.
+- Remove duplicate local settings headings while preserving page actions, workspace metrics, accessibility, translations, and existing form behavior.
+
+### Changed Files
+
+- `resources/css/app.css`
+- `resources/js/components/shared/WorkspacePageHeader.vue`
+- `resources/js/layouts/settings/Layout.vue`
+- `resources/js/pages/calendar/Index.vue`
+- `resources/js/pages/settings/Backup.vue`
+- `resources/js/pages/settings/Export.vue`
+- `resources/js/pages/settings/Members.vue`
+- `resources/js/pages/settings/Notifications.vue`
+- `resources/js/pages/settings/Preferences.vue`
+- `resources/js/pages/settings/Profile.vue`
+- `resources/js/pages/settings/Security.vue`
+- `resources/js/types/navigation.ts`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change is planned.
+
+### Verification
+
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `php artisan test --compact tests/Feature/FrontendDesignTest.php`: passed, 17 tests and 56 assertions.
+- `php artisan test --compact`: passed, 207 tests and 1,216 assertions.
+- `npm run lint:check`: passed with zero ESLint errors or warnings.
+- `npm run format:check`: passed for all files under `resources/`.
+- `npm run build`: passed; Vite transformed 3,358 modules and generated the production bundle. The existing optional `fontaine` notice remains non-blocking.
+- Browser verification passed for all 13 reachable authenticated list/settings routes at a 390 px viewport, with zero horizontal overflow and no console or page errors. Desktop settings headers match the `/projects` header width and structure; dark mode and the guest login, registration, and password-reset-entry routes were also verified.
+- `npm run types:check`: remains blocked only by the unrelated pre-existing `resources/js/composables/useAutosave.ts` import of a non-exported `debounce` member from `@vueuse/core`.
+- `vendor/bin/phpstan analyse --no-progress`: retains the pre-existing application-wide backlog of 327 errors; this frontend-only phase added no PHP source changes.
+
+### Known Limitations
+
+- The existing Vue type-check and Larastan baselines listed above remain outside this visual phase.
+- The security settings route requires an independent recent password-confirmation session; its shared shell is covered by the same layout implementation, source test, production build, and auth-shell browser verification.
+- The optional `fontaine` build notice was not changed because it requires a dependency or build-configuration decision outside this phase.
+
+### Git Delivery
+
+The implementation commit and this final delivery record are pending push to `origin main`.

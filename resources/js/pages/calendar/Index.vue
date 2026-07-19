@@ -271,7 +271,7 @@ function statusLabel(status: TodoStatus): string {
     <Head :title="copy.calendar.title" />
 
     <main class="min-h-full bg-muted/20 px-4 py-5 sm:p-6 lg:p-8">
-        <div class="mx-auto flex max-w-[1540px] flex-col gap-6">
+        <div class="mx-auto flex max-w-[1480px] flex-col gap-6">
             <WorkspacePageHeader
                 :eyebrow="copy.common.workspace_intelligence"
                 :title="copy.calendar.title"

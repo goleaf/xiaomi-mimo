@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, setLayoutProps, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { update } from '@/routes/preferences';
+import type { SettingsLayoutProps } from '@/types';
 import type { UserPreference } from '@/types/models';
 
 const props = defineProps<{ preferences: UserPreference }>();
 const toast = useToast();
 const { t } = useUi();
+
+setLayoutProps<SettingsLayoutProps>({
+    settingsEyebrow: t('account.menu.settings'),
+    settingsTitle: t('settings.notifications.title'),
+    settingsDescription: t('settings.notifications.description'),
+});
 
 const form = useForm({
     notification_email: props.preferences.notification_email,
@@ -28,14 +35,6 @@ function submit() {
 <template>
     <Head :title="t('settings.notifications.title')" />
     <div class="space-y-6">
-        <div>
-            <h2 class="text-lg font-semibold">
-                {{ t('settings.notifications.title') }}
-            </h2>
-            <p class="text-sm text-muted-foreground">
-                {{ t('settings.notifications.description') }}
-            </p>
-        </div>
         <form @submit.prevent="submit">
             <Card>
                 <CardContent class="space-y-4 pt-6">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, setLayoutProps, useForm } from '@inertiajs/vue3';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,11 +20,18 @@ import {
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { update } from '@/routes/preferences';
+import type { SettingsLayoutProps } from '@/types';
 import type { UserPreference } from '@/types/models';
 
 const props = defineProps<{ preferences: UserPreference }>();
 const toast = useToast();
 const { t } = useUi();
+
+setLayoutProps<SettingsLayoutProps>({
+    settingsEyebrow: t('account.menu.settings'),
+    settingsTitle: t('settings.preferences.title'),
+    settingsDescription: t('settings.preferences.description'),
+});
 
 const form = useForm({
     timezone: props.preferences.timezone,
@@ -60,15 +67,6 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
 <template>
     <Head :title="t('settings.preferences.title')" />
     <div class="space-y-6">
-        <div>
-            <h2 class="text-lg font-semibold">
-                {{ t('settings.preferences.title') }}
-            </h2>
-            <p class="text-sm text-muted-foreground">
-                {{ t('settings.preferences.description') }}
-            </p>
-        </div>
-
         <Card>
             <CardHeader>
                 <CardTitle>{{

@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, setLayoutProps } from '@inertiajs/vue3';
 import { Download, RotateCcw } from '@lucide/vue';
 import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
     Card,
+    CardAction,
     CardContent,
     CardHeader,
     CardTitle,
@@ -17,10 +18,17 @@ import {
     download,
     restore,
 } from '@/routes/backup';
+import type { SettingsLayoutProps } from '@/types';
 
 const toast = useToast();
 const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
 const creating = ref(false);
+
+setLayoutProps<SettingsLayoutProps>({
+    settingsEyebrow: t('account.menu.settings'),
+    settingsTitle: t('settings.backup.title'),
+    settingsDescription: t('settings.backup.description'),
+});
 
 interface Backup {
     filename: string;
@@ -89,25 +97,6 @@ function formatDate(timestamp: number): string {
 <template>
     <Head :title="t('settings.navigation.backup')" />
     <div class="space-y-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-lg font-semibold">
-                    {{ t('settings.backup.title') }}
-                </h2>
-                <p class="text-sm text-muted-foreground">
-                    {{ t('settings.backup.description') }}
-                </p>
-            </div>
-            <Button @click="createBackup" :disabled="creating">
-                <Download class="mr-2 h-4 w-4" />
-                {{
-                    creating
-                        ? t('settings.backup.creating')
-                        : t('settings.backup.create')
-                }}
-            </Button>
-        </div>
-
         <Card>
             <CardHeader>
                 <CardTitle>{{ t('settings.backup.list_title') }}</CardTitle>
@@ -116,6 +105,16 @@ function formatDate(timestamp: number): string {
                         count: formatNumber(backups.length),
                     })
                 }}</CardDescription>
+                <CardAction>
+                    <Button @click="createBackup" :disabled="creating">
+                        <Download class="size-4" aria-hidden="true" />
+                        {{
+                            creating
+                                ? t('settings.backup.creating')
+                                : t('settings.backup.create')
+                        }}
+                    </Button>
+                </CardAction>
             </CardHeader>
             <CardContent>
                 <div
