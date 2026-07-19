@@ -105,6 +105,38 @@ test('feature dialogs use the shared projects style dialog surface', function (s
     'remove member' => 'pages/settings/Members.vue',
 ]);
 
+test('active create dialogs reuse shared controls for processing states', function (string $file) {
+    expect(File::get(resource_path("js/components/{$file}")))
+        ->toContain("import { Spinner } from '@/components/ui/spinner'")
+        ->toContain('<Spinner v-if="form.processing" />')
+        ->toContain('size="lg"')
+        ->not->toContain('class="h-11 rounded-xl"')
+        ->not->toContain('bg-orange-600 text-white hover:bg-orange-700');
+})->with([
+    'project create' => 'project/ProjectCreateDialog.vue',
+    'task create' => 'task/TaskCreateDialog.vue',
+]);
+
+test('project creation selectors expose warm precision interaction states', function () {
+    expect(File::get(resource_path('js/components/project/ProjectCreateDialog.vue')))
+        ->toContain(':aria-invalid="Boolean(form.errors.description)"')
+        ->toContain('border-orange-500/50 bg-orange-500/[0.08] shadow-sm')
+        ->toContain('motion-reduce:transition-none')
+        ->toContain(':disabled="form.processing"');
+});
+
+test('task creation fields expose complete invalid and disabled states', function () {
+    expect(File::get(resource_path('js/components/task/TaskCreateDialog.vue')))
+        ->toContain(':aria-invalid="Boolean(form.errors.description)"')
+        ->toContain(':aria-invalid="Boolean(form.errors.priority)"')
+        ->toContain(':aria-invalid="Boolean(form.errors.due_date)"')
+        ->toContain('form.errors.recurring_rule')
+        ->toContain(':disabled="!form.is_recurring || form.processing"')
+        ->toContain('<InputError :message="form.errors.priority" />')
+        ->toContain('<InputError :message="form.errors.due_date" />')
+        ->toContain('<InputError :message="form.errors.recurring_rule" />');
+});
+
 test('destructive actions use application confirmations instead of browser dialogs', function (string $file) {
     expect(File::get(resource_path("js/{$file}")))
         ->toContain('WorkspaceConfirmDialog')

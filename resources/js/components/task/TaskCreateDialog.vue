@@ -15,6 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { store } from '@/routes/todos';
@@ -92,8 +93,8 @@ async function submit(): Promise<void> {
                         id="title"
                         v-model="form.title"
                         :placeholder="t('tasks.create.title_placeholder')"
-                        class="h-11 rounded-xl"
                         autofocus
+                        :disabled="form.processing"
                         :aria-invalid="Boolean(form.errors.title)"
                         @input="form.clearErrors('title')"
                     />
@@ -107,17 +108,27 @@ async function submit(): Promise<void> {
                         id="description"
                         v-model="form.description"
                         :placeholder="t('tasks.create.description_placeholder')"
-                        class="h-11 rounded-xl"
+                        :disabled="form.processing"
+                        :aria-invalid="Boolean(form.errors.description)"
+                        @input="form.clearErrors('description')"
                     />
                     <InputError :message="form.errors.description" />
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="space-y-2">
-                        <Label>{{ t('tasks.create.priority') }}</Label>
-                        <Select v-model="form.priority">
-                            <SelectTrigger class="h-11 rounded-xl"
-                                ><SelectValue
-                            /></SelectTrigger>
+                        <Label for="task-priority">{{
+                            t('tasks.create.priority')
+                        }}</Label>
+                        <Select
+                            v-model="form.priority"
+                            :disabled="form.processing"
+                        >
+                            <SelectTrigger
+                                id="task-priority"
+                                :aria-invalid="Boolean(form.errors.priority)"
+                            >
+                                <SelectValue />
+                            </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="none">{{
                                     t('tasks.priorities.none')
@@ -136,6 +147,7 @@ async function submit(): Promise<void> {
                                 }}</SelectItem>
                             </SelectContent>
                         </Select>
+                        <InputError :message="form.errors.priority" />
                     </div>
                     <div class="space-y-2">
                         <Label for="due_date">{{
@@ -145,18 +157,25 @@ async function submit(): Promise<void> {
                             id="due_date"
                             v-model="form.due_date"
                             type="date"
-                            class="h-11 rounded-xl"
+                            :disabled="form.processing"
+                            :aria-invalid="Boolean(form.errors.due_date)"
                         />
+                        <InputError :message="form.errors.due_date" />
                     </div>
                 </div>
                 <div class="space-y-2">
-                    <Label>{{ t('tasks.create.repeat') }}</Label>
+                    <Label for="task-recurring-rule">{{
+                        t('tasks.create.repeat')
+                    }}</Label>
                     <Select
                         v-model="form.recurring_rule"
-                        :disabled="!form.is_recurring"
+                        :disabled="!form.is_recurring || form.processing"
                     >
-                        <SelectTrigger class="h-11 rounded-xl"
-                            ><SelectValue
+                        <SelectTrigger
+                            id="task-recurring-rule"
+                            :aria-invalid="Boolean(form.errors.recurring_rule)"
+                        >
+                            <SelectValue
                                 :placeholder="
                                     form.is_recurring
                                         ? t(
@@ -164,7 +183,8 @@ async function submit(): Promise<void> {
                                           )
                                         : t('tasks.create.no_repeat')
                                 "
-                        /></SelectTrigger>
+                            />
+                        </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="none">{{
                                 t('tasks.create.no_repeat')
@@ -189,6 +209,7 @@ async function submit(): Promise<void> {
                             }}</SelectItem>
                         </SelectContent>
                     </Select>
+                    <InputError :message="form.errors.recurring_rule" />
                     <div
                         class="mt-3 flex min-h-11 items-center gap-3 rounded-xl border border-border/70 bg-muted/25 px-3.5"
                     >
@@ -196,6 +217,7 @@ async function submit(): Promise<void> {
                             id="task-is-recurring"
                             :model-value="form.is_recurring"
                             class="size-4.5 data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
+                            :disabled="form.processing"
                             @update:model-value="
                                 form.is_recurring = Boolean($event)
                             "
@@ -214,16 +236,13 @@ async function submit(): Promise<void> {
                     <Button
                         type="button"
                         variant="outline"
-                        class="min-h-11 cursor-pointer rounded-xl"
+                        size="lg"
                         :disabled="form.processing"
                         @click="emit('close')"
                         >{{ t('common.actions.cancel') }}</Button
                     >
-                    <Button
-                        type="submit"
-                        class="min-h-11 cursor-pointer rounded-xl bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-orange-500"
-                        :disabled="form.processing"
-                    >
+                    <Button type="submit" size="lg" :disabled="form.processing">
+                        <Spinner v-if="form.processing" />
                         {{
                             form.processing
                                 ? t('tasks.create.creating')

@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useWorkspaceUi } from '@/composables/useWorkspaceUi';
 import { store as projectStore } from '@/routes/projects';
@@ -161,9 +162,9 @@ async function submit(): Promise<void> {
                         id="project-name"
                         v-model="form.name"
                         :placeholder="copy.projects.name_placeholder"
-                        class="h-11 rounded-xl"
                         autocomplete="off"
                         autofocus
+                        :disabled="form.processing"
                         :aria-invalid="Boolean(form.errors.name)"
                         @input="form.clearErrors('name')"
                     />
@@ -178,7 +179,9 @@ async function submit(): Promise<void> {
                         id="project-description"
                         v-model="form.description"
                         :placeholder="copy.projects.description_placeholder"
-                        class="h-11 rounded-xl"
+                        :disabled="form.processing"
+                        :aria-invalid="Boolean(form.errors.description)"
+                        @input="form.clearErrors('description')"
                     />
                     <InputError :message="form.errors.description" />
                 </div>
@@ -192,12 +195,13 @@ async function submit(): Promise<void> {
                             v-for="color in colors"
                             :key="color"
                             type="button"
-                            class="flex size-11 cursor-pointer items-center justify-center rounded-xl border transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none motion-reduce:transform-none"
+                            class="flex size-11 cursor-pointer items-center justify-center rounded-xl border transition-[background-color,border-color,box-shadow,transform] hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transform-none motion-reduce:transition-none"
                             :class="
                                 form.color === color
-                                    ? 'border-foreground/40 bg-muted'
-                                    : 'border-border bg-background'
+                                    ? 'border-orange-500/50 bg-orange-500/[0.08] shadow-sm'
+                                    : 'border-border/80 bg-background hover:border-orange-500/25 hover:bg-orange-500/[0.04]'
                             "
+                            :disabled="form.processing"
                             :aria-label="color"
                             :aria-pressed="form.color === color"
                             @click="form.color = color"
@@ -222,11 +226,12 @@ async function submit(): Promise<void> {
                             :key="option.value"
                             type="button"
                             :class="[
-                                'flex min-h-12 cursor-pointer items-center justify-center rounded-xl border transition-colors focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none',
+                                'flex min-h-12 cursor-pointer items-center justify-center rounded-xl border transition-[background-color,border-color,box-shadow,color] focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none',
                                 form.icon === option.value
-                                    ? 'border-orange-500/40 bg-orange-500/10 text-orange-700 dark:text-orange-300'
-                                    : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
+                                    ? 'border-orange-500/50 bg-orange-500/10 text-orange-700 shadow-sm dark:text-orange-300'
+                                    : 'border-border/80 bg-background text-muted-foreground hover:border-orange-500/25 hover:bg-orange-500/[0.04] hover:text-foreground',
                             ]"
+                            :disabled="form.processing"
                             :aria-label="option.label"
                             :aria-pressed="form.icon === option.value"
                             :title="option.label"
@@ -248,17 +253,14 @@ async function submit(): Promise<void> {
                     <Button
                         type="button"
                         variant="outline"
-                        class="min-h-11 cursor-pointer rounded-xl"
+                        size="lg"
                         :disabled="form.processing"
                         @click="emit('close')"
                     >
                         {{ copy.projects.cancel }}
                     </Button>
-                    <Button
-                        type="submit"
-                        class="min-h-11 cursor-pointer rounded-xl bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-orange-500"
-                        :disabled="form.processing"
-                    >
+                    <Button type="submit" size="lg" :disabled="form.processing">
+                        <Spinner v-if="form.processing" />
                         {{
                             form.processing
                                 ? copy.projects.creating
