@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('activity_logs', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->uuid('workspace_id')->nullable()->constrained()->nullOnDelete();
+            $table->uuid('user_id')->nullable();
+            $table->uuid('workspace_id')->nullable();
             $table->string('subject_type');
             $table->uuid('subject_id');
             $table->string('event');

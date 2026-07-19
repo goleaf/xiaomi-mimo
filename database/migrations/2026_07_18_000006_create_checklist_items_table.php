@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('checklist_items', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('checklist_id')->constrained()->cascadeOnDelete();
+            $table->uuid('checklist_id');
             $table->string('content');
             $table->boolean('is_checked')->default(false);
             $table->unsignedInteger('position')->default(0);

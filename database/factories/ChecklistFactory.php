@@ -5,6 +5,9 @@ namespace Database\Factories;
 use App\Models\Checklist;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Checklist>
+ */
 class ChecklistFactory extends Factory
 {
     protected $model = Checklist::class;

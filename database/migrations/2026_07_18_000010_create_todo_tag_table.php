@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('todo_tag', function (Blueprint $table) {
-            $table->uuid('todo_id')->constrained()->cascadeOnDelete();
-            $table->uuid('tag_id')->constrained()->cascadeOnDelete();
+            $table->uuid('todo_id');
+            $table->uuid('tag_id');
             $table->primary(['todo_id', 'tag_id']);
 
             $table->index('tag_id');

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('workspace_id')->constrained()->cascadeOnDelete();
+            $table->uuid('workspace_id');
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('color')->default('#6366f1');

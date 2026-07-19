@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
-            $table->uuid('owner_id')->constrained('users')->cascadeOnDelete();
+            $table->uuid('owner_id');
             $table->timestamps();
         });
     }

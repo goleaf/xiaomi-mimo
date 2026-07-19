@@ -75,7 +75,6 @@ class TodoSeeder extends Seeder
                 'status' => $data['status'],
                 'priority' => $data['priority'],
                 'due_date' => $data['due_date'] ?? null,
-                'start_date' => $data['start_date'] ?? null,
                 'estimated_time' => $data['estimated_time'] ?? null,
                 'spent_time' => $data['spent_time'] ?? null,
                 'completed_at' => $data['completed_at'] ?? null,

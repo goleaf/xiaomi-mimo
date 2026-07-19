@@ -6,6 +6,9 @@ use App\Enums\WorkspaceRole;
 use App\Models\WorkspaceMember;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<WorkspaceMember>
+ */
 class WorkspaceMemberFactory extends Factory
 {
     protected $model = WorkspaceMember::class;

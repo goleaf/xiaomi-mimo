@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('reminders', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('todo_id')->constrained()->cascadeOnDelete();
-            $table->uuid('user_id')->constrained()->cascadeOnDelete();
+            $table->uuid('todo_id');
+            $table->uuid('user_id');
             $table->timestamp('reminded_at');
             $table->boolean('is_sent')->default(false);
             $table->string('type')->default('in_app');

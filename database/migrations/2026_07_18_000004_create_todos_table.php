@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('todos', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('project_id')->nullable()->constrained()->nullOnDelete();
-            $table->uuid('workspace_id')->constrained()->cascadeOnDelete();
-            $table->uuid('assigned_to')->nullable()->constrained('users')->nullOnDelete();
+            $table->uuid('project_id')->nullable();
+            $table->uuid('workspace_id');
+            $table->uuid('assigned_to')->nullable();
             $table->uuid('parent_id')->nullable();
             $table->string('title');
             $table->text('description')->nullable();

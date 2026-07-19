@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('workspace_members', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('workspace_id')->constrained()->cascadeOnDelete();
-            $table->uuid('user_id')->constrained()->cascadeOnDelete();
+            $table->uuid('workspace_id');
+            $table->uuid('user_id');
             $table->string('role')->default('member');
             $table->timestamps();
 

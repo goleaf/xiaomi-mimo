@@ -8,6 +8,9 @@ use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @extends Factory<ActivityLog>
+ */
 class ActivityLogFactory extends Factory
 {
     protected $model = ActivityLog::class;
@@ -38,7 +41,7 @@ class ActivityLogFactory extends Factory
     {
         return $this->state(fn () => [
             'subject_type' => get_class($subject),
-            'subject_id' => $subject->id,
+            'subject_id' => (string) $subject->getKey(),
         ]);
     }
 
@@ -47,6 +50,7 @@ class ActivityLogFactory extends Factory
         return $this->state(fn () => ['event' => $event]);
     }
 
+    /** @param array<string, mixed> $properties */
     public function withProperties(array $properties): static
     {
         return $this->state(fn () => ['properties' => $properties]);

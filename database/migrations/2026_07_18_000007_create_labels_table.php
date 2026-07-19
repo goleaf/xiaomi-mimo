@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('labels', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('workspace_id')->constrained()->cascadeOnDelete();
+            $table->uuid('workspace_id');
             $table->string('name');
             $table->string('color')->default('#6366f1');
             $table->timestamps();

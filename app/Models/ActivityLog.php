@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use App\Concerns\HasUuid;
+use Database\Factories\ActivityLogFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class ActivityLog extends Model
 {
-    use HasUuid;
+    /** @use HasFactory<ActivityLogFactory> */
+    use HasFactory, HasUuid;
 
     protected $fillable = ['user_id', 'workspace_id', 'subject_type', 'subject_id', 'event', 'properties'];
 

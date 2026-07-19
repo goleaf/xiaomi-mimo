@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
-
 use App\Models\Tag;
-use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Tag>
+ */
 class TagFactory extends Factory
 {
     protected $model = Tag::class;

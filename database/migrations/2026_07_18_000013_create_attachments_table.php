@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('attachments', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('todo_id')->constrained()->cascadeOnDelete();
-            $table->uuid('user_id')->constrained()->cascadeOnDelete();
+            $table->uuid('todo_id');
+            $table->uuid('user_id');
             $table->string('filename');
             $table->string('path');
             $table->string('mime_type');

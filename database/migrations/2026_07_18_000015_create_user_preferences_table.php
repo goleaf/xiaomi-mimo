@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('user_preferences', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id')->unique()->constrained()->cascadeOnDelete();
+            $table->uuid('user_id')->unique();
             $table->string('timezone')->default('UTC');
             $table->string('language')->default('en');
             $table->string('date_format')->default('Y-m-d');

@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
-
 use App\Models\Label;
-use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Label>
+ */
 class LabelFactory extends Factory
 {
     protected $model = Label::class;

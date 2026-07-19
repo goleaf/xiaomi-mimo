@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('checklists', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('todo_id')->constrained()->cascadeOnDelete();
+            $table->uuid('todo_id');
             $table->string('name');
             $table->unsignedInteger('position')->default(0);
             $table->timestamps();

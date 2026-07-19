@@ -5,6 +5,9 @@ namespace Database\Factories;
 use App\Models\UserPreference;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<UserPreference>
+ */
 class UserPreferenceFactory extends Factory
 {
     protected $model = UserPreference::class;
@@ -13,7 +16,7 @@ class UserPreferenceFactory extends Factory
     {
         return [
             'user_id' => UserFactory::new(),
-            'timezone' => fake()->timezoneAbbr(),
+            'timezone' => fake()->timezone(),
             'language' => 'en',
             'date_format' => 'Y-m-d',
             'time_format' => 'H:i',

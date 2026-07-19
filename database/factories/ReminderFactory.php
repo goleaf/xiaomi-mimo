@@ -6,6 +6,9 @@ use App\Enums\ReminderType;
 use App\Models\Reminder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Reminder>
+ */
 class ReminderFactory extends Factory
 {
     protected $model = Reminder::class;

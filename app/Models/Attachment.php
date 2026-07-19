@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Concerns\HasUuid;
+use Database\Factories\AttachmentFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +21,8 @@ use Illuminate\Support\Facades\Storage;
  */
 class Attachment extends Model
 {
-    use HasUuid;
+    /** @use HasFactory<AttachmentFactory> */
+    use HasFactory, HasUuid;
 
     protected $fillable = ['todo_id', 'user_id', 'filename', 'path', 'mime_type', 'size'];
 

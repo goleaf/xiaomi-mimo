@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Concerns\HasUuid;
+use Database\Factories\UserPreferenceFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserPreference extends Model
 {
-    use HasUuid;
+    /** @use HasFactory<UserPreferenceFactory> */
+    use HasFactory, HasUuid;
 
     protected $fillable = [
         'user_id', 'timezone', 'language', 'date_format', 'time_format',
