@@ -2589,4 +2589,6 @@ No migration or Composer/npm package change is planned.
 
 - Implementation commit: `8027849` (`fix: unify page header action states`).
 - Implementation push: successful to `origin/main`.
-- Documentation commit and push are pending.
+- Documentation commit: `15b9f40` (`docs: record page header action unification`).
+- Documentation push: successful to `origin/main`.
+- This final delivery record is committed and pushed separately so the phase commits remain focused.
