@@ -1,0 +1,46 @@
+<?php
+
+return [
+    'profile' => [
+        'title' => 'Profilis',
+        'description' => 'Tvarkykite asmeninę informaciją ir paskyros nuotrauką.',
+        'avatar' => [
+            'title' => 'Profilio nuotrauka',
+            'description' => 'Ši nuotrauka rodoma paskyros meniu ir visoje darbo erdvėje.',
+            'alt' => ':name profilio nuotrauka',
+            'choose' => 'Pasirinkti nuotrauką',
+            'change' => 'Keisti nuotrauką',
+            'remove' => 'Pašalinti nuotrauką',
+            'upload' => 'Išsaugoti nuotrauką',
+            'uploading' => 'Nuotrauka įkeliama…',
+            'help' => 'JPG, PNG arba WebP. Iki 2 MB ir 4096 × 4096 pikselių.',
+            'uploaded' => 'Profilio nuotrauka atnaujinta.',
+            'removed' => 'Profilio nuotrauka pašalinta.',
+        ],
+        'personal' => [
+            'title' => 'Asmeninė informacija',
+            'description' => 'Atnaujinkite paskyros vardą ir el. pašto adresą.',
+            'name' => 'Vardas',
+            'email' => 'El. pašto adresas',
+            'save' => 'Išsaugoti pakeitimus',
+            'saving' => 'Saugoma…',
+            'saved' => 'Profilis atnaujintas.',
+            'email_unverified' => 'Jūsų el. pašto adresas nepatvirtintas.',
+            'resend_verification' => 'Siųsti patvirtinimo laišką dar kartą',
+            'verification_sent' => 'Nauja patvirtinimo nuoroda išsiųsta jūsų el. pašto adresu.',
+        ],
+        'delete' => [
+            'title' => 'Ištrinti paskyrą',
+            'description' => 'Ištrinkite paskyrą ir visus jos išteklius.',
+            'warning_title' => 'Įspėjimas',
+            'warning_description' => 'Būkite atsargūs. Šio veiksmo atšaukti negalima.',
+            'trigger' => 'Ištrinti paskyrą',
+            'dialog_title' => 'Ar tikrai norite ištrinti paskyrą?',
+            'dialog_description' => 'Ištrynus paskyrą visi jos ištekliai ir duomenys bus pašalinti visam laikui. Įveskite slaptažodį, kad patvirtintumėte.',
+            'password' => 'Slaptažodis',
+            'password_placeholder' => 'Įveskite slaptažodį',
+            'cancel' => 'Atšaukti',
+            'confirm' => 'Ištrinti paskyrą',
+        ],
+    ],
+];

@@ -1,0 +1,46 @@
+<?php
+
+return [
+    'profile' => [
+        'title' => 'Profile',
+        'description' => 'Manage your personal information and account photo.',
+        'avatar' => [
+            'title' => 'Profile photo',
+            'description' => 'This photo appears in your account menu and throughout the workspace.',
+            'alt' => ':name profile photo',
+            'choose' => 'Choose photo',
+            'change' => 'Change photo',
+            'remove' => 'Remove photo',
+            'upload' => 'Save photo',
+            'uploading' => 'Uploading photo…',
+            'help' => 'JPG, PNG, or WebP. Maximum 2 MB and 4096 × 4096 pixels.',
+            'uploaded' => 'Profile photo updated.',
+            'removed' => 'Profile photo removed.',
+        ],
+        'personal' => [
+            'title' => 'Personal information',
+            'description' => 'Update the name and email address used for your account.',
+            'name' => 'Name',
+            'email' => 'Email address',
+            'save' => 'Save changes',
+            'saving' => 'Saving…',
+            'saved' => 'Profile updated.',
+            'email_unverified' => 'Your email address is not verified.',
+            'resend_verification' => 'Resend verification email',
+            'verification_sent' => 'A new verification link has been sent to your email address.',
+        ],
+        'delete' => [
+            'title' => 'Delete account',
+            'description' => 'Delete your account and all of its resources.',
+            'warning_title' => 'Warning',
+            'warning_description' => 'Proceed with caution. This action cannot be undone.',
+            'trigger' => 'Delete account',
+            'dialog_title' => 'Are you sure you want to delete your account?',
+            'dialog_description' => 'Once your account is deleted, all of its resources and data will be permanently deleted. Enter your password to confirm.',
+            'password' => 'Password',
+            'password_placeholder' => 'Enter your password',
+            'cancel' => 'Cancel',
+            'confirm' => 'Delete account',
+        ],
+    ],
+];
