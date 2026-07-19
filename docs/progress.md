@@ -1050,7 +1050,9 @@ No migration or Composer/npm dependency was added, removed, or upgraded. The exi
 
 ### Git Delivery
 
-The isolated commit uses `fix: localize frontend and reset task state` and will be pushed directly to `origin main`. Only this phase's files and attributable hunks are included; unrelated staged and unstaged work remains preserved.
+- Commit `350d19d` (`fix: localize frontend and reset task state`) contains only this phase's implementation, tests, configuration, and attributable progress entry.
+- Push to `origin main` succeeded (`9791310..350d19d`).
+- Unrelated staged and unstaged data-transfer, attachment, runtime, and design work remains preserved outside this phase.
 
 ## ESLint Cleanup Batch 1: Dead Frontend Bindings
 
