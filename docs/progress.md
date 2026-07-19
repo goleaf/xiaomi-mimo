@@ -2369,5 +2369,6 @@ No migration or Composer/npm package change was made.
 
 - Implementation commit: `8078d03` (`fix: align authentication action states`).
 - Implementation push: successful to `origin/main`.
-- Documentation commit: pending.
-- Documentation push: pending.
+- Documentation commit: `cf90e7b` (`docs: record authentication action unification`).
+- Documentation push: successful to `origin/main`.
+- This final delivery record is committed and pushed separately so the phase commits remain focused.
