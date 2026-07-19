@@ -400,3 +400,54 @@ No migration or Composer/npm package was added, removed, or upgraded. NativePHP 
 - Commit `825197b` (`chore: reconcile NativePHP configuration guide`) contains only the example environment, NativePHP configuration, focused test, and phase progress files.
 - Push to `origin main` succeeded (`65dc904..825197b`).
 - Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
+## NativePHP Mobile 3 Development Guide Reconciliation
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Reconciled the installed NativePHP Mobile 3 development workflow with the official development guide and the existing Laravel 13, Inertia 3, Vue 3, and Vite 8 application.
+- Confirmed `nativephpMobile()` and `nativephpHotFile()` are wired into Vite, with dedicated `build:ios` and `build:android` scripts using the required platform modes.
+- Confirmed Axios is a direct production dependency and Inertia 3 is explicitly configured with `axiosAdapter()`, allowing NativePHP's build-time Axios interception to route requests through the embedded PHP runtime.
+- Added `database` to the NativePHP hot-reload paths while retaining application, route, configuration, resource, and public asset watching.
+- Added `/public/ios-hot` and `/public/android-hot` to the root ignore rules alongside `/public/hot` so platform-specific Vite development state cannot be committed.
+- Confirmed `NATIVEPHP_APP_VERSION=DEBUG` remains active for development re-extraction and the installed `native:run`, `native:open`, and `native:watch` commands expose the documented platform and watch options.
+- Avoided speculative `System::isIos()` or `System::isAndroid()` branches because the application currently has no platform-specific behavior.
+- Preserved the self-contained on-device Laravel and SQLite architecture without adding a production remote client/server dependency; Vite networking remains development-only HMR.
+
+### Changed Files
+
+- `.gitignore`
+- `config/nativephp.php`
+- `tests/Feature/NativePhpMobileTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package was added, removed, or upgraded. Axios and all required NativePHP/Vite/Inertia packages were already installed.
+
+### Verification
+
+- The focused development test failed first because `database` was absent from the hot-reload paths, then `php artisan test --compact tests/Feature/NativePhpMobileTest.php` passed with 8 tests and 108 assertions.
+- `php artisan config:show nativephp.hot_reload` confirmed the complete effective watch and exclusion lists.
+- `php artisan help native:run --format=json`, `native:open`, and `native:watch` confirmed the installed command contracts without launching a build, IDE, device, or watcher.
+- `zsh -lic 'php artisan native:debug --json --no-interaction'` passed with NativePHP 3.3.6, embedded PHP 8.4.23, Android Studio 2026.1.2, Gradle 8.13, Java 17.0.16, CocoaPods 1.17.0, and no Xcode; plugin validation passed with no installed plugins.
+- Scoped Pint and Larastan for the NativePHP configuration files passed with zero errors.
+- `composer validate --strict --no-check-publish`, `composer audit --no-interaction`, and `npm audit --omit=dev` passed with no known dependency vulnerabilities.
+- `php artisan test --compact` passed with 150 tests and 726 assertions.
+- `npm run build` passed; Vite emitted only the existing optional `fontaine` notice.
+- Scoped `git diff --check` passed.
+- Full Larastan remains red with 364 existing application errors; the NativePHP configuration file is clean.
+- Full Vue type checking remains red with 9 existing errors, full ESLint with 72 existing errors, and full resource Prettier verification with 13 existing files; none is in a development-phase file.
+
+### Known Limitations
+
+- Native iOS development remains unavailable on this Intel Mac because full Xcode and Apple silicon are absent; the configured Android toolchain is available.
+- Platform-mode frontend builds, native compilation, IDE launch, device/emulator launch, and long-running watchers were not auto-run, per the installed NativePHP project guidance.
+- Real-device HMR requires the device and development workstation to share a network; this is development tooling only and is not an application runtime dependency.
+
+### Git Delivery
+
+Commit and push results are pending. Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.

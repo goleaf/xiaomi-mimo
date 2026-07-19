@@ -370,9 +370,10 @@ return [
     'hot_reload' => [
         'watch_paths' => [
             'app',
-            'resources',
             'routes',
             'config',
+            'database',
+            'resources',
             'public',
         ],
 

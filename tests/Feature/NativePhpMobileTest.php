@@ -156,6 +156,50 @@ test('the NativePHP v3 mobile configuration contract is complete', function () {
         );
 });
 
+test('the NativePHP v3 development workflow is configured', function () {
+    $applicationEntryPoint = file_get_contents(resource_path('js/app.ts'));
+    $environmentExample = file_get_contents(base_path('.env.example'));
+    $gitIgnore = file_get_contents(base_path('.gitignore'));
+    $package = json_decode(
+        file_get_contents(base_path('package.json')),
+        true,
+        flags: JSON_THROW_ON_ERROR,
+    );
+    $viteConfiguration = file_get_contents(base_path('vite.config.ts'));
+
+    expect(config('nativephp.version'))->toBe('DEBUG')
+        ->and($environmentExample)->toContain('NATIVEPHP_APP_VERSION=DEBUG')
+        ->and($package['dependencies'])->toHaveKey('axios')
+        ->and($package['scripts']['build:ios'])->toBe('vite build --mode=ios')
+        ->and($package['scripts']['build:android'])->toBe('vite build --mode=android')
+        ->and($viteConfiguration)->toContain(
+            'nativephpHotFile',
+            'nativephpMobile',
+            'hotFile: nativephpHotFile()',
+            'nativephpMobile()',
+        )
+        ->and($applicationEntryPoint)->toContain(
+            "import { axiosAdapter } from '@inertiajs/core';",
+            'http: axiosAdapter()',
+        )
+        ->and(config('nativephp.hot_reload.watch_paths'))->toContain(
+            'app',
+            'routes',
+            'config',
+            'database',
+            'public',
+        )
+        ->and($gitIgnore)->toContain(
+            '/public/ios-hot',
+            '/public/android-hot',
+        )
+        ->and(Artisan::all())->toHaveKeys([
+            'native:open',
+            'native:run',
+            'native:watch',
+        ]);
+});
+
 test('the NativePHP installer values are configured', function () {
     $composer = json_decode(
         file_get_contents(base_path('composer.json')),

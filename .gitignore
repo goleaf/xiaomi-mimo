@@ -4,6 +4,8 @@
 /node_modules
 /public/build
 /public/fonts-manifest.dev.json
+/public/ios-hot
+/public/android-hot
 /public/hot
 /public/storage
 /storage/*.key
