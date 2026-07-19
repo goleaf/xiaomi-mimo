@@ -191,10 +191,16 @@ return [
     */
 
     'cleanup_exclude_files' => [
+        '.agents',
+        '.github',
+        '.mimocode',
+        'credentials',
+        'docs',
         'storage/framework/sessions',
         'storage/framework/cache',
         'storage/framework/testing',
         'storage/logs/laravel.log',
+        'tests',
     ],
 
     /*
@@ -249,7 +255,7 @@ return [
         |          'dark'  - Dark icons
         |
         */
-        'status_bar_style' => 'auto',
+        'status_bar_style' => env('NATIVEPHP_ANDROID_STATUS_BAR_STYLE', 'auto'),
 
         /*
         |--------------------------------------------------------------------------
@@ -327,7 +333,7 @@ return [
         'ws_port' => env('NATIVEPHP_WS_PORT', 8081),
 
         // Service name advertised on the network
-        'service_name' => env('NATIVEPHP_SERVICE_NAME', 'NativePHP Server'),
+        'service_name' => env('NATIVEPHP_SERVICE_NAME', 'Xiaomi Mimo'),
 
         // Service type for mDNS advertisement
         'service_type' => '_http._tcp',

@@ -346,3 +346,55 @@ No application migration or Composer/npm package was added, removed, or upgraded
 - Commit `0366361` (`chore: reconcile NativePHP installation guide`) contains only the root ignore rule, NativePHP build-code configuration, focused installation tests, and phase progress.
 - Push to `origin main` succeeded (`c04d7a3..0366361`).
 - Unrelated staged sidebar, navigation, task, project, export, planning, and shared model/middleware work remains excluded and preserved.
+## NativePHP Mobile 3 Configuration Guide Reconciliation
+
+### Status
+
+Completed.
+
+### Completed Work
+
+- Reconciled the effective NativePHP Mobile 3 configuration with the official configuration guide and the installed 3.3.6 package implementation.
+- Kept the stable reverse-DNS app ID, debug development version, numeric build code, root start path, persistent runtime, SQLite storage, portrait-first phone orientation, and iPad support disabled.
+- Documented the optional deep-link, Apple team, App Store Connect, Android status-bar, and local development-server environment variables without inventing production hosts or credentials.
+- Made Android status-bar behavior environment-configurable with the documented `auto` default and named the local discovery service `Xiaomi Mimo`.
+- Excluded `.agents`, `.github`, `.mimocode`, credentials, documentation, tests, transient framework state, and logs from packaged Laravel bundles while retaining required runtime and built frontend files.
+- Confirmed the Android SDK invariant `compile_sdk >= target_sdk >= min_sdk`, conservative release optimization defaults, automatic system-theme status icons, and local-only hot-reload contract.
+- Confirmed no optional NativePHP plugin is installed, so app-level permission descriptions and localizations remain empty until a plugin-backed device feature requires them.
+- Preserved a self-contained Laravel, Inertia, Vue, and SQLite application with no remote client/server dependency.
+
+### Changed Files
+
+- `.env.example`
+- `config/nativephp.php`
+- `tests/Feature/NativePhpMobileTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package was added, removed, or upgraded. NativePHP remains at 3.3.6 on the v3 patch line.
+
+### Verification
+
+- The focused configuration test failed first on missing bundle exclusions, then `php artisan test --compact tests/Feature/NativePhpMobileTest.php` passed with 7 tests and 87 assertions.
+- `php artisan config:show nativephp` confirmed the effective runtime, Android, server, hot-reload, store, iPad, and orientation values.
+- `zsh -lic 'php artisan native:debug --json --no-interaction'` passed with NativePHP 3.3.6, embedded PHP 8.4.23, Android Studio 2026.1.2, Gradle 8.13, Java 17.0.16, CocoaPods 1.17.0, and no optional plugins; Xcode remains unavailable.
+- `php artisan native:plugin:validate --no-interaction` and `php artisan native:plugin:list --all --no-interaction` passed with no installed plugins.
+- Scoped Pint and Larastan for the NativePHP configuration files passed with zero errors.
+- `composer validate --strict --no-check-publish`, `composer audit --no-interaction`, and `npm audit --omit=dev` passed with no known dependency vulnerabilities.
+- `php artisan test --compact` passed with 149 tests and 705 assertions.
+- `npm run build` passed; Vite emitted only the existing optional `fontaine` notice.
+- Scoped `git diff --check` passed.
+- Full Larastan remains red with 364 existing application errors; the NativePHP configuration file is clean.
+- Full Vue type checking remains red with 9 existing errors, full ESLint with 72 existing errors, and full resource Prettier verification with 13 existing files; none is in a configuration-phase file.
+
+### Known Limitations
+
+- Deep links and verified HTTPS hosts remain disabled because no product URL contract was supplied.
+- iOS signing and App Store Connect upload remain unconfigured because no Apple team or API credentials were supplied; iOS compilation is also unavailable on this Intel Mac without full Xcode and Apple silicon.
+- Native permission descriptions remain empty because the application has no optional NativePHP plugin or implemented device permission flow.
+- Native build, run, device launch, emulator launch, and watch commands were not auto-run, per the installed NativePHP project guidance.
+
+### Git Delivery
+
+Commit and push results are pending. Unrelated staged and unstaged sidebar, navigation, task, project, export, profile, members, preferences, and planning work remains excluded and preserved.
