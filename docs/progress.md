@@ -2319,3 +2319,55 @@ No migration or Composer/npm package change was made.
 - Documentation commit: `e3a8462` (`docs: record creation dialog unification`).
 - Documentation push: successful to `origin/main`.
 - This final delivery record is committed and pushed separately so the phase commits remain focused.
+
+## Authentication Action And Validation Unification
+
+### Status
+
+- Completed.
+
+### Scope And Decisions
+
+- Align every active Fortify and passkey action with the 44px shared button rhythm used by the `/projects` creation flows.
+- Add consistent processing guards and shared loading indicators to authentication submissions, including both two-factor challenge modes.
+- Expose validation state through `aria-invalid` on credential, reset, confirmation, OTP, and recovery-code controls.
+- Preserve Fortify routes, request payloads, translations, password rules, passkey behavior, and authentication redirects.
+- Use Inertia's `disable-while-processing` contract to prevent duplicate interaction for every Fortify form while retaining the existing explicit disabled button states.
+- Keep the two-factor challenge behavior unchanged and verify its conditional screen through source contracts because Fortify only renders it during a pending two-factor login.
+
+### Changed Files
+
+- `resources/js/components/PasskeyVerify.vue`
+- `resources/js/pages/auth/*.vue`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Verification
+
+- The focused RED run produced 14 expected failures for missing large actions, processing guards, invalid states, and the passkey action contract.
+- Focused frontend-design coverage passed after implementation with 97 tests and 384 assertions.
+- Full Pest coverage passed with 387 tests and 1,708 assertions.
+- PHPStan passed with 0 errors.
+- Vue TypeScript checking, ESLint, Prettier verification, and the frontend Node test passed.
+- Production build passed after transforming 3,369 modules.
+- Guest route QA covered login, registration, forgot-password, reset-password, and the guarded two-factor route in desktop light and mobile dark modes with HTTP 200 results, zero horizontal overflow, and no console or page errors.
+- Live measurement confirmed 44px email/password inputs, passkey actions, primary authentication actions, and password-confirmation actions.
+- A single invalid demo login safely confirmed the semantic alert and `aria-invalid="true"` state without changing account data; the demo session was then restored successfully.
+- The Boost browser log contained only historical entries from the previously repaired Security screen; the current auth run produced no new log entries.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+
+### Known Limitations And Next Work
+
+- Vite continues to report the existing optional `fontaine` optimization notice; the production build succeeds.
+- Email verification and the two-factor challenge depend on account/session states not created during visual QA; both remain covered by their unchanged Fortify feature tests and the new frontend source contracts.
+
+### Git Delivery
+
+- Implementation commit: `8078d03` (`fix: align authentication action states`).
+- Implementation push: successful to `origin/main`.
+- Documentation commit: pending.
+- Documentation push: pending.
