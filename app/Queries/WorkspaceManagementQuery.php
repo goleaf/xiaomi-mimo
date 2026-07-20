@@ -4,6 +4,8 @@ namespace App\Queries;
 
 use App\Models\Label;
 use App\Models\Tag;
+use App\Models\TaskPriority;
+use App\Models\TaskStatus;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
@@ -62,6 +64,28 @@ class WorkspaceManagementQuery
             ->withCount('todos')
             ->orderBy('name')
             ->limit(Tag::MAX_PER_WORKSPACE)
+            ->get();
+    }
+
+    /** @return Collection<int, TaskStatus> */
+    public function taskStatuses(Workspace $workspace): Collection
+    {
+        return $workspace->taskStatuses()
+            ->with('workspace')
+            ->withCount(['allTodos as todos_count'])
+            ->ordered()
+            ->limit(TaskStatus::MAX_PER_WORKSPACE)
+            ->get();
+    }
+
+    /** @return Collection<int, TaskPriority> */
+    public function taskPriorities(Workspace $workspace): Collection
+    {
+        return $workspace->taskPriorities()
+            ->with('workspace')
+            ->withCount(['allTodos as todos_count'])
+            ->ordered()
+            ->limit(TaskPriority::MAX_PER_WORKSPACE)
             ->get();
     }
 }

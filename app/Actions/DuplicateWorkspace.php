@@ -5,6 +5,8 @@ namespace App\Actions;
 use App\Enums\WorkspaceRole;
 use App\Models\Label;
 use App\Models\Tag;
+use App\Models\TaskPriority;
+use App\Models\TaskStatus;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
@@ -35,6 +37,19 @@ class DuplicateWorkspace
 
             $sourceWorkspace->tags()->get()->each(
                 fn (Tag $tag) => $workspace->tags()->create($tag->only(['name'])),
+            );
+
+            $sourceWorkspace->taskStatuses()->ordered()->get()->each(
+                fn (TaskStatus $status) => $workspace->taskStatuses()->create($status->only([
+                    'key', 'name', 'translation_key', 'color', 'position', 'is_default',
+                    'is_completed', 'is_completion_target', 'is_archived',
+                ])),
+            );
+
+            $sourceWorkspace->taskPriorities()->ordered()->get()->each(
+                fn (TaskPriority $priority) => $workspace->taskPriorities()->create($priority->only([
+                    'key', 'name', 'translation_key', 'color', 'position', 'is_default', 'is_archived',
+                ])),
             );
 
             return $workspace;

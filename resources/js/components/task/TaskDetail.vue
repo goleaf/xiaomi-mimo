@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, useHttp } from '@inertiajs/vue3';
 import { Calendar, CheckCircle2, Trash2, User } from '@lucide/vue';
 import { ref } from 'vue';
 import WorkspaceConfirmDialog from '@/components/shared/WorkspaceConfirmDialog.vue';
@@ -14,6 +14,10 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
+import {
+    safeDefinitionColor,
+    useTaskDefinitions,
+} from '@/composables/useTaskDefinitions';
 import { useTaskDetailState } from '@/composables/useTaskDetailState';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
@@ -21,14 +25,28 @@ import { store as storeChecklistItem, toggle } from '@/routes/checklistItems';
 import { store as storeChecklist } from '@/routes/checklists';
 import { store as storeComment } from '@/routes/comments';
 import { complete, destroy, uncomplete, update } from '@/routes/todos';
-import type { Todo } from '@/types/models';
+import type { TaskDefinitionCatalog, Todo } from '@/types/models';
 
-const props = defineProps<{ todo: Todo; open: boolean }>();
-const emit = defineEmits<{ close: [] }>();
+const props = defineProps<{
+    todo: Todo;
+    open: boolean;
+    taskDefinitions: TaskDefinitionCatalog;
+}>();
+const emit = defineEmits<{ close: []; refresh: []; updated: [todo: Todo] }>();
 const toast = useToast();
 const { formatDate, t } = useUi();
+const { statuses, priorities } = useTaskDefinitions(
+    () => props.taskDefinitions,
+);
 const showDeleteDialog = ref(false);
 const deletingTodo = ref(false);
+const completionRequest = useHttp<Record<string, never>, { todo: Todo }>({});
+const statusRequest = useHttp<{ status: string }, { todo: Todo }>({
+    status: props.todo.status,
+});
+const priorityRequest = useHttp<{ priority: string }, { todo: Todo }>({
+    priority: props.todo.priority,
+});
 const { checklistItemDrafts, checklistName, comment, editingTitle, form } =
     useTaskDetailState(() => props.todo);
 
@@ -37,25 +55,51 @@ function updateTitle() {
         router.put(
             update(props.todo).url,
             { title: form.title },
-            { preserveScroll: true },
+            {
+                preserveScroll: true,
+                onSuccess: () => emit('refresh'),
+            },
         );
     }
 
     editingTitle.value = false;
 }
 
-function toggleComplete() {
-    const target = props.todo.status === 'completed' ? uncomplete : complete;
+async function toggleComplete(): Promise<void> {
+    if (completionRequest.processing) {
+        return;
+    }
 
-    router.post(target(props.todo).url, {}, { preserveScroll: true });
+    const target = props.todo.is_completed ? uncomplete : complete;
+
+    try {
+        const response = await completionRequest.post(target(props.todo).url);
+        emit('updated', response.todo);
+    } catch {
+        toast.error(t('common.errors.generic'));
+    }
 }
 
-function setPriority(priority: string) {
-    router.put(update(props.todo).url, { priority }, { preserveScroll: true });
+async function setPriority(priority: string): Promise<void> {
+    priorityRequest.priority = priority;
+
+    try {
+        const response = await priorityRequest.put(update(props.todo).url);
+        emit('updated', response.todo);
+    } catch {
+        toast.error(t('common.errors.generic'));
+    }
 }
 
-function setStatus(status: string) {
-    router.put(update(props.todo).url, { status }, { preserveScroll: true });
+async function setStatus(status: string): Promise<void> {
+    statusRequest.status = status;
+
+    try {
+        const response = await statusRequest.put(update(props.todo).url);
+        emit('updated', response.todo);
+    } catch {
+        toast.error(t('common.errors.generic'));
+    }
 }
 
 function addComment() {
@@ -70,6 +114,7 @@ function addComment() {
             preserveScroll: true,
             onSuccess: () => {
                 comment.value = '';
+                emit('refresh');
             },
         },
     );
@@ -87,6 +132,7 @@ function addChecklist() {
             preserveScroll: true,
             onSuccess: () => {
                 checklistName.value = '';
+                emit('refresh');
             },
         },
     );
@@ -106,13 +152,21 @@ function addChecklistItem(checklistId: string) {
             preserveScroll: true,
             onSuccess: () => {
                 delete checklistItemDrafts[checklistId];
+                emit('refresh');
             },
         },
     );
 }
 
 function toggleChecklistItem(itemId: string) {
-    router.patch(toggle(itemId).url, {}, { preserveScroll: true });
+    router.patch(
+        toggle(itemId).url,
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => emit('refresh'),
+        },
+    );
 }
 
 function deleteTodo() {
@@ -141,9 +195,6 @@ function displayDate(date: string | null): string {
         year: 'numeric',
     });
 }
-
-const priorityOptions = ['none', 'low', 'medium', 'high', 'urgent'];
-const statusOptions = ['pending', 'in_progress', 'completed'];
 </script>
 
 <template>
@@ -166,7 +217,8 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                 />
                 <div class="relative flex items-center gap-3 pr-10">
                     <Checkbox
-                        :model-value="todo.status === 'completed'"
+                        :model-value="todo.is_completed"
+                        :disabled="completionRequest.processing"
                         class="size-5 data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
                         :aria-label="todo.title"
                         @update:model-value="toggleComplete"
@@ -212,21 +264,22 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                             </p>
                             <div class="flex flex-wrap gap-1.5">
                                 <button
-                                    v-for="status in statusOptions"
-                                    :key="status"
+                                    v-for="status in statuses"
+                                    :key="status.id"
                                     type="button"
                                     class="cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
-                                    :aria-pressed="todo.status === status"
-                                    @click="setStatus(status)"
+                                    :aria-pressed="todo.status === status.key"
+                                    :disabled="statusRequest.processing"
+                                    @click="setStatus(status.key)"
                                 >
                                     <Badge
                                         :variant="
-                                            todo.status === status
+                                            todo.status === status.key
                                                 ? 'default'
                                                 : 'outline'
                                         "
                                     >
-                                        {{ t(`tasks.statuses.${status}`) }}
+                                        {{ status.name }}
                                     </Badge>
                                 </button>
                             </div>
@@ -239,21 +292,29 @@ const statusOptions = ['pending', 'in_progress', 'completed'];
                             </p>
                             <div class="flex flex-wrap gap-1.5">
                                 <button
-                                    v-for="priority in priorityOptions"
-                                    :key="priority"
+                                    v-for="priority in priorities"
+                                    :key="priority.id"
                                     type="button"
                                     class="cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
-                                    :aria-pressed="todo.priority === priority"
-                                    @click="setPriority(priority)"
+                                    :aria-pressed="
+                                        todo.priority === priority.key
+                                    "
+                                    :disabled="priorityRequest.processing"
+                                    @click="setPriority(priority.key)"
                                 >
                                     <Badge
                                         :variant="
-                                            todo.priority === priority
+                                            todo.priority === priority.key
                                                 ? 'default'
                                                 : 'outline'
                                         "
+                                        :style="{
+                                            borderColor: safeDefinitionColor(
+                                                priority.color,
+                                            ),
+                                        }"
                                     >
-                                        {{ t(`tasks.priorities.${priority}`) }}
+                                        {{ priority.name }}
                                     </Badge>
                                 </button>
                             </div>

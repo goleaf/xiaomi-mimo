@@ -30,6 +30,22 @@ test('user can create comment on todo', function () {
     $this->assertDatabaseHas('comments', ['todo_id' => $todo->id, 'body' => 'This is a comment', 'user_id' => $user->id]);
 });
 
+test('inertia comment mutations redirect back so task relations refresh', function () {
+    [$user, $workspace, $todo] = createAuthenticatedTodoWithWorkspace();
+    $taskUrl = route('todos.show', $todo);
+
+    $this->actingAs($user)
+        ->from($taskUrl)
+        ->post(route('comments.store', $todo), ['body' => 'Inline comment'])
+        ->assertRedirect($taskUrl);
+
+    $this->assertDatabaseHas('comments', [
+        'todo_id' => $todo->id,
+        'body' => 'Inline comment',
+        'user_id' => $user->id,
+    ]);
+});
+
 test('user can update own comment', function () {
     [$user, $workspace, $todo] = createAuthenticatedTodoWithWorkspace();
     $comment = Comment::factory()->create(['todo_id' => $todo->id, 'user_id' => $user->id]);

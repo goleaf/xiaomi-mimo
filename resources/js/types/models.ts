@@ -94,8 +94,52 @@ export interface Project {
     updated_at: string;
 }
 
-export type TodoStatus = 'pending' | 'in_progress' | 'completed';
-export type TodoPriority = 'none' | 'low' | 'medium' | 'high' | 'urgent';
+export type TodoStatus = string;
+export type TodoPriority = string;
+
+export interface TaskStatusDefinition {
+    id: string;
+    workspace_id: string;
+    key: string;
+    name: string;
+    color: string;
+    position: number;
+    is_default: boolean;
+    is_completed: boolean;
+    is_completion_target: boolean;
+    is_archived: boolean;
+    todos_count?: number;
+    permissions?: {
+        update: boolean;
+        delete: boolean;
+        archive: boolean;
+        set_default: boolean;
+        set_completion_target: boolean;
+    };
+}
+
+export interface TaskPriorityDefinition {
+    id: string;
+    workspace_id: string;
+    key: string;
+    name: string;
+    color: string;
+    position: number;
+    is_default: boolean;
+    is_archived: boolean;
+    todos_count?: number;
+    permissions?: {
+        update: boolean;
+        delete: boolean;
+        archive: boolean;
+        set_default: boolean;
+    };
+}
+
+export interface TaskDefinitionCatalog {
+    statuses: TaskStatusDefinition[];
+    priorities: TaskPriorityDefinition[];
+}
 
 export interface Todo {
     id: string;
@@ -106,7 +150,12 @@ export interface Todo {
     title: string;
     description: string | null;
     status: TodoStatus;
+    status_id: string;
+    status_definition?: TaskStatusDefinition;
+    is_completed: boolean;
     priority: TodoPriority;
+    priority_id: string;
+    priority_definition?: TaskPriorityDefinition;
     due_date: string | null;
     start_date: string | null;
     estimated_time: number | null;
@@ -187,6 +236,16 @@ export interface WorkspaceMetadataRouteUrls {
     storeTag: string;
     updateTag: (tagId: string) => string;
     deleteTag: (tagId: string) => string;
+    storeStatus: string;
+    updateStatus: (statusId: string) => string;
+    manageStatus: (statusId: string) => string;
+    deleteStatus: (statusId: string) => string;
+    reorderStatuses: string;
+    storePriority: string;
+    updatePriority: (priorityId: string) => string;
+    managePriority: (priorityId: string) => string;
+    deletePriority: (priorityId: string) => string;
+    reorderPriorities: string;
 }
 
 export interface Comment {

@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
-
+use App\Actions\TransitionTodoDefinitions;
 use App\Enums\TodoPriority;
 use App\Enums\TodoStatus;
 use App\Models\Todo;
-use Database\Factories\WorkspaceFactory;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -15,6 +15,27 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class TodoFactory extends Factory
 {
     protected $model = Todo::class;
+
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Todo $todo): void {
+            if ($todo->status_id !== null && $todo->priority_id !== null) {
+                return;
+            }
+
+            $workspace = Workspace::query()->findOrFail($todo->workspace_id);
+            $todo->forceFill(app(TransitionTodoDefinitions::class)->attributes(
+                $workspace,
+                [
+                    'status' => $todo->status,
+                    'status_id' => $todo->status_id,
+                    'priority' => $todo->priority,
+                    'priority_id' => $todo->priority_id,
+                ],
+                $todo,
+            ));
+        });
+    }
 
     public function definition(): array
     {

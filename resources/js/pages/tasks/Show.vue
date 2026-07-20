@@ -26,6 +26,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import {
+    safeDefinitionColor,
+    useTaskDefinitions,
+} from '@/composables/useTaskDefinitions';
 import { useTaskDetailState } from '@/composables/useTaskDetailState';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
@@ -35,6 +39,7 @@ import { store as storeComment } from '@/routes/comments';
 import { complete, uncomplete } from '@/routes/todos';
 import type {
     Label as TaskLabel,
+    TaskDefinitionCatalog,
     Todo,
     TodoPriority,
     TodoStatus,
@@ -73,10 +78,14 @@ const props = defineProps<{
     todo: { data: Todo };
     availableLabels: { data: TaskLabel[] };
     labels: TaskShowLabels;
+    taskDefinitions: TaskDefinitionCatalog;
 }>();
 const toast = useToast();
 const todo = computed(() => props.todo.data);
 const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
+const { statuses, priorities } = useTaskDefinitions(
+    () => props.taskDefinitions,
+);
 
 const editing = ref(false);
 const updatingCompletion = ref(false);
@@ -170,7 +179,7 @@ function toggleComplete() {
         return;
     }
 
-    const target = todo.value.status === 'completed' ? uncomplete : complete;
+    const target = todo.value.is_completed ? uncomplete : complete;
 
     updatingCompletion.value = true;
     router.post(
@@ -256,15 +265,6 @@ function formatDate(date: string | null): string {
         year: 'numeric',
     });
 }
-function priorityBadge(
-    priority: TodoPriority,
-): 'destructive' | 'secondary' | 'outline' {
-    if (priority === 'urgent' || priority === 'high') {
-        return 'destructive';
-    }
-
-    return priority === 'medium' ? 'secondary' : 'outline';
-}
 </script>
 
 <template>
@@ -302,17 +302,13 @@ function priorityBadge(
                         </Button>
                         <Button
                             size="lg"
-                            :variant="
-                                todo.status === 'completed'
-                                    ? 'outline'
-                                    : 'default'
-                            "
+                            :variant="todo.is_completed ? 'outline' : 'default'"
                             :disabled="updatingCompletion"
                             @click="toggleComplete"
                         >
                             <Spinner v-if="updatingCompletion" />
                             {{
-                                todo.status === 'completed'
+                                todo.is_completed
                                     ? t('common.actions.reopen')
                                     : t('common.actions.complete')
                             }}
@@ -323,11 +319,28 @@ function priorityBadge(
                 <div
                     class="flex flex-wrap items-center gap-2 rounded-xl border border-border/80 bg-card px-4 py-3 shadow-sm"
                 >
-                    <Badge :variant="priorityBadge(todo.priority)">
-                        {{ t(`tasks.priorities.${todo.priority}`) }}
+                    <Badge
+                        variant="outline"
+                        :style="{
+                            borderColor: safeDefinitionColor(
+                                todo.priority_definition?.color,
+                            ),
+                            color: safeDefinitionColor(
+                                todo.priority_definition?.color,
+                            ),
+                        }"
+                    >
+                        {{ todo.priority_definition?.name ?? todo.priority }}
                     </Badge>
-                    <span class="text-sm text-muted-foreground">
-                        {{ t(`tasks.statuses.${todo.status}`) }}
+                    <span
+                        class="text-sm text-muted-foreground"
+                        :style="{
+                            color: safeDefinitionColor(
+                                todo.status_definition?.color,
+                            ),
+                        }"
+                    >
+                        {{ todo.status_definition?.name ?? todo.status }}
                     </span>
                     <span
                         v-if="todo.project"
@@ -402,15 +415,13 @@ function priorityBadge(
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="pending">{{
-                                                labels.statuses.pending
-                                            }}</SelectItem>
-                                            <SelectItem value="in_progress">{{
-                                                labels.statuses.inProgress
-                                            }}</SelectItem>
-                                            <SelectItem value="completed">{{
-                                                labels.statuses.completed
-                                            }}</SelectItem>
+                                            <SelectItem
+                                                v-for="status in statuses"
+                                                :key="status.id"
+                                                :value="status.key"
+                                            >
+                                                {{ status.name }}
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <InputError
@@ -435,21 +446,13 @@ function priorityBadge(
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="none">{{
-                                                labels.priorities.none
-                                            }}</SelectItem>
-                                            <SelectItem value="low">{{
-                                                labels.priorities.low
-                                            }}</SelectItem>
-                                            <SelectItem value="medium">{{
-                                                labels.priorities.medium
-                                            }}</SelectItem>
-                                            <SelectItem value="high">{{
-                                                labels.priorities.high
-                                            }}</SelectItem>
-                                            <SelectItem value="urgent">{{
-                                                labels.priorities.urgent
-                                            }}</SelectItem>
+                                            <SelectItem
+                                                v-for="priority in priorities"
+                                                :key="priority.id"
+                                                :value="priority.key"
+                                            >
+                                                {{ priority.name }}
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <InputError

@@ -53,3 +53,17 @@ test('API user can delete reminder', function () {
     $response->assertNoContent();
     $this->assertDatabaseMissing('reminders', ['id' => $reminder->id]);
 });
+
+test('reminder API rejects creation for another workspace task', function () {
+    [$user, $token] = createApiReminderUser();
+    [$foreignUser, $foreignToken, $foreignWorkspace, $foreignTodo] = createApiReminderUser();
+
+    $this->withToken($token)
+        ->postJson("/api/tasks/{$foreignTodo->id}/reminders", [
+            'reminded_at' => now()->addHour()->toIso8601String(),
+            'type' => 'in_app',
+        ])
+        ->assertForbidden();
+
+    expect($foreignTodo->reminders)->toBeEmpty();
+});

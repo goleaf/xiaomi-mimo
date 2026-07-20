@@ -76,8 +76,8 @@ class ExportService
             $this->writeJson([
                 'title' => $todo->title,
                 'description' => $todo->description,
-                'status' => $todo->status->value,
-                'priority' => $todo->priority->value,
+                'status' => $todo->statusKey(),
+                'priority' => $todo->priorityKey(),
                 'due_date' => $this->dueDate($todo),
                 'project' => $project?->name,
                 'labels' => $this->relatedNames($todo, 'labels'),
@@ -121,8 +121,8 @@ class ExportService
                 $assignee = $this->loadedAssignee($todo);
                 fputcsv($handle, array_map($this->escapeCsvCell(...), [
                     $todo->title,
-                    $todo->status->value,
-                    $todo->priority->value,
+                    $todo->statusKey(),
+                    $todo->priorityKey(),
                     $this->dueDate($todo),
                     $project?->name,
                     $assignee?->name,
@@ -164,8 +164,9 @@ class ExportService
                 $hasWrittenProject = true;
             }
 
-            $check = $todo->status->value === 'completed' ? 'x' : ' ';
-            $priority = $todo->priority->value !== 'none' ? " [{$todo->priority->value}]" : '';
+            $priorityKey = $todo->priorityKey();
+            $check = $todo->completed_at !== null ? 'x' : ' ';
+            $priority = $priorityKey !== 'none' ? " [{$priorityKey}]" : '';
             $dueDate = $this->dueDate($todo);
             $due = $dueDate !== null ? " (due: {$dueDate})" : '';
             echo "- [{$check}] {$todo->title}{$priority}{$due}\n";

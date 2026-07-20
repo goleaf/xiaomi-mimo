@@ -25,6 +25,8 @@ class TodoSeeder extends Seeder
 
         $allLabels = Label::where('workspace_id', $workspace->id)->get();
         $allTags = Tag::where('workspace_id', $workspace->id)->get();
+        $statusIds = $workspace->taskStatuses()->pluck('id', 'key');
+        $priorityIds = $workspace->taskPriorities()->pluck('id', 'key');
 
         $todos = [
             // Product Launch todos
@@ -73,7 +75,9 @@ class TodoSeeder extends Seeder
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,
                 'status' => $data['status'],
+                'status_id' => $statusIds[$data['status']->value],
                 'priority' => $data['priority'],
+                'priority_id' => $priorityIds[$data['priority']->value],
                 'due_date' => $data['due_date'] ?? null,
                 'estimated_time' => $data['estimated_time'] ?? null,
                 'spent_time' => $data['spent_time'] ?? null,
@@ -113,7 +117,9 @@ class TodoSeeder extends Seeder
                 'parent_id' => $parentTodo->id,
                 'title' => $sub['title'],
                 'status' => $sub['status'],
+                'status_id' => $statusIds[$sub['status']->value],
                 'priority' => $sub['priority'],
+                'priority_id' => $priorityIds[$sub['priority']->value],
                 'completed_at' => $sub['completed_at'] ?? null,
                 'position' => $index,
             ]);
@@ -127,7 +133,9 @@ class TodoSeeder extends Seeder
             'parent_id' => $parentTodo2->id,
             'title' => 'Configure FCM for Android',
             'status' => TodoStatus::InProgress,
+            'status_id' => $statusIds[TodoStatus::InProgress->value],
             'priority' => TodoPriority::High,
+            'priority_id' => $priorityIds[TodoPriority::High->value],
             'position' => 0,
         ]);
 
@@ -138,7 +146,9 @@ class TodoSeeder extends Seeder
             'parent_id' => $parentTodo2->id,
             'title' => 'Configure APNs for iOS',
             'status' => TodoStatus::Pending,
+            'status_id' => $statusIds[TodoStatus::Pending->value],
             'priority' => TodoPriority::Medium,
+            'priority_id' => $priorityIds[TodoPriority::Medium->value],
             'position' => 1,
         ]);
 

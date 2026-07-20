@@ -14,11 +14,7 @@ test('guests are redirected to the login page', function () {
 
 test('authenticated users can visit the activity page', function () {
     $user = User::factory()->create();
-    $workspace = Workspace::create([
-        'name' => 'Test Workspace',
-        'slug' => 'test-workspace',
-        'owner_id' => $user->id,
-    ]);
+    $workspace = Workspace::factory()->create(['owner_id' => $user->id]);
     WorkspaceMember::create([
         'workspace_id' => $workspace->id,
         'user_id' => $user->id,
@@ -34,18 +30,14 @@ test('authenticated users can visit the activity page', function () {
 
 test('activity page displays activity logs', function () {
     $user = User::factory()->create();
-    $workspace = Workspace::create([
-        'name' => 'Test Workspace',
-        'slug' => 'test-workspace',
-        'owner_id' => $user->id,
-    ]);
+    $workspace = Workspace::factory()->create(['owner_id' => $user->id]);
     WorkspaceMember::create([
         'workspace_id' => $workspace->id,
         'user_id' => $user->id,
         'role' => WorkspaceRole::Owner,
     ]);
 
-    $todo = Todo::create([
+    $todo = Todo::factory()->create([
         'title' => 'Test Todo',
         'workspace_id' => $workspace->id,
         'assigned_to' => $user->id,

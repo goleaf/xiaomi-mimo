@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\LabelController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ReminderController;
 use App\Http\Controllers\Api\TagController;
+use App\Http\Controllers\Api\TaskPriorityController;
+use App\Http\Controllers\Api\TaskStatusController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\WorkspaceController;
 use App\Http\Controllers\WorkspaceInvitationController;
@@ -25,10 +27,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
     // Workspaces
-    Route::get('/workspaces', [WorkspaceController::class, 'index']);
+    Route::get('/workspaces', [WorkspaceController::class, 'index'])
+        ->middleware('abilities:workspaces:read');
     Route::post('/workspaces', [WorkspaceController::class, 'store'])
         ->middleware('abilities:workspaces:write');
-    Route::get('/workspaces/{workspace}', [WorkspaceController::class, 'show']);
+    Route::get('/workspaces/{workspace}', [WorkspaceController::class, 'show'])
+        ->middleware('abilities:workspaces:read');
     Route::post('/workspaces/{workspace}/duplicate', [WorkspaceController::class, 'duplicate'])
         ->middleware('abilities:workspaces:write');
     Route::put('/workspaces/{workspace}', [WorkspaceController::class, 'update'])
@@ -55,32 +59,52 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('abilities:workspaces:write');
 
     // Projects
-    Route::get('/workspaces/{workspace}/projects', [ProjectController::class, 'index']);
-    Route::post('/workspaces/{workspace}/projects', [ProjectController::class, 'store']);
-    Route::get('/projects/{project}', [ProjectController::class, 'show']);
-    Route::put('/projects/{project}', [ProjectController::class, 'update']);
-    Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
+    Route::get('/workspaces/{workspace}/projects', [ProjectController::class, 'index'])
+        ->middleware('abilities:projects:read');
+    Route::post('/workspaces/{workspace}/projects', [ProjectController::class, 'store'])
+        ->middleware('abilities:projects:write');
+    Route::get('/projects/{project}', [ProjectController::class, 'show'])
+        ->middleware('abilities:projects:read');
+    Route::put('/projects/{project}', [ProjectController::class, 'update'])
+        ->middleware('abilities:projects:write');
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])
+        ->middleware('abilities:projects:write');
 
     // Todos
-    Route::get('/workspaces/{workspace}/tasks', [TodoController::class, 'index']);
-    Route::post('/workspaces/{workspace}/tasks', [TodoController::class, 'store']);
-    Route::get('/tasks/{todo}', [TodoController::class, 'show']);
-    Route::put('/tasks/{todo}', [TodoController::class, 'update']);
-    Route::delete('/tasks/{todo}', [TodoController::class, 'destroy']);
-    Route::post('/tasks/{todo}/complete', [TodoController::class, 'complete']);
-    Route::post('/tasks/{todo}/uncomplete', [TodoController::class, 'uncomplete']);
+    Route::get('/workspaces/{workspace}/tasks', [TodoController::class, 'index'])
+        ->middleware('abilities:tasks:read');
+    Route::post('/workspaces/{workspace}/tasks', [TodoController::class, 'store'])
+        ->middleware('abilities:tasks:write');
+    Route::get('/tasks/{todo}', [TodoController::class, 'show'])
+        ->middleware('abilities:tasks:read');
+    Route::put('/tasks/{todo}', [TodoController::class, 'update'])
+        ->middleware('abilities:tasks:write');
+    Route::delete('/tasks/{todo}', [TodoController::class, 'destroy'])
+        ->middleware('abilities:tasks:write');
+    Route::post('/tasks/{todo}/complete', [TodoController::class, 'complete'])
+        ->middleware('abilities:tasks:write');
+    Route::post('/tasks/{todo}/uncomplete', [TodoController::class, 'uncomplete'])
+        ->middleware('abilities:tasks:write');
 
     // Comments
-    Route::get('/tasks/{todo}/comments', [CommentController::class, 'index']);
-    Route::post('/tasks/{todo}/comments', [CommentController::class, 'store']);
-    Route::put('/comments/{comment}', [CommentController::class, 'update']);
-    Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+    Route::get('/tasks/{todo}/comments', [CommentController::class, 'index'])
+        ->middleware('abilities:tasks:read');
+    Route::post('/tasks/{todo}/comments', [CommentController::class, 'store'])
+        ->middleware('abilities:tasks:write');
+    Route::put('/comments/{comment}', [CommentController::class, 'update'])
+        ->middleware('abilities:tasks:write');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])
+        ->middleware('abilities:tasks:write');
 
     // Checklists
-    Route::get('/tasks/{todo}/checklists', [ChecklistController::class, 'index']);
-    Route::post('/tasks/{todo}/checklists', [ChecklistController::class, 'store']);
-    Route::post('/checklists/{checklist}/items', [ChecklistController::class, 'storeItem']);
-    Route::patch('/checklist-items/{item}/toggle', [ChecklistController::class, 'toggleItem']);
+    Route::get('/tasks/{todo}/checklists', [ChecklistController::class, 'index'])
+        ->middleware('abilities:tasks:read');
+    Route::post('/tasks/{todo}/checklists', [ChecklistController::class, 'store'])
+        ->middleware('abilities:tasks:write');
+    Route::post('/checklists/{checklist}/items', [ChecklistController::class, 'storeItem'])
+        ->middleware('abilities:tasks:write');
+    Route::patch('/checklist-items/{item}/toggle', [ChecklistController::class, 'toggleItem'])
+        ->middleware('abilities:tasks:write');
 
     // Labels
     Route::get('/workspaces/{workspace}/labels', [LabelController::class, 'index'])
@@ -114,14 +138,54 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/tags/{tag}', [TagController::class, 'legacyDestroy'])
         ->middleware('abilities:workspaces:write');
 
+    // Task statuses and priorities
+    Route::get('/workspaces/{workspace}/task-statuses', [TaskStatusController::class, 'index'])
+        ->middleware('abilities:workspaces:read');
+    Route::post('/workspaces/{workspace}/task-statuses', [TaskStatusController::class, 'store'])
+        ->middleware('abilities:workspaces:write');
+    Route::put('/workspaces/{workspace}/task-statuses/reorder', [TaskStatusController::class, 'reorder'])
+        ->middleware('abilities:workspaces:write');
+    Route::put('/workspaces/{workspace}/task-statuses/{taskStatus}', [TaskStatusController::class, 'update'])
+        ->middleware('abilities:workspaces:write')
+        ->scopeBindings();
+    Route::patch('/workspaces/{workspace}/task-statuses/{taskStatus}/manage', [TaskStatusController::class, 'manage'])
+        ->middleware('abilities:workspaces:write')
+        ->scopeBindings();
+    Route::delete('/workspaces/{workspace}/task-statuses/{taskStatus}', [TaskStatusController::class, 'destroy'])
+        ->middleware('abilities:workspaces:write')
+        ->scopeBindings();
+
+    Route::get('/workspaces/{workspace}/task-priorities', [TaskPriorityController::class, 'index'])
+        ->middleware('abilities:workspaces:read');
+    Route::post('/workspaces/{workspace}/task-priorities', [TaskPriorityController::class, 'store'])
+        ->middleware('abilities:workspaces:write');
+    Route::put('/workspaces/{workspace}/task-priorities/reorder', [TaskPriorityController::class, 'reorder'])
+        ->middleware('abilities:workspaces:write');
+    Route::put('/workspaces/{workspace}/task-priorities/{taskPriority}', [TaskPriorityController::class, 'update'])
+        ->middleware('abilities:workspaces:write')
+        ->scopeBindings();
+    Route::patch('/workspaces/{workspace}/task-priorities/{taskPriority}/manage', [TaskPriorityController::class, 'manage'])
+        ->middleware('abilities:workspaces:write')
+        ->scopeBindings();
+    Route::delete('/workspaces/{workspace}/task-priorities/{taskPriority}', [TaskPriorityController::class, 'destroy'])
+        ->middleware('abilities:workspaces:write')
+        ->scopeBindings();
+
     // Reminders
-    Route::get('/tasks/{todo}/reminders', [ReminderController::class, 'index']);
-    Route::post('/tasks/{todo}/reminders', [ReminderController::class, 'store']);
-    Route::delete('/reminders/{reminder}', [ReminderController::class, 'destroy']);
+    Route::get('/tasks/{todo}/reminders', [ReminderController::class, 'index'])
+        ->middleware('abilities:tasks:read');
+    Route::post('/tasks/{todo}/reminders', [ReminderController::class, 'store'])
+        ->middleware('abilities:tasks:write');
+    Route::delete('/reminders/{reminder}', [ReminderController::class, 'destroy'])
+        ->middleware('abilities:tasks:write');
 
     // Attachments
-    Route::get('/tasks/{todo}/attachments', [AttachmentController::class, 'index']);
-    Route::post('/tasks/{todo}/attachments', [AttachmentController::class, 'store']);
-    Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy']);
-    Route::get('/attachments/{attachment}/download', [AttachmentController::class, 'download']);
+    Route::get('/tasks/{todo}/attachments', [AttachmentController::class, 'index'])
+        ->middleware('abilities:tasks:read');
+    Route::post('/tasks/{todo}/attachments', [AttachmentController::class, 'store'])
+        ->middleware('abilities:tasks:write');
+    Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])
+        ->middleware('abilities:tasks:write');
+    Route::get('/attachments/{attachment}/download', [AttachmentController::class, 'download'])
+        ->middleware('abilities:tasks:read');
 });

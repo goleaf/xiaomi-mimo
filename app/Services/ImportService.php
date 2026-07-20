@@ -4,8 +4,6 @@ namespace App\Services;
 
 use App\Actions\CreateProject;
 use App\Actions\CreateTodo;
-use App\Enums\TodoPriority;
-use App\Enums\TodoStatus;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -86,8 +84,18 @@ class ImportService
                     [
                         'title' => ['required', 'string', 'max:255'],
                         'description' => ['nullable', 'string'],
-                        'status' => ['sometimes', Rule::enum(TodoStatus::class)],
-                        'priority' => ['sometimes', Rule::enum(TodoPriority::class)],
+                        'status' => [
+                            'sometimes',
+                            Rule::exists('task_statuses', 'key')
+                                ->where('workspace_id', $workspace->id)
+                                ->where('is_archived', 0),
+                        ],
+                        'priority' => [
+                            'sometimes',
+                            Rule::exists('task_priorities', 'key')
+                                ->where('workspace_id', $workspace->id)
+                                ->where('is_archived', 0),
+                        ],
                         'due_date' => ['nullable', 'date_format:Y-m-d'],
                         'project' => ['nullable', 'string', 'max:255'],
                         'labels' => ['sometimes', 'array', 'max:100'],
@@ -126,8 +134,10 @@ class ImportService
                 $this->createTodo->handle($workspace, [
                     'title' => $validatedTodo['title'],
                     'description' => $validatedTodo['description'] ?? null,
-                    'status' => $validatedTodo['status'] ?? TodoStatus::Pending->value,
-                    'priority' => $validatedTodo['priority'] ?? TodoPriority::None->value,
+                    'status' => $validatedTodo['status'] ?? $workspace->taskStatuses()
+                        ->where('is_default', true)->value('key'),
+                    'priority' => $validatedTodo['priority'] ?? $workspace->taskPriorities()
+                        ->where('is_default', true)->value('key'),
                     'due_date' => $validatedTodo['due_date'] ?? null,
                     'project_id' => $projectId,
                 ]);
@@ -209,16 +219,28 @@ class ImportService
                     $validatedTodo = $this->validateRecord(
                         [
                             'title' => $rowData['title'] ?? null,
-                            'status' => ($rowData['status'] ?? '') ?: TodoStatus::Pending->value,
-                            'priority' => ($rowData['priority'] ?? '') ?: TodoPriority::None->value,
+                            'status' => ($rowData['status'] ?? '') ?: $workspace->taskStatuses()
+                                ->where('is_default', true)->value('key'),
+                            'priority' => ($rowData['priority'] ?? '') ?: $workspace->taskPriorities()
+                                ->where('is_default', true)->value('key'),
                             'due_date' => ($rowData['due_date'] ?? '') ?: null,
                             'project' => ($rowData['project'] ?? '') ?: null,
                             'description' => ($rowData['description'] ?? '') ?: null,
                         ],
                         [
                             'title' => ['required', 'string', 'max:255'],
-                            'status' => ['required', Rule::enum(TodoStatus::class)],
-                            'priority' => ['required', Rule::enum(TodoPriority::class)],
+                            'status' => [
+                                'required',
+                                Rule::exists('task_statuses', 'key')
+                                    ->where('workspace_id', $workspace->id)
+                                    ->where('is_archived', 0),
+                            ],
+                            'priority' => [
+                                'required',
+                                Rule::exists('task_priorities', 'key')
+                                    ->where('workspace_id', $workspace->id)
+                                    ->where('is_archived', 0),
+                            ],
                             'due_date' => ['nullable', 'date_format:Y-m-d'],
                             'project' => ['nullable', 'string', 'max:255'],
                             'description' => ['nullable', 'string'],

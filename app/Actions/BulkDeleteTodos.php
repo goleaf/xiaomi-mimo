@@ -2,13 +2,13 @@
 
 namespace App\Actions;
 
-use App\Models\Todo;
+use App\Models\Workspace;
 
 class BulkDeleteTodos
 {
     /** @param list<string> $todoIds */
-    public function handle(array $todoIds): int
+    public function handle(Workspace $workspace, array $todoIds): int
     {
-        return Todo::whereIn('id', $todoIds)->delete();
+        return $workspace->todos()->whereIn('id', $todoIds)->delete();
     }
 }

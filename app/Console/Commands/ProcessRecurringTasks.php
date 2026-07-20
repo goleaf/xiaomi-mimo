@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\TodoStatus;
+use App\Actions\TransitionTodoDefinitions;
 use App\Models\Todo;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -13,12 +13,13 @@ class ProcessRecurringTasks extends Command
 
     protected $description = 'Create new task instances for completed recurring tasks';
 
-    public function handle(): int
+    public function handle(TransitionTodoDefinitions $transition): int
     {
         $completedRecurring = Todo::where('is_recurring', true)
             ->where('status', 'completed')
             ->whereNotNull('recurring_rule')
             ->whereNotNull('completed_at')
+            ->with(['workspace', 'statusDefinition', 'priorityDefinition', 'labels', 'tags'])
             ->get();
 
         $created = 0;
@@ -28,12 +29,13 @@ class ProcessRecurringTasks extends Command
 
             if ($nextDueDate && $nextDueDate->isFuture()) {
                 $newTodo = $todo->replicate();
-                $newTodo->status = TodoStatus::Pending;
-                $newTodo->completed_at = null;
+                $newTodo->fill($transition->attributes($todo->workspace, [
+                    'priority_id' => $todo->priority_id,
+                ]));
                 $newTodo->due_date = $nextDueDate;
                 $newTodo->is_pinned = false;
                 $newTodo->is_favorite = false;
-                $newTodo->position = $todo->workspace->todos()->max('position') + 1;
+                $newTodo->position = ((int) $todo->workspace->todos()->max('position')) + 1;
                 $newTodo->save();
 
                 // Copy labels and tags
@@ -41,10 +43,7 @@ class ProcessRecurringTasks extends Command
                 $newTodo->tags()->sync($todo->tags->pluck('id'));
 
                 // Reset the original task
-                $todo->update([
-                    'status' => 'pending',
-                    'completed_at' => null,
-                ]);
+                $transition->uncomplete($todo);
 
                 $created++;
             }

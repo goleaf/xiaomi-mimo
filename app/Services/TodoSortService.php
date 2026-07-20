@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\TaskPriority;
+use App\Models\TaskStatus;
 use App\Models\Todo;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -17,10 +19,20 @@ class TodoSortService
 
         return match ($sort) {
             'due_date' => $query->orderBy('due_date', $resolvedDirection)->orderBy('position'),
-            'priority' => $query->orderByRaw("CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END"),
+            'priority' => $query->orderBy(
+                TaskPriority::query()
+                    ->select('position')
+                    ->whereColumn('task_priorities.id', 'todos.priority_id'),
+                $resolvedDirection,
+            ),
             'title' => $query->orderBy('title', $resolvedDirection),
             'created_at' => $query->orderBy('created_at', $resolvedDirection),
-            'status' => $query->orderByRaw("CASE status WHEN 'in_progress' THEN 0 WHEN 'pending' THEN 1 WHEN 'completed' THEN 2 END"),
+            'status' => $query->orderBy(
+                TaskStatus::query()
+                    ->select('position')
+                    ->whereColumn('task_statuses.id', 'todos.status_id'),
+                $resolvedDirection,
+            ),
             default => $query->orderBy('is_pinned', 'desc')->orderBy('position'),
         };
     }

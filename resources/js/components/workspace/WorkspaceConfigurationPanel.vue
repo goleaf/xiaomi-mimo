@@ -25,11 +25,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label as FormLabel } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import WorkspaceTaskDefinitionsPanel from '@/components/workspace/WorkspaceTaskDefinitionsPanel.vue';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import type {
     Label,
     Tag,
+    TaskPriorityDefinition,
+    TaskStatusDefinition,
     Workspace,
     WorkspaceMetadataRouteUrls,
 } from '@/types/models';
@@ -40,6 +43,8 @@ const props = defineProps<{
     workspace: Workspace;
     labels: Label[];
     tags: Tag[];
+    taskStatuses: TaskStatusDefinition[];
+    taskPriorities: TaskPriorityDefinition[];
     locale: string;
     routes: WorkspaceMetadataRouteUrls;
 }>();
@@ -351,6 +356,15 @@ async function deleteMetadata(): Promise<void> {
                 {{ t('workspaces.management.configuration.read_only') }}
             </AlertDescription>
         </Alert>
+
+        <WorkspaceTaskDefinitionsPanel
+            :workspace="workspace"
+            :statuses="taskStatuses"
+            :priorities="taskPriorities"
+            :search="searchQuery"
+            :locale="locale"
+            :routes="routes"
+        />
 
         <div class="grid items-start gap-6 xl:grid-cols-2">
             <Card class="border-sky-500/15">

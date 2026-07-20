@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Actions\EnsureWorkspaceTaskDefinitions;
 use App\Enums\WorkspaceRole;
 use App\Models\User;
 use App\Models\Workspace;
@@ -26,6 +27,7 @@ class WorkspaceSeeder extends Seeder
         WorkspaceMember::create(['workspace_id' => $workspace->id, 'user_id' => $owner->id, 'role' => WorkspaceRole::Owner]);
         WorkspaceMember::create(['workspace_id' => $workspace->id, 'user_id' => $alice->id, 'role' => WorkspaceRole::Admin]);
         WorkspaceMember::create(['workspace_id' => $workspace->id, 'user_id' => $bob->id, 'role' => WorkspaceRole::Member]);
+        app(EnsureWorkspaceTaskDefinitions::class)->handle($workspace);
 
         $this->command->info('Created workspace "Acme Projects" with 3 members.');
     }

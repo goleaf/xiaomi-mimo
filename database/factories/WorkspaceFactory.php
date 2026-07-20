@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Actions\EnsureWorkspaceTaskDefinitions;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -12,6 +13,13 @@ use Illuminate\Support\Str;
 class WorkspaceFactory extends Factory
 {
     protected $model = Workspace::class;
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Workspace $workspace): void {
+            app(EnsureWorkspaceTaskDefinitions::class)->handle($workspace);
+        });
+    }
 
     public function definition(): array
     {

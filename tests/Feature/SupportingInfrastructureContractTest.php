@@ -75,7 +75,7 @@ test('workspace schema enforces its declared foreign keys', function (string $ta
     'workspaces' => ['workspaces', 1],
     'workspace members' => ['workspace_members', 2],
     'projects' => ['projects', 1],
-    'todos' => ['todos', 3],
+    'todos' => ['todos', 5],
     'checklists' => ['checklists', 1],
     'checklist items' => ['checklist_items', 1],
     'labels' => ['labels', 1],

@@ -9,6 +9,9 @@ use App\Actions\UpdateProject;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
+use App\Http\Resources\TaskPriorityResource;
+use App\Http\Resources\TaskStatusResource;
+use App\Http\Resources\TodoResource;
 use App\Models\Project;
 use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
@@ -37,15 +40,23 @@ class ProjectController extends Controller
         $this->authorize('view', $project);
 
         $todos = $project->todos()
-            ->with(['assignee', 'labels', 'tags'])
+            ->with(['assignee', 'labels', 'tags', 'statusDefinition', 'priorityDefinition'])
             ->active()
             ->orderBy('position')
             ->get();
 
         return Inertia::render('projects/Show', [
             'project' => new ProjectResource($project),
-            'todos' => $todos,
+            'todos' => TodoResource::collection($todos)->resolve($request),
             'workspace' => ['id' => $workspace->id],
+            'taskDefinitions' => [
+                'statuses' => TaskStatusResource::collection(
+                    $workspace->taskStatuses()->ordered()->get(),
+                )->resolve($request),
+                'priorities' => TaskPriorityResource::collection(
+                    $workspace->taskPriorities()->ordered()->get(),
+                )->resolve($request),
+            ],
         ]);
     }
 

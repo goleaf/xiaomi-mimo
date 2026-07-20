@@ -22,6 +22,7 @@ class ReminderController extends Controller
 
     public function store(Request $request, Todo $todo, CreateReminder $action): JsonResponse
     {
+        $this->authorize('update', $todo);
         $request->validate([
             'reminded_at' => 'required|date|after:now',
             'type' => 'sometimes|string|in:email,in_app,browser',

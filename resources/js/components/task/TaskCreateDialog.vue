@@ -16,23 +16,29 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { useTaskDefinitions } from '@/composables/useTaskDefinitions';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { store } from '@/routes/todos';
+import type { TaskDefinitionCatalog } from '@/types/models';
 
 const props = defineProps<{
     open: boolean;
     workspaceId: string;
     projectId?: string;
+    taskDefinitions: TaskDefinitionCatalog;
 }>();
 const emit = defineEmits<{ close: []; created: [] }>();
 const toast = useToast();
 const { t } = useUi();
+const { statuses, priorities, defaultStatus, defaultPriority } =
+    useTaskDefinitions(() => props.taskDefinitions);
 
 const form = useHttp({
     title: '',
     description: '',
-    priority: 'none',
+    status: defaultStatus.value?.key ?? 'pending',
+    priority: defaultPriority.value?.key ?? 'none',
     due_date: '',
     project_id: props.projectId ?? '',
     is_recurring: false,
@@ -45,6 +51,8 @@ watch(
         if (open) {
             form.resetAndClearErrors();
             form.project_id = props.projectId ?? '';
+            form.status = defaultStatus.value?.key ?? '';
+            form.priority = defaultPriority.value?.key ?? '';
         }
     },
 );
@@ -114,7 +122,33 @@ async function submit(): Promise<void> {
                     />
                     <InputError :message="form.errors.description" />
                 </div>
-                <div class="grid gap-4 sm:grid-cols-2">
+                <div class="grid gap-4 sm:grid-cols-3">
+                    <div class="space-y-2">
+                        <Label for="task-status">{{
+                            t('tasks.create.status')
+                        }}</Label>
+                        <Select
+                            v-model="form.status"
+                            :disabled="form.processing"
+                        >
+                            <SelectTrigger
+                                id="task-status"
+                                :aria-invalid="Boolean(form.errors.status)"
+                            >
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem
+                                    v-for="status in statuses"
+                                    :key="status.id"
+                                    :value="status.key"
+                                >
+                                    {{ status.name }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <InputError :message="form.errors.status" />
+                    </div>
                     <div class="space-y-2">
                         <Label for="task-priority">{{
                             t('tasks.create.priority')
@@ -130,21 +164,13 @@ async function submit(): Promise<void> {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="none">{{
-                                    t('tasks.priorities.none')
-                                }}</SelectItem>
-                                <SelectItem value="low">{{
-                                    t('tasks.priorities.low')
-                                }}</SelectItem>
-                                <SelectItem value="medium">{{
-                                    t('tasks.priorities.medium')
-                                }}</SelectItem>
-                                <SelectItem value="high">{{
-                                    t('tasks.priorities.high')
-                                }}</SelectItem>
-                                <SelectItem value="urgent">{{
-                                    t('tasks.priorities.urgent')
-                                }}</SelectItem>
+                                <SelectItem
+                                    v-for="priority in priorities"
+                                    :key="priority.id"
+                                    :value="priority.key"
+                                >
+                                    {{ priority.name }}
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                         <InputError :message="form.errors.priority" />

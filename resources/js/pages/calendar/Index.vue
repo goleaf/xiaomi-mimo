@@ -17,13 +17,20 @@ import WorkspaceSegmentedControl from '@/components/shared/WorkspaceSegmentedCon
 import { Button } from '@/components/ui/button';
 import { useWorkspaceUi } from '@/composables/useWorkspaceUi';
 import { show as todoShow } from '@/routes/todos';
-import type { Project, Todo, TodoPriority, TodoStatus } from '@/types/models';
+import type { Project, Todo, TodoPriority } from '@/types/models';
 
 type CalendarView = 'month' | 'week' | 'agenda';
 type CalendarProject = Pick<Project, 'id' | 'name' | 'color'>;
 type CalendarTodo = Pick<
     Todo,
-    'id' | 'title' | 'status' | 'priority' | 'due_date'
+    | 'id'
+    | 'title'
+    | 'status'
+    | 'priority'
+    | 'due_date'
+    | 'is_completed'
+    | 'status_definition'
+    | 'priority_definition'
 > & {
     project: CalendarProject | null;
 };
@@ -162,7 +169,7 @@ const overdueTasks = computed(
             (todo) =>
                 todo.due_date &&
                 todo.due_date < toDateKey(new Date()) &&
-                todo.status !== 'completed',
+                !todo.is_completed,
         ).length,
 );
 const upcomingTasks = computed(() =>
@@ -171,7 +178,7 @@ const upcomingTasks = computed(() =>
             (todo) =>
                 todo.due_date &&
                 todo.due_date >= toDateKey(new Date()) &&
-                todo.status !== 'completed',
+                !todo.is_completed,
         )
         .slice()
         .sort((first, second) =>
@@ -256,16 +263,12 @@ function prioritySurface(priority: TodoPriority): string {
     );
 }
 
-function priorityLabel(priority: TodoPriority): string {
-    const labels = copy.value.calendar as unknown as Record<string, string>;
-
-    return labels[`priority_${priority}`] ?? copy.value.calendar.priority_none;
+function priorityLabel(todo: CalendarTodo): string {
+    return todo.priority_definition?.name ?? todo.priority;
 }
 
-function statusLabel(status: TodoStatus): string {
-    const labels = copy.value.calendar as unknown as Record<string, string>;
-
-    return labels[`status_${status}`] ?? status;
+function statusLabel(todo: CalendarTodo): string {
+    return todo.status_definition?.name ?? todo.status;
 }
 </script>
 
@@ -510,7 +513,7 @@ function statusLabel(status: TodoStatus): string {
                                         <p
                                             class="mt-1 text-[0.65rem] opacity-75"
                                         >
-                                            {{ statusLabel(todo.status) }}
+                                            {{ statusLabel(todo) }}
                                         </p>
                                     </Link>
                                     <p
@@ -574,15 +577,13 @@ function statusLabel(status: TodoStatus): string {
                                             <p
                                                 class="mt-1 text-xs text-muted-foreground"
                                             >
-                                                {{
-                                                    priorityLabel(todo.priority)
-                                                }}
+                                                {{ priorityLabel(todo) }}
                                                 ·
-                                                {{ statusLabel(todo.status) }}
+                                                {{ statusLabel(todo) }}
                                             </p>
                                         </div>
                                         <CheckCircle2
-                                            v-if="todo.status === 'completed'"
+                                            v-if="todo.is_completed"
                                             class="size-4 shrink-0 text-emerald-600"
                                             aria-hidden="true"
                                         />

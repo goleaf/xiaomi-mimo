@@ -34,6 +34,20 @@ import {
     update as updateTag,
 } from '@/routes/tags';
 import {
+    destroy as destroyTaskPriority,
+    manage as manageTaskPriority,
+    reorder as reorderTaskPriorities,
+    store as storeTaskPriority,
+    update as updateTaskPriority,
+} from '@/routes/task-priorities';
+import {
+    destroy as destroyTaskStatus,
+    manage as manageTaskStatus,
+    reorder as reorderTaskStatuses,
+    store as storeTaskStatus,
+    update as updateTaskStatus,
+} from '@/routes/task-statuses';
+import {
     configuration as workspaceConfiguration,
     danger as workspaceDanger,
     index as workspaceIndex,
@@ -56,6 +70,8 @@ import type {
     WorkspaceMetadataRouteUrls,
     Label,
     Tag,
+    TaskPriorityDefinition,
+    TaskStatusDefinition,
 } from '@/types/models';
 
 const props = defineProps<{
@@ -65,6 +81,8 @@ const props = defineProps<{
     invitations: WorkspaceInvitation[];
     labels: Label[];
     tags: Tag[];
+    taskStatuses: TaskStatusDefinition[];
+    taskPriorities: TaskPriorityDefinition[];
     locale: string;
 }>();
 
@@ -125,6 +143,40 @@ const metadataRoutes = computed<WorkspaceMetadataRouteUrls>(() => ({
         updateTag.url({ workspace: props.workspace, tag: tagId }),
     deleteTag: (tagId: string) =>
         destroyTag.url({ workspace: props.workspace, tag: tagId }),
+    storeStatus: storeTaskStatus.url(props.workspace),
+    updateStatus: (statusId: string) =>
+        updateTaskStatus.url({
+            workspace: props.workspace,
+            taskStatus: statusId,
+        }),
+    manageStatus: (statusId: string) =>
+        manageTaskStatus.url({
+            workspace: props.workspace,
+            taskStatus: statusId,
+        }),
+    deleteStatus: (statusId: string) =>
+        destroyTaskStatus.url({
+            workspace: props.workspace,
+            taskStatus: statusId,
+        }),
+    reorderStatuses: reorderTaskStatuses.url(props.workspace),
+    storePriority: storeTaskPriority.url(props.workspace),
+    updatePriority: (priorityId: string) =>
+        updateTaskPriority.url({
+            workspace: props.workspace,
+            taskPriority: priorityId,
+        }),
+    managePriority: (priorityId: string) =>
+        manageTaskPriority.url({
+            workspace: props.workspace,
+            taskPriority: priorityId,
+        }),
+    deletePriority: (priorityId: string) =>
+        destroyTaskPriority.url({
+            workspace: props.workspace,
+            taskPriority: priorityId,
+        }),
+    reorderPriorities: reorderTaskPriorities.url(props.workspace),
 }));
 </script>
 
@@ -270,6 +322,8 @@ const metadataRoutes = computed<WorkspaceMetadataRouteUrls>(() => ({
                         :workspace="workspace"
                         :labels="labels"
                         :tags="tags"
+                        :task-statuses="taskStatuses"
+                        :task-priorities="taskPriorities"
                         :locale="locale"
                         :routes="metadataRoutes"
                     />

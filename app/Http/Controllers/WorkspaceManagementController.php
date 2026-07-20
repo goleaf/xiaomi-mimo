@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\LabelResource;
 use App\Http\Resources\TagResource;
+use App\Http\Resources\TaskPriorityResource;
+use App\Http\Resources\TaskStatusResource;
 use App\Http\Resources\WorkspaceInvitationResource;
 use App\Http\Resources\WorkspaceMemberResource;
 use App\Http\Resources\WorkspaceResource;
@@ -58,6 +60,12 @@ class WorkspaceManagementController extends Controller
                 : [],
             'tags' => $section === 'configuration'
                 ? TagResource::collection($this->query->tags($workspace))->resolve($request)
+                : [],
+            'taskStatuses' => $section === 'configuration'
+                ? TaskStatusResource::collection($this->query->taskStatuses($workspace))->resolve($request)
+                : [],
+            'taskPriorities' => $section === 'configuration'
+                ? TaskPriorityResource::collection($this->query->taskPriorities($workspace))->resolve($request)
                 : [],
             'locale' => app()->getLocale(),
         ]);

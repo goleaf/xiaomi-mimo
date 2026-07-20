@@ -13,6 +13,8 @@ use App\Http\Controllers\LabelController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TagController;
+use App\Http\Controllers\TaskPriorityController;
+use App\Http\Controllers\TaskStatusController;
 use App\Http\Controllers\TodoController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Controllers\WorkspaceController;
@@ -192,6 +194,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('workspaces/{workspace}/tasks/{todo}/tags/{tag}', [TagController::class, 'detach'])
         ->scopeBindings()
         ->name('tags.detach');
+
+    // Task statuses and priorities
+    Route::get('workspaces/{workspace}/task-statuses', [TaskStatusController::class, 'index'])->name('task-statuses.index');
+    Route::post('workspaces/{workspace}/task-statuses', [TaskStatusController::class, 'store'])->name('task-statuses.store');
+    Route::put('workspaces/{workspace}/task-statuses/reorder', [TaskStatusController::class, 'reorder'])->name('task-statuses.reorder');
+    Route::put('workspaces/{workspace}/task-statuses/{taskStatus}', [TaskStatusController::class, 'update'])
+        ->scopeBindings()
+        ->name('task-statuses.update');
+    Route::patch('workspaces/{workspace}/task-statuses/{taskStatus}/manage', [TaskStatusController::class, 'manage'])
+        ->scopeBindings()
+        ->name('task-statuses.manage');
+    Route::delete('workspaces/{workspace}/task-statuses/{taskStatus}', [TaskStatusController::class, 'destroy'])
+        ->scopeBindings()
+        ->name('task-statuses.destroy');
+
+    Route::get('workspaces/{workspace}/task-priorities', [TaskPriorityController::class, 'index'])->name('task-priorities.index');
+    Route::post('workspaces/{workspace}/task-priorities', [TaskPriorityController::class, 'store'])->name('task-priorities.store');
+    Route::put('workspaces/{workspace}/task-priorities/reorder', [TaskPriorityController::class, 'reorder'])->name('task-priorities.reorder');
+    Route::put('workspaces/{workspace}/task-priorities/{taskPriority}', [TaskPriorityController::class, 'update'])
+        ->scopeBindings()
+        ->name('task-priorities.update');
+    Route::patch('workspaces/{workspace}/task-priorities/{taskPriority}/manage', [TaskPriorityController::class, 'manage'])
+        ->scopeBindings()
+        ->name('task-priorities.manage');
+    Route::delete('workspaces/{workspace}/task-priorities/{taskPriority}', [TaskPriorityController::class, 'destroy'])
+        ->scopeBindings()
+        ->name('task-priorities.destroy');
 
     // Attachments
     Route::post('tasks/{todo}/attachments', [AttachmentController::class, 'store'])->name('attachments.store');

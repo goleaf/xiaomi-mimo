@@ -32,6 +32,22 @@ test('user can create checklist', function () {
     $this->assertDatabaseHas('checklists', ['todo_id' => $todo->id, 'name' => 'My Checklist']);
 });
 
+test('inertia checklist mutations redirect back and reject foreign workspaces', function () {
+    [$user, $workspace, $todo] = createAuthenticatedChecklist();
+    $tasksUrl = route('todos.index', $workspace);
+
+    $this->actingAs($user)
+        ->from($tasksUrl)
+        ->post(route('checklists.store', $todo), ['name' => 'Inline checklist'])
+        ->assertRedirect($tasksUrl);
+
+    $foreignTodo = Todo::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson(route('checklists.store', $foreignTodo), ['name' => 'Private'])
+        ->assertForbidden();
+});
+
 test('user can update checklist', function () {
     [$user, $workspace, $todo, $checklist] = createAuthenticatedChecklist();
 

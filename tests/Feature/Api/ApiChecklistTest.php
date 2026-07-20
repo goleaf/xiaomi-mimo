@@ -54,11 +54,37 @@ test('API user can add checklist item', function () {
 
 test('API user can toggle checklist item', function () {
     [$user, $token, $workspace, $todo] = createApiChecklistUser();
-    $item = ChecklistItem::factory()->create(['is_checked' => false]);
+    $checklist = Checklist::factory()->create(['todo_id' => $todo->id]);
+    $item = ChecklistItem::factory()->create([
+        'checklist_id' => $checklist->id,
+        'is_checked' => false,
+    ]);
 
     $response = $this->withHeader('Authorization', "Bearer {$token}")
         ->patchJson("/api/checklist-items/{$item->id}/toggle");
 
     $response->assertOk();
     $this->assertDatabaseHas('checklist_items', ['id' => $item->id, 'is_checked' => true]);
+});
+
+test('checklist API writes reject resources from another workspace', function () {
+    [$user, $token] = createApiChecklistUser();
+    [$foreignUser, $foreignToken, $foreignWorkspace, $foreignTodo] = createApiChecklistUser();
+    $foreignChecklist = Checklist::factory()->create(['todo_id' => $foreignTodo->id]);
+    $foreignItem = ChecklistItem::factory()->create([
+        'checklist_id' => $foreignChecklist->id,
+        'is_checked' => false,
+    ]);
+
+    $this->withToken($token)
+        ->postJson("/api/tasks/{$foreignTodo->id}/checklists", ['name' => 'Leaked'])
+        ->assertForbidden();
+    $this->withToken($token)
+        ->postJson("/api/checklists/{$foreignChecklist->id}/items", ['content' => 'Leaked'])
+        ->assertForbidden();
+    $this->withToken($token)
+        ->patchJson("/api/checklist-items/{$foreignItem->id}/toggle")
+        ->assertForbidden();
+
+    expect($foreignItem->refresh()->is_checked)->toBeFalse();
 });

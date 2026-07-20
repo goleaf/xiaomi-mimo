@@ -171,6 +171,19 @@ test('user can complete todo', function () {
     $this->assertDatabaseHas('todos', ['id' => $todo->id, 'status' => 'completed']);
 });
 
+test('inertia task mutations redirect back so page props refresh', function () {
+    [$user, $workspace] = createAuthenticatedWorkspace();
+    $todo = Todo::factory()->pending()->create(['workspace_id' => $workspace->id]);
+    $tasksUrl = route('todos.index', $workspace);
+
+    $this->actingAs($user)
+        ->from($tasksUrl)
+        ->post(route('todos.complete', $todo))
+        ->assertRedirect($tasksUrl);
+
+    expect($todo->refresh()->completed_at)->not->toBeNull();
+});
+
 test('user can uncomplete todo', function () {
     [$user, $workspace] = createAuthenticatedWorkspace();
     $todo = Todo::factory()->completed()->create(['workspace_id' => $workspace->id]);

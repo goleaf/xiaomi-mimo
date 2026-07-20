@@ -26,6 +26,7 @@ class ChecklistController extends Controller
 
     public function store(Request $request, Todo $todo, CreateChecklist $action): JsonResponse
     {
+        $this->authorize('update', $todo);
         $request->validate(['name' => 'required|string|max:255']);
         $checklist = $action->handle($todo, $request->name);
 
@@ -34,6 +35,7 @@ class ChecklistController extends Controller
 
     public function storeItem(Request $request, Checklist $checklist, CreateChecklistItem $action): JsonResponse
     {
+        $this->authorize('update', $checklist->todo);
         $request->validate(['content' => 'required|string|max:500']);
         $item = $action->handle($checklist, $request->content);
 
@@ -42,6 +44,7 @@ class ChecklistController extends Controller
 
     public function toggleItem(ChecklistItem $item, ToggleChecklistItem $action): JsonResponse
     {
+        $this->authorize('update', $item->checklist->todo);
         $item = $action->handle($item);
 
         return response()->json(['item' => new ChecklistItemResource($item)]);

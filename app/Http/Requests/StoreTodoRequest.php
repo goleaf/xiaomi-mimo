@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\TodoPriority;
-use App\Enums\TodoStatus;
 use App\Models\Label;
 use App\Models\Tag;
 use App\Models\Workspace;
@@ -26,11 +24,42 @@ class StoreTodoRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:500'],
             'description' => ['nullable', 'string'],
-            'project_id' => ['nullable', 'uuid', 'exists:projects,id'],
-            'assigned_to' => ['nullable', 'uuid', 'exists:users,id'],
-            'parent_id' => ['nullable', 'uuid', 'exists:todos,id'],
-            'status' => ['sometimes', Rule::enum(TodoStatus::class)],
-            'priority' => ['sometimes', Rule::enum(TodoPriority::class)],
+            'project_id' => [
+                'nullable', 'uuid',
+                Rule::exists('projects', 'id')->where('workspace_id', $workspaceId),
+            ],
+            'assigned_to' => [
+                'nullable', 'uuid',
+                Rule::exists('workspace_members', 'user_id')->where('workspace_id', $workspaceId),
+            ],
+            'parent_id' => [
+                'nullable', 'uuid',
+                Rule::exists('todos', 'id')->where('workspace_id', $workspaceId),
+            ],
+            'status' => [
+                'sometimes', 'string', 'prohibits:status_id',
+                Rule::exists('task_statuses', 'key')
+                    ->where('workspace_id', $workspaceId)
+                    ->where('is_archived', 0),
+            ],
+            'status_id' => [
+                'sometimes', 'uuid', 'prohibits:status',
+                Rule::exists('task_statuses', 'id')
+                    ->where('workspace_id', $workspaceId)
+                    ->where('is_archived', 0),
+            ],
+            'priority' => [
+                'sometimes', 'string', 'prohibits:priority_id',
+                Rule::exists('task_priorities', 'key')
+                    ->where('workspace_id', $workspaceId)
+                    ->where('is_archived', 0),
+            ],
+            'priority_id' => [
+                'sometimes', 'uuid', 'prohibits:priority',
+                Rule::exists('task_priorities', 'id')
+                    ->where('workspace_id', $workspaceId)
+                    ->where('is_archived', 0),
+            ],
             'due_date' => ['nullable', 'date'],
             'start_date' => ['nullable', 'date', 'before_or_equal:due_date'],
             'estimated_time' => ['nullable', 'integer', 'min:1'],
@@ -48,7 +77,7 @@ class StoreTodoRequest extends FormRequest
     }
 
     /**
-     * @return array{title: string, project_id?: string|null, assigned_to?: string|null, parent_id?: string|null, description?: string|null, status?: string, priority?: string, due_date?: string|null, start_date?: string|null, estimated_time?: int|null, label_ids?: list<string>, tag_ids?: list<string>}
+     * @return array{title: string, project_id?: string|null, assigned_to?: string|null, parent_id?: string|null, description?: string|null, status?: string, status_id?: string, priority?: string, priority_id?: string, due_date?: string|null, start_date?: string|null, estimated_time?: int|null, label_ids?: list<string>, tag_ids?: list<string>}
      */
     public function todoData(): array
     {
@@ -59,7 +88,7 @@ class StoreTodoRequest extends FormRequest
             $data[$key] = is_string($value) ? $value : null;
         }
 
-        foreach (['status', 'priority'] as $key) {
+        foreach (['status', 'status_id', 'priority', 'priority_id'] as $key) {
             $value = $this->validated($key);
 
             if (is_string($value)) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TodoResource;
 use App\Models\User;
 use App\Services\DashboardQuery;
 use Illuminate\Http\Request;
@@ -22,14 +23,20 @@ class DashboardController extends Controller
         );
         $timezone = $user->preferences?->getAttribute('timezone');
 
-        return Inertia::render(
-            'Dashboard',
-            $workspace
-                ? $dashboardQuery->forWorkspace(
-                    $workspace,
-                    is_string($timezone) ? $timezone : (string) config('app.timezone'),
-                )
-                : $dashboardQuery->empty(),
-        );
+        $data = $workspace
+            ? $dashboardQuery->forWorkspace(
+                $workspace,
+                is_string($timezone) ? $timezone : (string) config('app.timezone'),
+            )
+            : $dashboardQuery->empty();
+
+        foreach (['todayTasks', 'overdueTasks', 'upcomingTasks'] as $key) {
+            $resourceData = TodoResource::collection($data[$key])
+                ->toResponse($request)
+                ->getData(true);
+            $data[$key] = $resourceData['data'] ?? [];
+        }
+
+        return Inertia::render('Dashboard', $data);
     }
 }

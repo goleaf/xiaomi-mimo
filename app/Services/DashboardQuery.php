@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\TodoStatus;
 use App\Models\Todo;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -32,21 +31,21 @@ class DashboardQuery
 
         $todayTasks = (clone $todos)
             ->whereDate('due_date', $today)
-            ->with('project')
+            ->with(['project', 'statusDefinition', 'priorityDefinition'])
             ->orderBy('position')
             ->get();
         $overdueTasks = (clone $todos)
             ->whereDate('due_date', '<', $today)
-            ->where('status', '!=', TodoStatus::Completed)
-            ->with('project')
+            ->whereNull('completed_at')
+            ->with(['project', 'statusDefinition', 'priorityDefinition'])
             ->orderBy('due_date')
             ->limit(10)
             ->get();
         $upcomingTasks = (clone $todos)
             ->whereDate('due_date', '>', $today)
             ->whereDate('due_date', '<=', $upcomingEnd)
-            ->where('status', '!=', TodoStatus::Completed)
-            ->with('project')
+            ->whereNull('completed_at')
+            ->with(['project', 'statusDefinition', 'priorityDefinition'])
             ->orderBy('due_date')
             ->limit(10)
             ->get();
@@ -104,14 +103,14 @@ class DashboardQuery
             ->selectRaw('COUNT(*) AS total_tasks')
             ->selectRaw('COUNT(CASE WHEN DATE(due_date) = ? THEN 1 END) AS today_count', [$today])
             ->selectRaw(
-                'COUNT(CASE WHEN DATE(due_date) < ? AND status != ? THEN 1 END) AS overdue_count',
-                [$today, TodoStatus::Completed->value],
+                'COUNT(CASE WHEN DATE(due_date) < ? AND completed_at IS NULL THEN 1 END) AS overdue_count',
+                [$today],
             )
             ->selectRaw(
                 'COUNT(CASE WHEN completed_at >= ? AND completed_at < ? THEN 1 END) AS completed_today',
                 [$todayStartUtc, $tomorrowStartUtc],
             )
-            ->selectRaw('COUNT(CASE WHEN status = ? THEN 1 END) AS completed_total', [TodoStatus::Completed->value])
+            ->selectRaw('COUNT(CASE WHEN completed_at IS NOT NULL THEN 1 END) AS completed_total')
             ->first();
 
         $totalTasks = (int) ($counts['total_tasks'] ?? 0);

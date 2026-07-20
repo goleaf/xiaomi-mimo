@@ -30,7 +30,9 @@ class TodoController extends Controller
     {
         $this->authorize('view', $workspace);
 
-        $query = $workspace->todos()->with(['project', 'assignee', 'labels', 'tags'])->active();
+        $query = $workspace->todos()->with([
+            'project', 'assignee', 'labels', 'tags', 'statusDefinition', 'priorityDefinition',
+        ])->active();
         $query = $this->filterService->apply($query->getQuery(), $request->only([
             'search', 'project_id', 'status', 'priority', 'assigned_to',
         ]));
@@ -50,7 +52,10 @@ class TodoController extends Controller
     public function show(Todo $todo): TodoResource
     {
         $this->authorize('view', $todo);
-        $todo->load(['project', 'assignee', 'labels', 'tags', 'comments.user', 'checklists.items']);
+        $todo->load([
+            'project', 'assignee', 'labels', 'tags', 'comments.user', 'checklists.items',
+            'statusDefinition', 'priorityDefinition',
+        ]);
 
         return new TodoResource($todo);
     }

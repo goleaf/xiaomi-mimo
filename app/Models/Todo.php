@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Casts\LegacyBackedEnumOrString;
 use App\Concerns\HasUuid;
 use App\Enums\TodoPriority;
 use App\Enums\TodoStatus;
+use BackedEnum;
 use Database\Factories\TodoFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,8 +26,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $parent_id
  * @property string $title
  * @property string|null $description
- * @property TodoStatus $status
- * @property TodoPriority $priority
+ * @property string|null $status_id
+ * @property string|null $priority_id
+ * @property TodoStatus|string $status
+ * @property TodoPriority|string $priority
  * @property Carbon|null $due_date
  * @property Carbon|null $start_date
  * @property int|null $estimated_time
@@ -45,7 +49,7 @@ class Todo extends Model
 
     protected $fillable = [
         'project_id', 'workspace_id', 'assigned_to', 'parent_id',
-        'title', 'description', 'status', 'priority',
+        'title', 'description', 'status', 'status_id', 'priority', 'priority_id',
         'due_date', 'start_date', 'estimated_time', 'spent_time',
         'is_pinned', 'is_favorite', 'is_archived', 'is_recurring',
         'recurring_rule', 'position', 'completed_at',
@@ -54,8 +58,8 @@ class Todo extends Model
     protected function casts(): array
     {
         return [
-            'status' => TodoStatus::class,
-            'priority' => TodoPriority::class,
+            'status' => LegacyBackedEnumOrString::class.':'.TodoStatus::class,
+            'priority' => LegacyBackedEnumOrString::class.':'.TodoPriority::class,
             'due_date' => 'date:Y-m-d',
             'start_date' => 'date',
             'completed_at' => 'datetime',
@@ -76,6 +80,18 @@ class Todo extends Model
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
+    }
+
+    /** @return BelongsTo<TaskStatus, $this> */
+    public function statusDefinition(): BelongsTo
+    {
+        return $this->belongsTo(TaskStatus::class, 'status_id');
+    }
+
+    /** @return BelongsTo<TaskPriority, $this> */
+    public function priorityDefinition(): BelongsTo
+    {
+        return $this->belongsTo(TaskPriority::class, 'priority_id');
     }
 
     /** @return BelongsTo<User, $this> */
@@ -163,7 +179,7 @@ class Todo extends Model
     public function scopeOverdue(Builder $query): Builder
     {
         return $query->where('due_date', '<', now()->toDateString())
-            ->where('status', '!=', TodoStatus::Completed);
+            ->whereNull('completed_at');
     }
 
     /**
@@ -185,5 +201,19 @@ class Todo extends Model
         );
 
         return $total > 0 ? round(($checked / $total) * 100) : 0;
+    }
+
+    public function statusKey(): string
+    {
+        return $this->status instanceof BackedEnum
+            ? (string) $this->status->value
+            : $this->status;
+    }
+
+    public function priorityKey(): string
+    {
+        return $this->priority instanceof BackedEnum
+            ? (string) $this->priority->value
+            : $this->priority;
     }
 }

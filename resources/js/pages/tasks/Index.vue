@@ -27,6 +27,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useBulkSelect } from '@/composables/useBulkSelect';
+import {
+    safeDefinitionColor,
+    useTaskDefinitions,
+} from '@/composables/useTaskDefinitions';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import {
@@ -37,18 +41,22 @@ import {
     uncomplete,
 } from '@/routes/todos';
 import type { PaginatedResponse } from '@/types/api';
-import type { Project, Todo } from '@/types/models';
+import type { Project, TaskDefinitionCatalog, Todo } from '@/types/models';
 
 const props = defineProps<{
     todos: PaginatedResponse<Todo> & { meta?: { total: number } };
     filters: Record<string, string>;
     projects: { data: Project[] };
     workspace: { id: string };
+    taskDefinitions: TaskDefinitionCatalog;
 }>();
 
 const bulkSelect = useBulkSelect<Todo>();
 const toast = useToast();
 const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
+const { statuses, priorities } = useTaskDefinitions(
+    () => props.taskDefinitions,
+);
 const searchQuery = ref(props.filters.search ?? '');
 const statusFilter = ref(props.filters.status ?? 'all');
 const priorityFilter = ref(props.filters.priority ?? 'all');
@@ -62,10 +70,10 @@ const totalCount = computed(
     () => props.todos.meta?.total ?? props.todos.total ?? allTodos.value.length,
 );
 const pendingCount = computed(
-    () => allTodos.value.filter((todo) => todo.status === 'pending').length,
+    () => allTodos.value.filter((todo) => !todo.is_completed).length,
 );
 const completedCount = computed(
-    () => allTodos.value.filter((todo) => todo.status === 'completed').length,
+    () => allTodos.value.filter((todo) => todo.is_completed).length,
 );
 
 function applyFilters(): void {
@@ -85,8 +93,7 @@ function applyFilters(): void {
 }
 
 function toggleComplete(todo: Todo): void {
-    const target =
-        todo.status === 'completed' ? uncomplete(todo) : complete(todo);
+    const target = todo.is_completed ? uncomplete(todo) : complete(todo);
 
     router.post(target.url, {}, { preserveScroll: true });
 }
@@ -129,18 +136,18 @@ function selectTodo(todo: Todo): void {
     );
 }
 
-function priorityBadge(
-    priority: string,
-): 'destructive' | 'outline' | 'secondary' {
-    if (priority === 'urgent' || priority === 'high') {
-        return 'destructive';
+function updateSelectedTodo(todo: Todo): void {
+    if (selectedTodo.value?.id === todo.id) {
+        selectedTodo.value = { ...selectedTodo.value, ...todo };
     }
 
-    if (priority === 'medium') {
-        return 'secondary';
-    }
+    router.reload({ only: ['todos'] });
+}
 
-    return 'outline';
+function refreshSelectedTodo(): void {
+    if (selectedTodo.value) {
+        selectTodo(selectedTodo.value);
+    }
 }
 
 function formatDate(date: string | null): string {
@@ -231,14 +238,12 @@ function formatDate(date: string | null): string {
                                 <SelectItem value="all">
                                     {{ t('tasks.filters.all_statuses') }}
                                 </SelectItem>
-                                <SelectItem value="pending">
-                                    {{ t('tasks.statuses.pending') }}
-                                </SelectItem>
-                                <SelectItem value="in_progress">
-                                    {{ t('tasks.statuses.in_progress') }}
-                                </SelectItem>
-                                <SelectItem value="completed">
-                                    {{ t('tasks.statuses.completed') }}
+                                <SelectItem
+                                    v-for="status in statuses"
+                                    :key="status.id"
+                                    :value="status.key"
+                                >
+                                    {{ status.name }}
                                 </SelectItem>
                             </SelectContent>
                         </Select>
@@ -255,17 +260,12 @@ function formatDate(date: string | null): string {
                                 <SelectItem value="all">
                                     {{ t('tasks.filters.all_priorities') }}
                                 </SelectItem>
-                                <SelectItem value="urgent">
-                                    {{ t('tasks.priorities.urgent') }}
-                                </SelectItem>
-                                <SelectItem value="high">
-                                    {{ t('tasks.priorities.high') }}
-                                </SelectItem>
-                                <SelectItem value="medium">
-                                    {{ t('tasks.priorities.medium') }}
-                                </SelectItem>
-                                <SelectItem value="low">
-                                    {{ t('tasks.priorities.low') }}
+                                <SelectItem
+                                    v-for="priority in priorities"
+                                    :key="priority.id"
+                                    :value="priority.key"
+                                >
+                                    {{ priority.name }}
                                 </SelectItem>
                             </SelectContent>
                         </Select>
@@ -306,7 +306,7 @@ function formatDate(date: string | null): string {
                                 @click="selectTodo(todo)"
                             ></button>
                             <Checkbox
-                                :model-value="todo.status === 'completed'"
+                                :model-value="todo.is_completed"
                                 class="relative z-20 size-4.5 data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
                                 :aria-label="todo.title"
                                 @click.stop
@@ -318,7 +318,7 @@ function formatDate(date: string | null): string {
                                 <p
                                     :class="[
                                         'truncate text-sm font-medium',
-                                        todo.status === 'completed'
+                                        todo.is_completed
                                             ? 'text-muted-foreground line-through'
                                             : '',
                                     ]"
@@ -347,9 +347,20 @@ function formatDate(date: string | null): string {
                             >
                                 <Badge
                                     class="hidden sm:inline-flex"
-                                    :variant="priorityBadge(todo.priority)"
+                                    variant="outline"
+                                    :style="{
+                                        borderColor: safeDefinitionColor(
+                                            todo.priority_definition?.color,
+                                        ),
+                                        color: safeDefinitionColor(
+                                            todo.priority_definition?.color,
+                                        ),
+                                    }"
                                 >
-                                    {{ t(`tasks.priorities.${todo.priority}`) }}
+                                    {{
+                                        todo.priority_definition?.name ??
+                                        todo.priority
+                                    }}
                                 </Badge>
                                 <div class="hidden gap-1 md:flex">
                                     <span
@@ -397,12 +408,16 @@ function formatDate(date: string | null): string {
             :key="selectedTodo.id"
             :todo="selectedTodo"
             :open="Boolean(selectedTodo)"
+            :task-definitions="taskDefinitions"
             @close="selectedTodo = null"
+            @refresh="refreshSelectedTodo"
+            @updated="updateSelectedTodo"
         />
 
         <TaskCreateDialog
             :open="showCreateDialog"
             :workspace-id="workspace.id"
+            :task-definitions="taskDefinitions"
             @close="showCreateDialog = false"
             @created="applyFilters"
         />

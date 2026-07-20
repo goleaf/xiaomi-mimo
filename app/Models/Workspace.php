@@ -79,6 +79,18 @@ class Workspace extends Model
         return $this->hasMany(Tag::class);
     }
 
+    /** @return HasMany<TaskStatus, $this> */
+    public function taskStatuses(): HasMany
+    {
+        return $this->hasMany(TaskStatus::class);
+    }
+
+    /** @return HasMany<TaskPriority, $this> */
+    public function taskPriorities(): HasMany
+    {
+        return $this->hasMany(TaskPriority::class);
+    }
+
     /** @return HasMany<ActivityLog, $this> */
     public function activityLogs(): HasMany
     {

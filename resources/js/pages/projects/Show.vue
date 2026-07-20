@@ -23,12 +23,13 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
+import { safeDefinitionColor } from '@/composables/useTaskDefinitions';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import { projects } from '@/routes';
 import { archive, duplicate, restore } from '@/routes/projects';
 import { complete, destroy, show, uncomplete } from '@/routes/todos';
-import type { Project, Todo } from '@/types/models';
+import type { Project, TaskDefinitionCatalog, Todo } from '@/types/models';
 
 type ProjectHeaderAction = 'duplicate' | 'archive' | 'restore';
 
@@ -36,6 +37,7 @@ const props = defineProps<{
     project: { data: Project };
     todos: Todo[];
     workspace: { id: string };
+    taskDefinitions: TaskDefinitionCatalog;
 }>();
 
 const toast = useToast();
@@ -58,18 +60,15 @@ const filteredTodos = computed(() => {
     );
 });
 
-const pendingTodos = computed(() =>
-    filteredTodos.value.filter((todo) => todo.status === 'pending'),
-);
-const inProgressTodos = computed(() =>
-    filteredTodos.value.filter((todo) => todo.status === 'in_progress'),
+const openTodos = computed(() =>
+    filteredTodos.value.filter((todo) => !todo.is_completed),
 );
 const completedTodos = computed(() =>
-    filteredTodos.value.filter((todo) => todo.status === 'completed'),
+    filteredTodos.value.filter((todo) => todo.is_completed),
 );
 
 function toggleComplete(todo: Todo): void {
-    const target = todo.status === 'completed' ? uncomplete : complete;
+    const target = todo.is_completed ? uncomplete : complete;
 
     router.post(target(todo).url, {}, { preserveScroll: true });
 }
@@ -159,21 +158,18 @@ function selectTodo(todo: Todo): void {
     );
 }
 
-function priorityBadge(
-    priority: string,
-): 'default' | 'destructive' | 'outline' | 'secondary' {
-    const variants: Record<
-        string,
-        'default' | 'destructive' | 'outline' | 'secondary'
-    > = {
-        urgent: 'destructive',
-        high: 'destructive',
-        medium: 'secondary',
-        low: 'outline',
-        none: 'outline',
-    };
+function updateSelectedTodo(todo: Todo): void {
+    if (selectedTodo.value?.id === todo.id) {
+        selectedTodo.value = { ...selectedTodo.value, ...todo };
+    }
 
-    return variants[priority] ?? 'outline';
+    router.reload({ only: ['todos'] });
+}
+
+function refreshSelectedTodo(): void {
+    if (selectedTodo.value) {
+        selectTodo(selectedTodo.value);
+    }
 }
 
 function formatDate(date: string | null): string {
@@ -182,23 +178,18 @@ function formatDate(date: string | null): string {
         : '';
 }
 
-const taskGroups = computed(() => [
-    {
-        key: 'in_progress',
-        label: t('tasks.statuses.in_progress'),
-        todos: inProgressTodos.value,
-    },
-    {
-        key: 'pending',
-        label: t('tasks.board.to_do'),
-        todos: pendingTodos.value,
-    },
-    {
-        key: 'completed',
-        label: t('tasks.board.done'),
-        todos: completedTodos.value,
-    },
-]);
+const taskGroups = computed(() =>
+    [...props.taskDefinitions.statuses]
+        .sort((left, right) => left.position - right.position)
+        .map((status) => ({
+            key: status.key,
+            label: status.name,
+            color: status.color,
+            todos: filteredTodos.value.filter(
+                (todo) => todo.status === status.key,
+            ),
+        })),
+);
 </script>
 
 <template>
@@ -287,8 +278,8 @@ const taskGroups = computed(() => [
                             tone="orange"
                         />
                         <WorkspaceMetric
-                            :label="t('tasks.stats.in_progress')"
-                            :value="formatNumber(inProgressTodos.length)"
+                            :label="t('tasks.stats.pending')"
+                            :value="formatNumber(openTodos.length)"
                             :icon="Clock3"
                             tone="blue"
                         />
@@ -338,7 +329,12 @@ const taskGroups = computed(() => [
                         >
                             <div class="mb-3 flex items-center gap-2">
                                 <span
-                                    class="size-2 rounded-full bg-orange-500"
+                                    class="size-2 rounded-full"
+                                    :style="{
+                                        backgroundColor: safeDefinitionColor(
+                                            group.color,
+                                        ),
+                                    }"
                                     aria-hidden="true"
                                 />
                                 <h2
@@ -361,9 +357,7 @@ const taskGroups = computed(() => [
                                         @click="selectTodo(todo)"
                                     ></button>
                                     <Checkbox
-                                        :model-value="
-                                            todo.status === 'completed'
-                                        "
+                                        :model-value="todo.is_completed"
                                         class="relative z-20 size-4.5 data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
                                         :aria-label="todo.title"
                                         @click.stop
@@ -377,7 +371,7 @@ const taskGroups = computed(() => [
                                         <p
                                             :class="[
                                                 'truncate text-sm font-medium',
-                                                todo.status === 'completed'
+                                                todo.is_completed
                                                     ? 'text-muted-foreground line-through'
                                                     : '',
                                             ]"
@@ -396,14 +390,22 @@ const taskGroups = computed(() => [
                                     >
                                         <Badge
                                             class="hidden sm:inline-flex"
-                                            :variant="
-                                                priorityBadge(todo.priority)
-                                            "
+                                            variant="outline"
+                                            :style="{
+                                                borderColor:
+                                                    safeDefinitionColor(
+                                                        todo.priority_definition
+                                                            ?.color,
+                                                    ),
+                                                color: safeDefinitionColor(
+                                                    todo.priority_definition
+                                                        ?.color,
+                                                ),
+                                            }"
                                         >
                                             {{
-                                                t(
-                                                    `tasks.priorities.${todo.priority}`,
-                                                )
+                                                todo.priority_definition
+                                                    ?.name ?? todo.priority
                                             }}
                                         </Badge>
                                         <Button
@@ -447,12 +449,16 @@ const taskGroups = computed(() => [
             :key="selectedTodo.id"
             :todo="selectedTodo"
             :open="Boolean(selectedTodo)"
+            :task-definitions="taskDefinitions"
             @close="selectedTodo = null"
+            @refresh="refreshSelectedTodo"
+            @updated="updateSelectedTodo"
         />
         <TaskCreateDialog
             :open="showCreateDialog"
             :workspace-id="workspace.id"
             :project-id="project.id"
+            :task-definitions="taskDefinitions"
             @close="showCreateDialog = false"
             @created="showCreateDialog = false"
         />

@@ -20,8 +20,15 @@ class TodoResource extends JsonResource
             'parent_id' => $this->parent_id,
             'title' => $this->title,
             'description' => $this->description,
-            'status' => $this->status->value,
-            'priority' => $this->priority->value,
+            'status' => $this->statusKey(),
+            'status_id' => $this->status_id,
+            'priority' => $this->priorityKey(),
+            'priority_id' => $this->priority_id,
+            'status_definition' => new TaskStatusResource($this->whenLoaded('statusDefinition')),
+            'priority_definition' => new TaskPriorityResource($this->whenLoaded('priorityDefinition')),
+            'is_completed' => $this->relationLoaded('statusDefinition')
+                ? (bool) $this->statusDefinition?->is_completed
+                : $this->completed_at !== null,
             'due_date' => $this->due_date?->toDateString(),
             'start_date' => $this->start_date?->toDateString(),
             'estimated_time' => $this->estimated_time,

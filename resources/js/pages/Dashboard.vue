@@ -12,6 +12,7 @@ import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { safeDefinitionColor } from '@/composables/useTaskDefinitions';
 import { useUi } from '@/composables/useUi';
 import type { Todo } from '@/types/models';
 
@@ -30,18 +31,6 @@ defineProps<{
     weeklyData: Array<{ date: string; completed: number; created: number }>;
 }>();
 const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
-
-function priorityColor(priority: string): string {
-    return (
-        {
-            urgent: 'bg-red-500',
-            high: 'bg-orange-500',
-            medium: 'bg-yellow-500',
-            low: 'bg-blue-500',
-            none: 'bg-muted-foreground/35',
-        }[priority] ?? 'bg-muted-foreground/35'
-    );
-}
 
 function formatDate(date: string | null): string {
     if (!date) {
@@ -133,10 +122,14 @@ function formatDate(date: string | null): string {
                                     class="flex items-center gap-3 rounded-xl border border-border/80 bg-background p-3"
                                 >
                                     <div
-                                        :class="[
-                                            'size-2 shrink-0 rounded-full',
-                                            priorityColor(todo.priority),
-                                        ]"
+                                        class="size-2 shrink-0 rounded-full"
+                                        :style="{
+                                            backgroundColor:
+                                                safeDefinitionColor(
+                                                    todo.priority_definition
+                                                        ?.color,
+                                                ),
+                                        }"
                                     />
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-sm font-medium">
@@ -149,7 +142,10 @@ function formatDate(date: string | null): string {
                                         </p>
                                     </div>
                                     <Badge variant="outline">
-                                        {{ t(`tasks.statuses.${todo.status}`) }}
+                                        {{
+                                            todo.status_definition?.name ??
+                                            todo.status
+                                        }}
                                     </Badge>
                                 </div>
                             </div>
@@ -184,10 +180,14 @@ function formatDate(date: string | null): string {
                                     class="flex items-center gap-3 rounded-xl border border-border/80 bg-background p-3"
                                 >
                                     <div
-                                        :class="[
-                                            'size-2 shrink-0 rounded-full',
-                                            priorityColor(todo.priority),
-                                        ]"
+                                        class="size-2 shrink-0 rounded-full"
+                                        :style="{
+                                            backgroundColor:
+                                                safeDefinitionColor(
+                                                    todo.priority_definition
+                                                        ?.color,
+                                                ),
+                                        }"
                                     />
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-sm font-medium">
@@ -232,10 +232,14 @@ function formatDate(date: string | null): string {
                                     class="flex items-center gap-3 rounded-xl border border-border/80 bg-background p-3"
                                 >
                                     <div
-                                        :class="[
-                                            'size-2 shrink-0 rounded-full',
-                                            priorityColor(todo.priority),
-                                        ]"
+                                        class="size-2 shrink-0 rounded-full"
+                                        :style="{
+                                            backgroundColor:
+                                                safeDefinitionColor(
+                                                    todo.priority_definition
+                                                        ?.color,
+                                                ),
+                                        }"
                                     />
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-sm font-medium">
@@ -248,7 +252,10 @@ function formatDate(date: string | null): string {
                                         </p>
                                     </div>
                                     <Badge variant="outline">
-                                        {{ t(`tasks.statuses.${todo.status}`) }}
+                                        {{
+                                            todo.status_definition?.name ??
+                                            todo.status
+                                        }}
                                     </Badge>
                                 </div>
                             </div>
