@@ -2826,6 +2826,71 @@ No migration or Composer/npm package change was made.
 - This progress record will be committed as `docs: record workspace portfolio CRUD` and pushed separately.
 - The pre-existing Task Index and Herd Upload progress entries remain preserved and excluded from this phase's staged changes.
 
+## Workspace Management Center Phase 3: Labels And Tags
+
+### Status
+
+Completed and pushed.
+
+### Before-Phase Baseline
+
+- Labels and tags exist as workspace-owned task relations, but update and delete routes bind them globally instead of through the authorized workspace.
+- Attach validation accepts any existing relation identifier, so foreign workspace identifiers are not rejected atomically.
+- The management center Task configuration section is still a localized placeholder and the API mutations do not enforce workspace write abilities.
+
+### Scope And Decisions
+
+- Add workspace-scoped label and tag CRUD with normalized unique names, usage counts, safe detach-on-delete behavior, and owner/admin management permissions.
+- Nest every web and API mutation below the workspace and enable scoped binding or explicit workspace resolution for every related identifier.
+- Require `workspaces:read` for API reads and `workspaces:write` for API mutations while preserving member read access.
+- Harden task label/tag attachment and detachment so mixed-workspace identifiers fail without partial writes.
+- Replace the configuration placeholder with complete accessible label and tag management using the canonical workspace page.
+- Keep metadata readable by every authorized workspace member while limiting create, update, and delete operations to owners and admins.
+- Normalize names before validation, enforce case-insensitive uniqueness in SQLite, and convert write-race unique constraint failures into field validation responses.
+- Store Unicode-aware normalized-name keys produced by PHP so Lithuanian and Russian case variants are rejected even though SQLite `lower()` and `NOCASE` are ASCII-only.
+- Delete labels and tags transactionally by detaching task pivots first; linked tasks are preserved and the confirmation communicates the affected task count.
+- Wrap task creation and update relation synchronization in transactions so invalid or failed relation writes cannot partially mutate the task.
+- Preserve the existing unversioned label/tag mutation API as secured compatibility aliases beside the canonical workspace-nested endpoints.
+- Bound each workspace to 200 labels and 200 tags so API and Inertia metadata collections remain complete and predictable.
+
+### Changed Files
+
+- Label and tag actions, controllers, Form Requests, resources, workspace policy/query integration, task write actions, and task validation under `app/`.
+- `routes/web.php` and `routes/api.php`.
+- `resources/js/components/workspace/WorkspaceConfigurationPanel.vue`, `resources/js/pages/workspaces/Show.vue`, its focused source test, and shared TypeScript models.
+- English, Lithuanian, and Russian task-configuration translations.
+- `tests/Feature/LabelTagTest.php`, `tests/Feature/Api/ApiLabelTagTest.php`, and `docs/progress.md`.
+
+### Migrations And Packages
+
+- Added and applied `2026_07_20_181649_add_workspace_name_unique_indexes_to_labels_and_tags.php`, which adds required Unicode-normalized name keys and workspace-scoped unique indexes for labels and tags.
+- The migration transactionally trims existing names, merges case-only duplicates, transfers their task pivots with duplicate protection, and preserves every linked task before creating the indexes.
+- Pre-migration live checks found no trimmed or case-insensitive duplicate names; the migration still covers populated databases where such duplicates exist.
+- No Composer or npm package change was made.
+
+### Verification
+
+- Full Pest passed with 439 tests and 2,334 assertions, including owner/admin/member authorization, nested workspace isolation, Unicode uniqueness, populated-database duplicate merging, mixed-identifier atomic rejection, bounded collections, usage counts, pivot-safe deletion, legacy API compatibility, token abilities, API JSON semantics, and existing task write regressions.
+- `vendor/bin/pint --dirty --format agent`, full configured PHPStan, Vue TypeScript checking, full ESLint, resource Prettier verification, the five focused workspace source tests, and `git diff --check` passed.
+- The production build passed after transforming 3,387 modules; only the existing optional `fontaine` optimization notice remains.
+- Route inspection confirmed canonical nested label/tag API reads use `workspaces:read`, mutations use `workspaces:write`, update/delete bindings are scoped through the authorized workspace, and secured legacy mutation aliases remain available.
+- Live desktop QA verified label and tag create, edit, usage-count presentation, confirmation, and deletion on the canonical configuration page.
+- The rebuilt live page exposes item-specific edit/delete accessible names and neutral count grammar.
+- All temporary Phase 3 metadata was deleted through the UI and the live SQLite query returned zero matching rows afterward.
+- Current live QA produced no page errors; Boost browser logs contain only historical entries from 2026-07-19.
+- Independent re-review findings for API compatibility, Unicode uniqueness, populated migration safety, bounded collections, accessible names, and count grammar were resolved before delivery.
+
+### Known Limitations And Next Work
+
+- Status and priority configuration remains backed by the existing enums until Phase 4 adds workspace-owned definitions, ordering, defaults, completion semantics, and safe replacement-on-delete.
+- Broader task relation and legacy API compatibility hardening remains Phase 5 work; this phase covers labels, tags, and their task pivot validation only.
+
+### Git Delivery
+
+- Implementation commit `ba08f2e` (`feat: add workspace task metadata CRUD`) was pushed successfully to `origin/main`.
+- This progress record will be committed as `docs: record workspace task metadata CRUD` after the implementation commit is pushed.
+- The pre-existing Task Detail, Task Index, and Herd Upload progress changes remain preserved and excluded from this phase's staged changes.
+
 ## Workspace Management Center Phase 2: Management And Membership
 
 ### Status
