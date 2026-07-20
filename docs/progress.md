@@ -2825,3 +2825,65 @@ No migration or Composer/npm package change was made.
 - Implementation commit `2fc1dcd` (`feat: complete workspace portfolio CRUD`) was pushed successfully to `origin/main`.
 - This progress record will be committed as `docs: record workspace portfolio CRUD` and pushed separately.
 - The pre-existing Task Index and Herd Upload progress entries remain preserved and excluded from this phase's staged changes.
+
+## Workspace Management Center Phase 2: Management And Membership
+
+### Status
+
+Completed and pushed.
+
+### Before-Phase Baseline
+
+- Workspace cards temporarily send Manage through the current-workspace switch flow to `/settings/members`; there is no canonical `/workspaces/{workspace}` management page.
+- Membership supports immediate add and removal only. There is no pending invitation lifecycle, role update, ownership transfer, or management API.
+- Inviting an unknown email currently creates a user with a predictable password, which must be replaced by a secure invitation flow.
+
+### Scope And Decisions
+
+- Add shareable Overview, Members, Task configuration, and Danger routes under the authorized workspace.
+- Redirect the legacy `/settings/members` page to the selected workspace's canonical Members route.
+- Add pending invitations with expiring signed acceptance, cancellation, and resend support without pre-creating user accounts.
+- Add workspace-scoped member role changes, removal, and transactional ownership transfer while preserving exactly one owner.
+- Expose the same membership operations through Sanctum-protected API routes with workspace-write ability checks.
+- Keep Phase 2 migrations SQLite-native and add focused Pest coverage before frontend integration.
+- Store invitation secrets only as SHA-256 hashes, rotate them after resend, cancellation, and acceptance, and deliver signed expiring acceptance links without creating placeholder users.
+- Revalidate owner and manager authority inside SQLite-compatible transactional mutations; conditional writes prevent stale requests from demoting or removing the active owner.
+- Require `workspaces:read` for API membership reads and `workspaces:write` for mutations, and return JSON for every `/api/*` response independently of the client Accept header.
+- Treat the management-section controls as normal grouped links because each section has its own canonical URL.
+
+### Changed Files
+
+- Workspace membership actions, controllers, Form Requests, resources, models, policies, query object, invitation notification, data object, factory, and migration under `app/` and `database/`.
+- `routes/web.php` and `routes/api.php`.
+- `resources/js/pages/workspaces/Show.vue`, its focused source test, the four workspace management panels, the workspace portfolio, the legacy settings members page, settings navigation, and shared TypeScript models.
+- English, Lithuanian, and Russian workspace-management and UI translations.
+- `tests/Feature/WorkspaceMembershipManagementTest.php`, `tests/Feature/SettingsMembersTest.php`, and `docs/progress.md`.
+
+### Migrations And Packages
+
+- Added `2026_07_20_172037_create_workspace_invitations_table.php` with UUID ownership, inviter, normalized email, role, hashed token, expiry/lifecycle timestamps, scoped uniqueness, indexes, and SQLite foreign keys.
+- The migration was applied successfully to the live SQLite database and its resulting schema was verified.
+- No Composer or npm package change was made.
+
+### Verification
+
+- Full Pest passed with 437 tests and 2,198 assertions, including canonical routes, pending invitation security, replay/expiry/cancellation, stale-owner protection, role/removal isolation, ownership transfer, token abilities, and API JSON behavior.
+- `vendor/bin/pint --dirty --format agent`, full configured PHPStan, Vue TypeScript checking, full ESLint, resource Prettier verification, the four focused frontend tests, and `git diff --check` passed.
+- The production build passed after transforming 3,385 modules; only the existing optional `fontaine` optimization notice remains.
+- Route inspection confirmed membership reads use `workspaces:read` and every membership mutation uses `workspaces:write` under Sanctum.
+- Live desktop QA verified the canonical Overview/Members navigation, accurate 3-member/6-project/27-task metrics, searchable roster, invitation creation/cancellation, and the corrected invitation form reset.
+- Test invitations were cancelled and their exact audit rows removed; the live database contains zero `codex.phase2.qa%` invitation rows.
+- Live QA produced no current page errors; Boost browser logs contain only historical 2026-07-19 entries.
+- Independent security review found the original ownership, invitation, API, async-state, and navigation issues fixed, with no remaining critical or important blocker after visible stale-state errors were added.
+
+### Known Limitations And Next Work
+
+- Email delivery uses the application's configured notification channel; production deliverability configuration remains deployment-specific.
+- The Task configuration section intentionally remains a localized Phase 3 hand-off until label, tag, status, and priority CRUD is integrated.
+- Phase 3 will harden existing label/tag workspace isolation, add complete management CRUD and API ability coverage, and replace the placeholder configuration panel.
+
+### Git Delivery
+
+- Implementation commit `a562bef` (`feat: add workspace management center`) was pushed successfully to `origin/main`.
+- This progress record will be committed as `docs: record workspace management center` and pushed separately.
+- The pre-existing Task Index and Herd Upload progress entries remain preserved and excluded from this phase's staged changes.
