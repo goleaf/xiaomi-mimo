@@ -2751,3 +2751,77 @@ No migration or Composer/npm package change was made.
 - Documentation commit `b99f915` (`docs: record dashboard presentation repair`) was pushed successfully to `origin/main`.
 - Unrelated user-authored progress entries remain preserved outside this phase's staged changes.
 - This final delivery record will be committed and pushed separately so the phase commits remain focused.
+
+## Workspace Management Center Phase 1: Portfolio CRUD
+
+### Status
+
+Completed and pushed.
+
+### Before-Phase Baseline
+
+- `/workspaces` could create and switch workspaces but did not expose complete edit, duplicate, and safe delete flows.
+- Portfolio cards showed incomplete counts, did not identify the current workspace consistently, and did not expose policy-derived actions.
+- The existing API workspace CRUD had no token ability boundary and no duplicate endpoint.
+
+### Scope And Decisions
+
+- Keep the portfolio at `/workspaces` as the entry point for the approved maximum management center.
+- Add search and sorting, accurate member/project/task metrics, current-workspace state, and policy-aware manage, switch, edit, duplicate, and delete actions.
+- Duplicate workspace metadata, labels, tags, and owner membership transactionally while intentionally excluding projects and tasks.
+- Require the exact workspace name before destructive deletion and show the affected member/project/task counts.
+- Select an authorized fallback workspace after deleting the current workspace, or clear the session after deleting the final workspace.
+- Apply `workspaces:write` to API workspace mutations and keep API permission flags consistent with the authenticated token's abilities as well as workspace policies.
+- Reuse loaded membership pivots and cached role resolution to avoid permission N+1 queries across the portfolio.
+
+### Changed Files
+
+- `app/Actions/DuplicateWorkspace.php`
+- `app/Actions/UpdateWorkspace.php`
+- `app/Http/Controllers/WorkspaceController.php`
+- `app/Http/Controllers/Api/WorkspaceController.php`
+- `app/Http/Middleware/HandleInertiaRequests.php`
+- `app/Http/Requests/DuplicateWorkspaceRequest.php`
+- `app/Http/Resources/WorkspaceResource.php`
+- `app/Models/Workspace.php`
+- `app/Policies/WorkspacePolicy.php`
+- `bootstrap/app.php`
+- `routes/web.php`
+- `routes/api.php`
+- `resources/js/pages/workspaces/Index.vue`
+- `resources/js/components/shared/WorkspaceConfirmDialog.vue`
+- `resources/js/types/models.ts`
+- `lang/en/ui.php`
+- `lang/lt/ui.php`
+- `lang/ru/ui.php`
+- `tests/Feature/WorkspaceManagementTest.php`
+- `tests/Feature/ModelRelationsTest.php`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Verification
+
+- Focused Phase 1 Pest coverage passed with 183 tests and 680 assertions, including accurate counts, current-session fallback, owner/admin/member/outsider authorization, whitespace validation, label/tag-only duplication, safe deletion, restricted API tokens, and no-query loaded-pivot reuse.
+- `vendor/bin/pint --dirty --format agent`, full configured PHPStan, Vue TypeScript checking, full ESLint, resource Prettier verification, and `git diff --check` passed.
+- The production build passed after transforming 3,375 modules; only the existing optional `fontaine` optimization notice remains.
+- Route inspection confirmed every API workspace mutation runs through Sanctum authentication and `CheckAbilities:workspaces:write`.
+- Live browser CRUD verified create, edit, duplicate, switch, and delete with temporary workspaces; all temporary data was removed afterward.
+- Live browser interaction verified workspace search and descending-name sort with multiple records.
+- Live delete QA verified the button remains disabled for empty and incorrect confirmation text, enables only for the exact workspace name, displays 3 members, 6 projects, and 27 tasks for `Acme Projects`, and cancels without deletion.
+- A fresh browser reload produced zero page errors or console errors; Boost browser logs contained only older unrelated entries from 2026-07-19.
+- Independent re-review reported no remaining blocking or important Phase 1 issues.
+
+### Known Limitations And Next Work
+
+- Portfolio search and sorting are client-side over the authorized workspace collection; server pagination can be added if portfolios grow materially.
+- Phase 2 will replace the temporary Manage hand-off with the canonical `/workspaces/{workspace}` management center and complete member and invitation administration.
+
+### Git Delivery
+
+- Implementation commit `2fc1dcd` (`feat: complete workspace portfolio CRUD`) was pushed successfully to `origin/main`.
+- This progress record will be committed as `docs: record workspace portfolio CRUD` and pushed separately.
+- The pre-existing Task Index and Herd Upload progress entries remain preserved and excluded from this phase's staged changes.
