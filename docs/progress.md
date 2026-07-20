@@ -2697,3 +2697,55 @@ No migration or Composer/npm package change was made.
 - Implementation commit `275d364` (`fix: correct dashboard information`) was pushed successfully to `origin/main`.
 - Documentation commit `a8e3df0` (`docs: record dashboard information repair`) was pushed successfully to `origin/main`.
 - This final delivery record will be committed and pushed separately. Existing unrelated `docs/progress.md` changes remain preserved and excluded.
+
+## Dashboard Information Presentation Repair
+
+### Status
+
+Completed.
+
+### Scope And Decisions
+
+- Reconcile the live dashboard with the already-correct workspace-scoped SQLite and Inertia data contract.
+- Render the daily task and completion information currently supplied but ignored by `Dashboard.vue`.
+- Keep today's tasks and future upcoming tasks in distinct, non-duplicated buckets.
+- Reuse the existing productivity component so both completed and created weekly series are presented accessibly.
+
+### Migrations And Packages
+
+No migration or Composer/npm package change was made.
+
+### Changed Files
+
+- `app/Services/DashboardQuery.php`
+- `resources/js/pages/Dashboard.vue`
+- `resources/js/components/dashboard/ProductivityChart.vue`
+- `lang/en/ui.php`
+- `lang/lt/ui.php`
+- `lang/ru/ui.php`
+- `tests/Feature/DashboardTest.php`
+- `tests/Feature/FrontendDesignTest.php`
+- `docs/progress.md`
+
+### Verification
+
+- Live reproduction confirmed dashboard, task-index, and SQLite totals agree at 27 active tasks, 8 completed tasks, and 3 overdue tasks.
+- Source inspection confirmed `today_count`, `completed_today`, `todayTasks`, `completion_rate`, and `weeklyData.created` are supplied but not fully rendered.
+- The focused RED run failed because a today task was duplicated in `upcomingTasks` and the Vue page did not render the complete supplied information; the focused GREEN run passed with 5 tests and 56 assertions.
+- Dashboard, frontend-design, and localization coverage passed with 123 tests and 591 assertions.
+- Full Pest coverage passed with 408 tests and 1,879 assertions.
+- PHPStan, Vue TypeScript checking, ESLint, Prettier verification, and the frontend Node test passed.
+- `vendor/bin/pint --dirty --format agent` and `git diff --check` passed.
+- The production build passed after transforming 3,375 modules; only the existing optional `fontaine` notice remains.
+- Live desktop and 390-pixel mobile QA showed the overall completion summary, due-today and completed-today metrics, a distinct today section, future-only upcoming tasks, full years on deadlines, and both weekly completed/created series.
+- Browser QA produced zero page errors, console errors, and horizontal overflow; Boost logs contain only historical entries from 2026-07-19.
+
+### Known Limitations And Next Work
+
+- Two existing SQLite tasks have due dates in 1976 and 2000. They are correctly counted as overdue and now display their full year; this phase did not alter or delete user data.
+- The existing optional `fontaine` build notice remains non-blocking and outside this dependency-free repair.
+
+### Git Delivery
+
+- Implementation commit `de534f7` (`fix: present complete dashboard information`) was pushed successfully to `origin/main`.
+- Documentation commit and push are pending.
