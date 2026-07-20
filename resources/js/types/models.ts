@@ -16,6 +16,14 @@ export interface Workspace {
     members_count?: number;
     projects_count?: number;
     todos_count?: number;
+    is_current?: boolean;
+    permissions?: {
+        view: boolean;
+        update: boolean;
+        duplicate: boolean;
+        delete: boolean;
+        manage_members: boolean;
+    };
     created_at: string;
     updated_at: string;
 }

@@ -63,7 +63,7 @@ class HandleInertiaRequests extends Middleware
             }
 
             $workspaces = $user->workspaces()
-                ->withCount(['projects', 'todos'])
+                ->withCount(['members', 'projects', 'todos'])
                 ->get();
             $selectedWorkspaceId = $request->session()->get('current_workspace_id');
             $currentWorkspace = is_string($selectedWorkspaceId)

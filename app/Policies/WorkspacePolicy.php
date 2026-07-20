@@ -22,6 +22,11 @@ class WorkspacePolicy
         return $workspace->isOwner($user);
     }
 
+    public function duplicate(User $user, Workspace $workspace): bool
+    {
+        return $workspace->isOwner($user);
+    }
+
     public function invite(User $user, Workspace $workspace): bool
     {
         return $workspace->isOwner($user) || $workspace->memberRole($user) === 'admin';

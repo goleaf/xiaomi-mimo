@@ -23,10 +23,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Workspaces
     Route::get('/workspaces', [WorkspaceController::class, 'index']);
-    Route::post('/workspaces', [WorkspaceController::class, 'store']);
+    Route::post('/workspaces', [WorkspaceController::class, 'store'])
+        ->middleware('abilities:workspaces:write');
     Route::get('/workspaces/{workspace}', [WorkspaceController::class, 'show']);
-    Route::put('/workspaces/{workspace}', [WorkspaceController::class, 'update']);
-    Route::delete('/workspaces/{workspace}', [WorkspaceController::class, 'destroy']);
+    Route::post('/workspaces/{workspace}/duplicate', [WorkspaceController::class, 'duplicate'])
+        ->middleware('abilities:workspaces:write');
+    Route::put('/workspaces/{workspace}', [WorkspaceController::class, 'update'])
+        ->middleware('abilities:workspaces:write');
+    Route::delete('/workspaces/{workspace}', [WorkspaceController::class, 'destroy'])
+        ->middleware('abilities:workspaces:write');
 
     // Projects
     Route::get('/workspaces/{workspace}/projects', [ProjectController::class, 'index']);

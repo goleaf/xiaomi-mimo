@@ -212,6 +212,27 @@ test('workspace creation reuses shared controls for complete processing states',
         ->not->toContain('bg-orange-600 text-white hover:bg-orange-700');
 });
 
+test('workspace portfolio exposes complete management actions with shared dialog surfaces', function () {
+    expect(File::get(resource_path('js/pages/workspaces/Index.vue')))
+        ->toContain('WorkspaceConfirmDialog')
+        ->toContain('editWorkspace')
+        ->toContain('duplicateWorkspace')
+        ->toContain('deleteWorkspace')
+        ->toContain('switchWorkspace')
+        ->toContain("t('workspaces.actions.manage')")
+        ->toContain("t('workspaces.actions.edit')")
+        ->toContain("t('workspaces.actions.duplicate')")
+        ->toContain("t('workspaces.actions.delete')")
+        ->toContain(':confirmation-text="deletingWorkspace?.name"')
+        ->toContain('members: formatNumber(')
+        ->toContain('projects: formatNumber(')
+        ->toContain('tasks: formatNumber(')
+        ->and(File::get(resource_path('js/components/shared/WorkspaceConfirmDialog.vue')))
+        ->toContain('confirmationText?: string')
+        ->toContain('confirmationValue.value === props.confirmationText')
+        ->toContain(':disabled="processing || !confirmationMatches"');
+});
+
 test('settings save forms reuse shared large loading actions', function (string $page) {
     expect(File::get(resource_path("js/pages/settings/{$page}.vue")))
         ->toContain("import { Spinner } from '@/components/ui/spinner'")

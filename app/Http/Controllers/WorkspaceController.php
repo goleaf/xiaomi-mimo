@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateWorkspace;
 use App\Actions\DeleteWorkspace;
+use App\Actions\DuplicateWorkspace;
 use App\Actions\InviteToWorkspace;
 use App\Actions\RemoveFromWorkspace;
 use App\Actions\UpdateWorkspace;
+use App\Http\Requests\DuplicateWorkspaceRequest;
 use App\Http\Requests\InviteMemberRequest;
 use App\Http\Requests\StoreWorkspaceRequest;
 use App\Http\Requests\UpdateWorkspaceRequest;
@@ -22,7 +24,23 @@ class WorkspaceController extends Controller
 {
     public function index(Request $request): Response
     {
-        $workspaces = $request->user()->workspaces()->withCount(['projects', 'todos'])->get();
+        $workspaces = $request->user()->workspaces()
+            ->withCount(['members', 'projects', 'todos'])
+            ->get();
+        $selectedWorkspaceId = $request->session()->get('current_workspace_id');
+        $currentWorkspace = is_string($selectedWorkspaceId)
+            ? $workspaces->firstWhere('id', $selectedWorkspaceId)
+            : null;
+
+        if (! $currentWorkspace) {
+            $currentWorkspace = $workspaces->first();
+
+            if ($currentWorkspace) {
+                $request->session()->put('current_workspace_id', $currentWorkspace->id);
+            } else {
+                $request->session()->forget('current_workspace_id');
+            }
+        }
 
         return Inertia::render('workspaces/Index', [
             'workspaces' => WorkspaceResource::collection($workspaces),
@@ -34,7 +52,7 @@ class WorkspaceController extends Controller
         $workspace = $action->handle($request->workspaceData(), $request->user());
 
         return response()->json([
-            'workspace' => new WorkspaceResource($workspace->loadCount(['projects', 'todos'])),
+            'workspace' => new WorkspaceResource($workspace->loadCount(['members', 'projects', 'todos'])),
         ], 201);
     }
 
@@ -42,15 +60,40 @@ class WorkspaceController extends Controller
     {
         $workspace = $action->handle($workspace, $request->validated());
 
-        return response()->json(['workspace' => new WorkspaceResource($workspace)]);
+        return response()->json([
+            'workspace' => new WorkspaceResource($workspace->loadCount(['members', 'projects', 'todos'])),
+        ]);
     }
 
-    public function destroy(Workspace $workspace, DeleteWorkspace $action): JsonResponse
+    public function destroy(Request $request, Workspace $workspace, DeleteWorkspace $action): JsonResponse
     {
         $this->authorize('delete', $workspace);
+        $deletedCurrentWorkspace = $request->session()->get('current_workspace_id') === $workspace->id;
         $action->handle($workspace);
 
+        if ($deletedCurrentWorkspace) {
+            $fallbackWorkspace = $request->user()->currentWorkspace();
+
+            if ($fallbackWorkspace) {
+                $request->session()->put('current_workspace_id', $fallbackWorkspace->id);
+            } else {
+                $request->session()->forget('current_workspace_id');
+            }
+        }
+
         return response()->json(null, 204);
+    }
+
+    public function duplicate(
+        DuplicateWorkspaceRequest $request,
+        Workspace $workspace,
+        DuplicateWorkspace $action,
+    ): JsonResponse {
+        $copy = $action->handle($workspace, $request->user(), $request->workspaceName());
+
+        return response()->json([
+            'workspace' => new WorkspaceResource($copy->loadCount(['members', 'projects', 'todos'])),
+        ], 201);
     }
 
     public function switch(Request $request, Workspace $workspace): JsonResponse
@@ -59,7 +102,9 @@ class WorkspaceController extends Controller
 
         $request->session()->put('current_workspace_id', $workspace->id);
 
-        return response()->json(['workspace' => new WorkspaceResource($workspace)]);
+        return response()->json([
+            'workspace' => new WorkspaceResource($workspace->loadCount(['members', 'projects', 'todos'])),
+        ]);
     }
 
     public function invite(InviteMemberRequest $request, Workspace $workspace, InviteToWorkspace $action): RedirectResponse

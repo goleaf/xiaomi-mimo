@@ -11,7 +11,9 @@ class UpdateWorkspace
     {
         $workspace->update([
             'name' => $data['name'] ?? $workspace->name,
-            'description' => $data['description'] ?? $workspace->description,
+            'description' => array_key_exists('description', $data)
+                ? $data['description']
+                : $workspace->description,
         ]);
 
         return $workspace->fresh();

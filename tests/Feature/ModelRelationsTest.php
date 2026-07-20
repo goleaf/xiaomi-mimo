@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\DB;
 
 test('model relationships expose their declared Eloquent relation type', function (string $model, string $relation, string $expectedType) {
     expect((new $model)->{$relation}())->toBeInstanceOf($expectedType);
@@ -85,4 +86,25 @@ test('workspace member roles are read from the membership pivot', function () {
     ]);
 
     expect($workspace->memberRole($member))->toBe(WorkspaceRole::Admin->value);
+});
+
+test('workspace membership checks reuse an already loaded pivot without queries', function () {
+    $owner = User::factory()->create();
+    $member = User::factory()->create();
+    $workspace = Workspace::factory()->for($owner, 'owner')->create();
+
+    WorkspaceMember::create([
+        'workspace_id' => $workspace->id,
+        'user_id' => $member->id,
+        'role' => WorkspaceRole::Admin,
+    ]);
+
+    $workspaceFromMembership = $member->workspaces()->whereKey($workspace->id)->firstOrFail();
+
+    DB::enableQueryLog();
+    DB::flushQueryLog();
+
+    expect($workspaceFromMembership->hasMember($member))->toBeTrue()
+        ->and($workspaceFromMembership->memberRole($member))->toBe(WorkspaceRole::Admin->value)
+        ->and(DB::getQueryLog())->toBeEmpty();
 });
