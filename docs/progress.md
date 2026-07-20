@@ -2891,6 +2891,66 @@ Completed and pushed.
 - This progress record will be committed as `docs: record workspace task metadata CRUD` after the implementation commit is pushed.
 - The pre-existing Task Detail, Task Index, and Herd Upload progress changes remain preserved and excluded from this phase's staged changes.
 
+## Workspace Management Center Phase 4: Statuses And Priorities
+
+### Status
+
+Completed and pushed.
+
+### Before-Phase Baseline
+
+- Tasks persist enum-backed `status` and `priority` strings, so each workspace is limited to the three built-in statuses and five built-in priorities.
+- The Task configuration page manages labels and tags only; statuses and priorities have no workspace-owned CRUD, ordering, defaults, archive state, or safe replacement flow.
+- Task API payloads cannot expose definition resources or accept workspace-scoped definition identifiers.
+
+### Scope And Decisions
+
+- Add workspace-owned status and priority definition tables with stable compatibility keys, Unicode-normalized names, colors, ordering, default selection, archive state, usage counts, and explicit completed-status semantics.
+- Backfill every existing workspace and task while preserving current `status` and `priority` string keys for unversioned API compatibility.
+- Add owner/admin web and Sanctum API CRUD, archive/restore, reorder, default, and delete-with-replacement operations with atomic workspace isolation.
+- Integrate task create, update, complete, uncomplete, duplicate, recurrence, filtering, sorting, resources, and configuration UI with the new definitions without partial writes.
+- Keep bounded collections, EN/LT/RU localization, accessible controls, and focused migration/security/regression coverage.
+- Keep the legacy scalar keys as an additive compatibility layer while definition identifiers provide scoped relations; SQLite triggers reject missing, mismatched, or cross-workspace dual writes.
+- Derive task completion from the selected status definition and preserve `completed_at` when another completed status is selected.
+- Include soft-deleted tasks in usage counts and replacement safeguards so a definition cannot be removed while recoverable tasks still reference it.
+
+### Changed Files
+
+- Workspace task-definition migration, models, factories, relations, compatibility cast, provisioning, transition, and management actions under `database/` and `app/`.
+- Authorized web and API controllers, Form Requests, API resources, scoped task write validation, query integration, and versioned routes for statuses and priorities.
+- Task creation, editing, completion, bulk mutation, duplication, recurrence, import/export, dashboard, calendar, project, and task-list integration.
+- Reusable definition-management components, task-definition composable and types, workspace configuration UI, dynamic task controls, and English, Lithuanian, and Russian translations.
+- Focused task-definition, API ability, tenant-isolation, Inertia redirect, checklist, reminder, activity, and infrastructure regression tests.
+
+### Migrations And Packages
+
+- Added `2026_07_20_185654_create_task_definitions_and_link_todos.php` with workspace-owned status and priority definitions, bounded positions, archive/default/completion semantics, composite tenant foreign keys, partial unique indexes, and semantic SQLite triggers.
+- The migration seeded every existing workspace, preserved non-standard legacy keys, backfilled all task relation identifiers, and was applied successfully to the populated live SQLite database.
+- Live verification confirmed 27 of 27 tasks mapped, zero key/identifier mismatches, zero completion mismatches, and exactly one default status, completion target, and default priority for the workspace.
+- No Composer or npm package change was made.
+
+### Verification
+
+- Full Pest passed with 462 tests and 2,456 assertions, including provisioning, semantic database constraints, tenant foreign keys, web/API CRUD, permissions, atomic replacement, completion transitions, archive behavior, token abilities, and soft-deleted-task safeguards.
+- `vendor/bin/pint --dirty --format agent`, full configured PHPStan, Vue TypeScript checking, full ESLint, resource Prettier verification, and `git diff --check` passed.
+- The production build passed after transforming 3,394 modules; only the existing optional `fontaine` optimization notice remains.
+- Route inspection confirmed definition reads use `workspaces:read`, mutations use `workspaces:write`, and existing workspace, project, and task API families now have explicit ability middleware.
+- Live desktop QA verified create, edit, reorder, default/target selection, archive/restore, replacement delete, task assignment, completion, and reopen flows.
+- Live mobile QA verified the responsive configuration CRUD; temporary QA definitions and task data were removed, leaving the original 27 tasks and no mapping inconsistencies.
+- Fresh configuration and task-page browser logs contain no errors or warnings; Boost logs contain only historical 2026-07-19 entries.
+
+### Known Limitations And Next Work
+
+- Definition catalogs are intentionally bounded to 50 statuses and 25 priorities per workspace.
+- Workspace JSON exports continue to carry stable task keys rather than embedding custom definition catalogs; cross-workspace import or transfer requires matching destination keys.
+- Broader relation management beyond workspace membership, labels, tags, statuses, and priorities remains future work.
+
+### Git Delivery
+
+- Implementation commit `bb3b97a` (`feat: add workspace task definitions`) was pushed successfully to `origin/main`.
+- This progress record will be committed separately as `docs: record workspace task definitions`.
+- The pre-existing Task Detail, Task Index, and Herd Upload progress changes remain preserved and excluded from this phase's staged changes.
+
 ## Workspace Management Center Phase 2: Management And Membership
 
 ### Status
