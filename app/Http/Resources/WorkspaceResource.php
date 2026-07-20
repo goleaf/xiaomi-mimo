@@ -26,7 +26,10 @@ class WorkspaceResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'owner_id' => $this->owner_id,
-            'owner' => new UserResource($this->whenLoaded('owner')),
+            'owner' => $this->when(
+                $this->relationLoaded('owner'),
+                fn (): array => (new UserResource($this->getRelation('owner')))->resolve($request),
+            ),
             'members_count' => $this->whenCounted('members'),
             'projects_count' => $this->whenCounted('projects'),
             'todos_count' => $this->whenCounted('todos'),
@@ -37,6 +40,8 @@ class WorkspaceResource extends JsonResource
                 'duplicate' => $canWriteThroughApi && ($user?->can('duplicate', $this->resource) ?? false),
                 'delete' => $canWriteThroughApi && ($user?->can('delete', $this->resource) ?? false),
                 'manage_members' => $canWriteThroughApi && ($user?->can('manageMembers', $this->resource) ?? false),
+                'transfer_ownership' => $canWriteThroughApi
+                    && ($user?->can('transferOwnership', $this->resource) ?? false),
             ],
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

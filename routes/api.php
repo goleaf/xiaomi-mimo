@@ -10,6 +10,9 @@ use App\Http\Controllers\Api\ReminderController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\WorkspaceController;
+use App\Http\Controllers\WorkspaceInvitationController;
+use App\Http\Controllers\WorkspaceMemberController;
+use App\Http\Controllers\WorkspaceOwnershipController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +34,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/workspaces/{workspace}', [WorkspaceController::class, 'update'])
         ->middleware('abilities:workspaces:write');
     Route::delete('/workspaces/{workspace}', [WorkspaceController::class, 'destroy'])
+        ->middleware('abilities:workspaces:write');
+    Route::get('/workspaces/{workspace}/members', [WorkspaceMemberController::class, 'index'])
+        ->middleware('abilities:workspaces:read');
+    Route::patch('/workspaces/{workspace}/members/{userId}', [WorkspaceMemberController::class, 'update'])
+        ->middleware('abilities:workspaces:write');
+    Route::delete('/workspaces/{workspace}/members/{userId}', [WorkspaceMemberController::class, 'destroy'])
+        ->middleware('abilities:workspaces:write');
+    Route::get('/workspaces/{workspace}/invitations', [WorkspaceInvitationController::class, 'index'])
+        ->middleware('abilities:workspaces:read');
+    Route::post('/workspaces/{workspace}/invitations', [WorkspaceInvitationController::class, 'store'])
+        ->middleware(['abilities:workspaces:write', 'throttle:10,1']);
+    Route::post('/workspaces/{workspace}/invitations/{invitation}/resend', [WorkspaceInvitationController::class, 'resend'])
+        ->middleware(['abilities:workspaces:write', 'throttle:6,1'])
+        ->scopeBindings();
+    Route::delete('/workspaces/{workspace}/invitations/{invitation}', [WorkspaceInvitationController::class, 'destroy'])
+        ->middleware('abilities:workspaces:write')
+        ->scopeBindings();
+    Route::post('/workspaces/{workspace}/ownership', WorkspaceOwnershipController::class)
         ->middleware('abilities:workspaces:write');
 
     // Projects

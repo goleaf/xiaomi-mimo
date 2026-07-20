@@ -5,8 +5,8 @@ import {
     Shield,
     ShieldCheck,
     Bell,
+    Building2,
     Download,
-    Users,
     UsersRound,
     Database,
     Globe,
@@ -18,10 +18,10 @@ import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { useUi } from '@/composables/useUi';
 import { edit as editBackup } from '@/routes/backup';
 import { edit as editExport } from '@/routes/export';
-import { edit as editMembers } from '@/routes/members';
 import { edit as editNotifications } from '@/routes/notifications';
 import { edit as editPreferences } from '@/routes/preferences';
 import { edit as editSecurity } from '@/routes/security';
+import { show as showWorkspace } from '@/routes/workspaces';
 import type { SettingsLayoutProps } from '@/types';
 
 const page = usePage();
@@ -51,11 +51,17 @@ const navItems = computed(() => [
         href: editNotifications.url(),
         icon: Bell,
     },
-    {
-        label: t('settings.navigation.members'),
-        href: editMembers.url(),
-        icon: Users,
-    },
+    ...(page.props.navigation.currentWorkspace
+        ? [
+              {
+                  label: t('settings.navigation.workspace_management'),
+                  href: showWorkspace.url(
+                      page.props.navigation.currentWorkspace,
+                  ),
+                  icon: Building2,
+              },
+          ]
+        : []),
     {
         label: t('settings.navigation.export'),
         href: editExport.url(),

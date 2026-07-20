@@ -16,6 +16,11 @@ use App\Http\Controllers\TagController;
 use App\Http\Controllers\TodoController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Controllers\WorkspaceController;
+use App\Http\Controllers\WorkspaceInvitationAcceptanceController;
+use App\Http\Controllers\WorkspaceInvitationController;
+use App\Http\Controllers\WorkspaceManagementController;
+use App\Http\Controllers\WorkspaceMemberController;
+use App\Http\Controllers\WorkspaceOwnershipController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -89,12 +94,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Workspaces
     Route::get('workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
     Route::post('workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
+    Route::get('workspaces/{workspace}', [WorkspaceManagementController::class, 'show'])->name('workspaces.show');
+    Route::get('workspaces/{workspace}/members', [WorkspaceManagementController::class, 'members'])->name('workspaces.members');
+    Route::get('workspaces/{workspace}/configuration', [WorkspaceManagementController::class, 'configuration'])->name('workspaces.configuration');
+    Route::get('workspaces/{workspace}/danger', [WorkspaceManagementController::class, 'danger'])->name('workspaces.danger');
     Route::post('workspaces/{workspace}/duplicate', [WorkspaceController::class, 'duplicate'])->name('workspaces.duplicate');
     Route::put('workspaces/{workspace}', [WorkspaceController::class, 'update'])->name('workspaces.update');
     Route::delete('workspaces/{workspace}', [WorkspaceController::class, 'destroy'])->name('workspaces.destroy');
     Route::post('workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('workspaces.switch');
-    Route::post('workspaces/{workspace}/invite', [WorkspaceController::class, 'invite'])->name('workspaces.invite');
-    Route::delete('workspaces/{workspace}/members/{userId}', [WorkspaceController::class, 'removeMember'])->name('workspaces.removeMember');
+    Route::post('workspaces/{workspace}/invite', [WorkspaceInvitationController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('workspaces.invite');
+    Route::post('workspaces/{workspace}/invitations/{invitation}/resend', [WorkspaceInvitationController::class, 'resend'])
+        ->middleware('throttle:6,1')
+        ->scopeBindings()
+        ->name('workspaces.invitations.resend');
+    Route::delete('workspaces/{workspace}/invitations/{invitation}', [WorkspaceInvitationController::class, 'destroy'])
+        ->scopeBindings()
+        ->name('workspaces.invitations.cancel');
+    Route::patch('workspaces/{workspace}/members/{userId}', [WorkspaceMemberController::class, 'update'])
+        ->name('workspaces.members.update');
+    Route::delete('workspaces/{workspace}/members/{userId}', [WorkspaceMemberController::class, 'destroy'])
+        ->name('workspaces.removeMember');
+    Route::post('workspaces/{workspace}/ownership', WorkspaceOwnershipController::class)
+        ->name('workspaces.transferOwnership');
+    Route::get('workspace-invitations/{invitation}/accept', WorkspaceInvitationAcceptanceController::class)
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('workspace-invitations.accept');
 
     // Projects
     Route::get('workspaces/{workspace}/projects', [ProjectController::class, 'index'])->name('projects.index');

@@ -36,4 +36,9 @@ class WorkspacePolicy
     {
         return $workspace->isOwner($user) || $workspace->memberRole($user) === 'admin';
     }
+
+    public function transferOwnership(User $user, Workspace $workspace): bool
+    {
+        return $workspace->isOwner($user);
+    }
 }

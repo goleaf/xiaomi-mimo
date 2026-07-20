@@ -10,10 +10,6 @@ import {
     UserPlus,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
-import {
-    invite as inviteWorkspaceMember,
-    removeMember as removeWorkspaceMember,
-} from '@/actions/App/Http/Controllers/WorkspaceController';
 import InputError from '@/components/InputError.vue';
 import WorkspaceDialogContent from '@/components/shared/WorkspaceDialogContent.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -38,6 +34,10 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
+import {
+    invite as inviteWorkspaceMember,
+    removeMember as removeWorkspaceMember,
+} from '@/routes/workspaces';
 import type { SettingsLayoutProps } from '@/types';
 
 type WorkspaceRole = 'owner' | 'admin' | 'member';

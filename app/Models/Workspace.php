@@ -43,6 +43,18 @@ class Workspace extends Model
             ->withTimestamps();
     }
 
+    /** @return HasMany<WorkspaceMember, $this> */
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(WorkspaceMember::class);
+    }
+
+    /** @return HasMany<WorkspaceInvitation, $this> */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(WorkspaceInvitation::class);
+    }
+
     /** @return HasMany<Project, $this> */
     public function projects(): HasMany
     {

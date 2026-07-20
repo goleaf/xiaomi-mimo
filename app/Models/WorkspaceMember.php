@@ -9,6 +9,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $workspace_id
+ * @property string $user_id
+ * @property WorkspaceRole $role
+ * @property User $user
+ * @property Workspace $workspace
+ */
 class WorkspaceMember extends Model
 {
     /** @use HasFactory<WorkspaceMemberFactory> */

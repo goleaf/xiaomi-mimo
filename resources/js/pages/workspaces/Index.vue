@@ -37,10 +37,10 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
-import { edit as editMembers } from '@/routes/members';
 import {
     destroy,
     duplicate,
+    show as showWorkspace,
     store,
     switchMethod,
     update,
@@ -322,12 +322,8 @@ async function switchWorkspace(
     }
 }
 
-async function manageWorkspace(workspace: Workspace): Promise<void> {
-    const selected = await switchWorkspace(workspace, false);
-
-    if (selected) {
-        router.visit(editMembers());
-    }
+function manageWorkspace(workspace: Workspace): void {
+    router.visit(showWorkspace(workspace));
 }
 </script>
 

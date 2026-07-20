@@ -8,28 +8,29 @@ use App\Models\WorkspaceMember;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-class RemoveFromWorkspace
+class UpdateWorkspaceMemberRole
 {
-    public function handle(WorkspaceMember $membership, User $actor): bool
+    public function handle(WorkspaceMember $membership, User $actor, WorkspaceRole $role): WorkspaceMember
     {
-        return DB::transaction(function () use ($membership, $actor): bool {
-            $deleted = WorkspaceMember::query()
+        return DB::transaction(function () use ($membership, $actor, $role): WorkspaceMember {
+            $updated = WorkspaceMember::query()
                 ->whereKey($membership->id)
                 ->where('workspace_id', $membership->workspace_id)
-                ->where('user_id', '!=', $actor->id)
                 ->whereNot('role', WorkspaceRole::Owner)
                 ->whereHas('workspace.memberships', fn ($query) => $query
                     ->where('user_id', $actor->id)
                     ->whereIn('role', [WorkspaceRole::Owner, WorkspaceRole::Admin]))
-                ->delete();
+                ->update(['role' => $role]);
 
-            if ($deleted !== 1) {
+            if ($updated !== 1) {
                 throw ValidationException::withMessages([
-                    'member' => [__('validation.in', ['attribute' => 'member'])],
+                    'role' => [__('validation.in', ['attribute' => 'role'])],
                 ]);
             }
 
-            return true;
+            return WorkspaceMember::query()
+                ->with(['user:id,name,email', 'workspace'])
+                ->findOrFail($membership->id);
         }, 5);
     }
 }

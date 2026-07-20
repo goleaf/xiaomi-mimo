@@ -23,9 +23,50 @@ export interface Workspace {
         duplicate: boolean;
         delete: boolean;
         manage_members: boolean;
+        transfer_ownership?: boolean;
     };
     created_at: string;
     updated_at: string;
+}
+
+export type WorkspaceRole = 'owner' | 'admin' | 'member';
+export type WorkspaceManagementSection =
+    'overview' | 'members' | 'configuration' | 'danger';
+
+export interface WorkspaceManagementMember {
+    id: string;
+    membership_id: string;
+    name: string;
+    email: string;
+    avatar?: string | null;
+    role: WorkspaceRole;
+    is_current_user: boolean;
+    permissions: {
+        update: boolean;
+        remove: boolean;
+        transfer_ownership: boolean;
+    };
+}
+
+export interface WorkspaceInvitation {
+    id: string;
+    email: string;
+    role: Exclude<WorkspaceRole, 'owner'>;
+    expires_at: string;
+    is_expired: boolean;
+    created_at: string;
+    permissions: {
+        resend: boolean;
+        cancel: boolean;
+    };
+}
+
+export interface WorkspaceMemberRouteUrls {
+    invite: string;
+    resendInvitation: (invitationId: string) => string;
+    cancelInvitation: (invitationId: string) => string;
+    updateMember: (userId: string) => string;
+    removeMember: (userId: string) => string;
 }
 
 export interface WorkspaceMember {
