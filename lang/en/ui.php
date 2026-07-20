@@ -196,17 +196,22 @@ return [
         'placeholder' => 'Type a command...',
     ],
     'dashboard' => [
+        'completed_today' => 'Completed today',
         'created' => 'Created',
         'date' => 'Date',
+        'due_today' => 'Due today',
         'overdue' => 'overdue',
         'overdue_tasks' => 'Overdue Tasks',
         'title' => 'Dashboard',
+        'today_tasks' => "Today's Tasks",
         'upcoming_tasks' => 'Upcoming Tasks',
         'weekly_overview' => 'Weekly Overview',
         'weekly_productivity' => 'Weekly Productivity',
-        'welcome' => "Welcome back! Here's your task overview.",
+        'welcome' => 'Welcome back! :completed of :total tasks complete (:rate%).',
         'no_overdue' => 'No overdue tasks',
+        'no_today' => 'No tasks due today',
         'no_upcoming' => 'No upcoming tasks',
+        'weekly_day_summary' => ':date: :completed completed, :created created.',
     ],
     'projects' => [
         'show' => [

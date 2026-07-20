@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { AlertTriangle, Calendar, CheckCircle2, ListChecks } from '@lucide/vue';
-import { computed } from 'vue';
+import {
+    AlertTriangle,
+    Calendar,
+    CalendarClock,
+    CheckCircle2,
+    ListChecks,
+} from '@lucide/vue';
+import ProductivityChart from '@/components/dashboard/ProductivityChart.vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUi } from '@/composables/useUi';
 import type { Todo } from '@/types/models';
 
-const props = defineProps<{
+defineProps<{
     stats: {
         today_count: number;
         overdue_count: number;
@@ -45,12 +51,9 @@ function formatDate(date: string | null): string {
     return formatLocalizedDate(date, {
         month: 'short',
         day: 'numeric',
+        year: 'numeric',
     });
 }
-
-const maxWeekly = computed(() =>
-    Math.max(...props.weeklyData.map((day) => day.completed), 1),
-);
 </script>
 
 <template>
@@ -62,7 +65,13 @@ const maxWeekly = computed(() =>
                 <WorkspacePageHeader
                     :eyebrow="t('dashboard.weekly_productivity')"
                     :title="t('dashboard.title')"
-                    :description="t('dashboard.welcome')"
+                    :description="
+                        t('dashboard.welcome', {
+                            completed: formatNumber(stats.completed_total),
+                            total: formatNumber(stats.total_tasks),
+                            rate: formatNumber(stats.completion_rate),
+                        })
+                    "
                 >
                     <template #metrics>
                         <WorkspaceMetric
@@ -72,8 +81,14 @@ const maxWeekly = computed(() =>
                             tone="orange"
                         />
                         <WorkspaceMetric
-                            :label="t('tasks.stats.completed')"
-                            :value="formatNumber(stats.completed_total)"
+                            :label="t('dashboard.due_today')"
+                            :value="formatNumber(stats.today_count)"
+                            :icon="CalendarClock"
+                            tone="blue"
+                        />
+                        <WorkspaceMetric
+                            :label="t('dashboard.completed_today')"
+                            :value="formatNumber(stats.completed_today)"
                             :icon="CheckCircle2"
                             tone="emerald"
                         />
@@ -86,7 +101,61 @@ const maxWeekly = computed(() =>
                     </template>
                 </WorkspacePageHeader>
 
-                <div class="grid gap-5 lg:grid-cols-2">
+                <div class="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+                    <Card class="overflow-hidden">
+                        <CardHeader class="flex flex-row items-center gap-3">
+                            <div
+                                class="flex size-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-700 dark:text-sky-300"
+                            >
+                                <CalendarClock
+                                    class="size-4"
+                                    aria-hidden="true"
+                                />
+                            </div>
+                            <CardTitle class="text-base">
+                                {{ t('dashboard.today_tasks') }}
+                            </CardTitle>
+                            <Badge variant="secondary" class="ml-auto">
+                                {{ formatNumber(stats.today_count) }}
+                            </Badge>
+                        </CardHeader>
+                        <CardContent>
+                            <div
+                                v-if="todayTasks.length === 0"
+                                class="py-4 text-sm text-muted-foreground"
+                            >
+                                {{ t('dashboard.no_today') }}
+                            </div>
+                            <div v-else class="space-y-2">
+                                <div
+                                    v-for="todo in todayTasks"
+                                    :key="todo.id"
+                                    class="flex items-center gap-3 rounded-xl border border-border/80 bg-background p-3"
+                                >
+                                    <div
+                                        :class="[
+                                            'size-2 shrink-0 rounded-full',
+                                            priorityColor(todo.priority),
+                                        ]"
+                                    />
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-medium">
+                                            {{ todo.title }}
+                                        </p>
+                                        <p
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            {{ formatDate(todo.due_date) }}
+                                        </p>
+                                    </div>
+                                    <Badge variant="outline">
+                                        {{ t(`tasks.statuses.${todo.status}`) }}
+                                    </Badge>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     <Card class="overflow-hidden">
                         <CardHeader class="flex flex-row items-center gap-3">
                             <div
@@ -187,41 +256,7 @@ const maxWeekly = computed(() =>
                     </Card>
                 </div>
 
-                <Card class="overflow-hidden">
-                    <CardHeader class="border-b border-border/70">
-                        <CardTitle class="text-base">
-                            {{ t('dashboard.weekly_overview') }}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent class="pt-2">
-                        <div class="flex h-36 items-end gap-2 sm:gap-3">
-                            <div
-                                v-for="day in weeklyData"
-                                :key="day.date"
-                                class="flex flex-1 flex-col items-center gap-1.5"
-                            >
-                                <div
-                                    class="text-xs font-medium text-muted-foreground tabular-nums"
-                                >
-                                    {{ formatNumber(day.completed) }}
-                                </div>
-                                <div
-                                    class="w-full rounded-t-lg bg-orange-500/85 transition-[height] duration-300 motion-reduce:transition-none"
-                                    :style="{
-                                        height: `${Math.max((day.completed / maxWeekly) * 100, 4)}px`,
-                                    }"
-                                />
-                                <div class="text-[10px] text-muted-foreground">
-                                    {{
-                                        formatLocalizedDate(day.date, {
-                                            weekday: 'short',
-                                        })
-                                    }}
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <ProductivityChart :data="weeklyData" />
             </div>
         </main>
     </div>

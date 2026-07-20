@@ -196,17 +196,22 @@ return [
         'placeholder' => 'Введите команду...',
     ],
     'dashboard' => [
+        'completed_today' => 'Выполнено сегодня',
         'created' => 'Создано',
         'date' => 'Дата',
+        'due_today' => 'Срок сегодня',
         'overdue' => 'просрочено',
         'overdue_tasks' => 'Просроченные задачи',
         'title' => 'Обзор',
+        'today_tasks' => 'Задачи на сегодня',
         'upcoming_tasks' => 'Предстоящие задачи',
         'weekly_overview' => 'Обзор недели',
         'weekly_productivity' => 'Продуктивность за неделю',
-        'welcome' => 'С возвращением! Вот обзор ваших задач.',
+        'welcome' => 'С возвращением! Выполнено :completed из :total задач (:rate%).',
         'no_overdue' => 'Просроченных задач нет',
+        'no_today' => 'На сегодня задач нет',
         'no_upcoming' => 'Предстоящих задач нет',
+        'weekly_day_summary' => ':date: выполнено — :completed, создано — :created.',
     ],
     'projects' => [
         'show' => [

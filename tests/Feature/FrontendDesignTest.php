@@ -20,6 +20,18 @@ test('primary workspace pages use the shared warm precision header', function (s
     'workspaces' => 'workspaces/Index.vue',
 ]);
 
+test('dashboard renders the complete workspace information supplied by its page props', function () {
+    $source = File::get(resource_path('js/pages/Dashboard.vue'));
+
+    expect($source)
+        ->toContain('formatNumber(stats.today_count)')
+        ->toContain('formatNumber(stats.completed_today)')
+        ->toContain('formatNumber(stats.completion_rate)')
+        ->toContain('v-for="todo in todayTasks"')
+        ->toContain('<ProductivityChart :data="weeklyData" />')
+        ->not->toContain('day.completed / maxWeekly');
+});
+
 test('every active page header action uses the shared large button contract', function (string $page, int $actionCount) {
     $source = File::get(resource_path("js/pages/{$page}"));
     $actions = Str::betweenFirst(

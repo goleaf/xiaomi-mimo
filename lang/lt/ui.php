@@ -196,17 +196,22 @@ return [
         'placeholder' => 'Įveskite komandą...',
     ],
     'dashboard' => [
+        'completed_today' => 'Atlikta šiandien',
         'created' => 'Sukurta',
         'date' => 'Data',
+        'due_today' => 'Terminas šiandien',
         'overdue' => 'vėluoja',
         'overdue_tasks' => 'Vėluojančios užduotys',
         'title' => 'Apžvalga',
+        'today_tasks' => 'Šiandienos užduotys',
         'upcoming_tasks' => 'Artėjančios užduotys',
         'weekly_overview' => 'Savaitės apžvalga',
         'weekly_productivity' => 'Savaitės produktyvumas',
-        'welcome' => 'Sveiki sugrįžę! Štai jūsų užduočių apžvalga.',
+        'welcome' => 'Sveiki sugrįžę! Atlikta :completed iš :total užduočių (:rate%).',
         'no_overdue' => 'Vėluojančių užduočių nėra',
+        'no_today' => 'Šiandien užduočių nėra',
         'no_upcoming' => 'Artėjančių užduočių nėra',
+        'weekly_day_summary' => ':date: atlikta – :completed, sukurta – :created.',
     ],
     'projects' => [
         'show' => [

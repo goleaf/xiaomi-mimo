@@ -43,7 +43,7 @@ class DashboardQuery
             ->limit(10)
             ->get();
         $upcomingTasks = (clone $todos)
-            ->whereDate('due_date', '>=', $today)
+            ->whereDate('due_date', '>', $today)
             ->whereDate('due_date', '<=', $upcomingEnd)
             ->where('status', '!=', TodoStatus::Completed)
             ->with('project')
