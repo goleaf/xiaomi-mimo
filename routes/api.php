@@ -83,15 +83,36 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/checklist-items/{item}/toggle', [ChecklistController::class, 'toggleItem']);
 
     // Labels
-    Route::get('/workspaces/{workspace}/labels', [LabelController::class, 'index']);
-    Route::post('/workspaces/{workspace}/labels', [LabelController::class, 'store']);
-    Route::put('/labels/{label}', [LabelController::class, 'update']);
-    Route::delete('/labels/{label}', [LabelController::class, 'destroy']);
+    Route::get('/workspaces/{workspace}/labels', [LabelController::class, 'index'])
+        ->middleware('abilities:workspaces:read');
+    Route::post('/workspaces/{workspace}/labels', [LabelController::class, 'store'])
+        ->middleware('abilities:workspaces:write');
+    Route::put('/workspaces/{workspace}/labels/{label}', [LabelController::class, 'update'])
+        ->middleware('abilities:workspaces:write')
+        ->scopeBindings();
+    Route::delete('/workspaces/{workspace}/labels/{label}', [LabelController::class, 'destroy'])
+        ->middleware('abilities:workspaces:write')
+        ->scopeBindings();
+    Route::put('/labels/{label}', [LabelController::class, 'legacyUpdate'])
+        ->middleware('abilities:workspaces:write');
+    Route::delete('/labels/{label}', [LabelController::class, 'legacyDestroy'])
+        ->middleware('abilities:workspaces:write');
 
     // Tags
-    Route::get('/workspaces/{workspace}/tags', [TagController::class, 'index']);
-    Route::post('/workspaces/{workspace}/tags', [TagController::class, 'store']);
-    Route::put('/tags/{tag}', [TagController::class, 'update']);
+    Route::get('/workspaces/{workspace}/tags', [TagController::class, 'index'])
+        ->middleware('abilities:workspaces:read');
+    Route::post('/workspaces/{workspace}/tags', [TagController::class, 'store'])
+        ->middleware('abilities:workspaces:write');
+    Route::put('/workspaces/{workspace}/tags/{tag}', [TagController::class, 'update'])
+        ->middleware('abilities:workspaces:write')
+        ->scopeBindings();
+    Route::delete('/workspaces/{workspace}/tags/{tag}', [TagController::class, 'destroy'])
+        ->middleware('abilities:workspaces:write')
+        ->scopeBindings();
+    Route::put('/tags/{tag}', [TagController::class, 'legacyUpdate'])
+        ->middleware('abilities:workspaces:write');
+    Route::delete('/tags/{tag}', [TagController::class, 'legacyDestroy'])
+        ->middleware('abilities:workspaces:write');
 
     // Reminders
     Route::get('/tasks/{todo}/reminders', [ReminderController::class, 'index']);
@@ -103,5 +124,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tasks/{todo}/attachments', [AttachmentController::class, 'store']);
     Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy']);
     Route::get('/attachments/{attachment}/download', [AttachmentController::class, 'download']);
-    Route::delete('/tags/{tag}', [TagController::class, 'destroy']);
 });

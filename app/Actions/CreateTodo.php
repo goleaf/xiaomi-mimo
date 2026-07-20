@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\Todo;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\DB;
 
 class CreateTodo
 {
@@ -12,32 +13,34 @@ class CreateTodo
      */
     public function handle(Workspace $workspace, array $data, ?string $userId = null): Todo
     {
-        $maxPosition = $workspace->todos()
-            ->where('project_id', $data['project_id'] ?? null)
-            ->max('position') ?? 0;
+        return DB::transaction(function () use ($workspace, $data, $userId): Todo {
+            $maxPosition = $workspace->todos()
+                ->where('project_id', $data['project_id'] ?? null)
+                ->max('position') ?? 0;
 
-        $todo = $workspace->todos()->create([
-            'project_id' => $data['project_id'] ?? null,
-            'assigned_to' => $data['assigned_to'] ?? $userId,
-            'parent_id' => $data['parent_id'] ?? null,
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'status' => $data['status'] ?? 'pending',
-            'priority' => $data['priority'] ?? 'none',
-            'due_date' => $data['due_date'] ?? null,
-            'start_date' => $data['start_date'] ?? null,
-            'estimated_time' => $data['estimated_time'] ?? null,
-            'position' => $maxPosition + 1,
-        ]);
+            $todo = $workspace->todos()->create([
+                'project_id' => $data['project_id'] ?? null,
+                'assigned_to' => $data['assigned_to'] ?? $userId,
+                'parent_id' => $data['parent_id'] ?? null,
+                'title' => $data['title'],
+                'description' => $data['description'] ?? null,
+                'status' => $data['status'] ?? 'pending',
+                'priority' => $data['priority'] ?? 'none',
+                'due_date' => $data['due_date'] ?? null,
+                'start_date' => $data['start_date'] ?? null,
+                'estimated_time' => $data['estimated_time'] ?? null,
+                'position' => $maxPosition + 1,
+            ]);
 
-        if (! empty($data['label_ids'])) {
-            $todo->labels()->sync($data['label_ids']);
-        }
+            if (! empty($data['label_ids'])) {
+                $todo->labels()->sync($data['label_ids']);
+            }
 
-        if (! empty($data['tag_ids'])) {
-            $todo->tags()->sync($data['tag_ids']);
-        }
+            if (! empty($data['tag_ids'])) {
+                $todo->tags()->sync($data['tag_ids']);
+            }
 
-        return $todo->load(['project', 'assignee', 'labels', 'tags']);
+            return $todo->load(['project', 'assignee', 'labels', 'tags']);
+        }, 5);
     }
 }

@@ -23,6 +23,7 @@ export interface Workspace {
         duplicate: boolean;
         delete: boolean;
         manage_members: boolean;
+        manage_task_configuration?: boolean;
         transfer_ownership?: boolean;
     };
     created_at: string;
@@ -158,7 +159,12 @@ export interface Label {
     name: string;
     color: string;
     todos_count?: number;
+    permissions?: {
+        update: boolean;
+        delete: boolean;
+    };
     created_at: string;
+    updated_at?: string;
 }
 
 export interface Tag {
@@ -166,7 +172,21 @@ export interface Tag {
     workspace_id: string;
     name: string;
     todos_count?: number;
+    permissions?: {
+        update: boolean;
+        delete: boolean;
+    };
     created_at: string;
+    updated_at?: string;
+}
+
+export interface WorkspaceMetadataRouteUrls {
+    storeLabel: string;
+    updateLabel: (labelId: string) => string;
+    deleteLabel: (labelId: string) => string;
+    storeTag: string;
+    updateTag: (tagId: string) => string;
+    deleteTag: (tagId: string) => string;
 }
 
 export interface Comment {

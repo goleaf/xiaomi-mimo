@@ -2,6 +2,8 @@
 
 namespace App\Queries;
 
+use App\Models\Label;
+use App\Models\Tag;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
@@ -38,6 +40,28 @@ class WorkspaceManagementQuery
             ->whereNull('accepted_at')
             ->whereNull('cancelled_at')
             ->latest()
+            ->get();
+    }
+
+    /** @return Collection<int, Label> */
+    public function labels(Workspace $workspace): Collection
+    {
+        return $workspace->labels()
+            ->with('workspace')
+            ->withCount('todos')
+            ->orderBy('name')
+            ->limit(Label::MAX_PER_WORKSPACE)
+            ->get();
+    }
+
+    /** @return Collection<int, Tag> */
+    public function tags(Workspace $workspace): Collection
+    {
+        return $workspace->tags()
+            ->with('workspace')
+            ->withCount('todos')
+            ->orderBy('name')
+            ->limit(Tag::MAX_PER_WORKSPACE)
             ->get();
     }
 }

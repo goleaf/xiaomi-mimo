@@ -164,18 +164,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Labels
     Route::get('workspaces/{workspace}/labels', [LabelController::class, 'index'])->name('labels.index');
     Route::post('workspaces/{workspace}/labels', [LabelController::class, 'store'])->name('labels.store');
-    Route::put('labels/{label}', [LabelController::class, 'update'])->name('labels.update');
-    Route::delete('labels/{label}', [LabelController::class, 'destroy'])->name('labels.destroy');
-    Route::post('tasks/{todo}/labels', [LabelController::class, 'attach'])->name('labels.attach');
-    Route::delete('tasks/{todo}/labels/{label}', [LabelController::class, 'detach'])->name('labels.detach');
+    Route::put('workspaces/{workspace}/labels/{label}', [LabelController::class, 'update'])
+        ->scopeBindings()
+        ->name('labels.update');
+    Route::delete('workspaces/{workspace}/labels/{label}', [LabelController::class, 'destroy'])
+        ->scopeBindings()
+        ->name('labels.destroy');
+    Route::post('workspaces/{workspace}/tasks/{todo}/labels', [LabelController::class, 'attach'])
+        ->scopeBindings()
+        ->name('labels.attach');
+    Route::delete('workspaces/{workspace}/tasks/{todo}/labels/{label}', [LabelController::class, 'detach'])
+        ->scopeBindings()
+        ->name('labels.detach');
 
     // Tags
     Route::get('workspaces/{workspace}/tags', [TagController::class, 'index'])->name('tags.index');
     Route::post('workspaces/{workspace}/tags', [TagController::class, 'store'])->name('tags.store');
-    Route::put('tags/{tag}', [TagController::class, 'update'])->name('tags.update');
-    Route::delete('tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy');
-    Route::post('tasks/{todo}/tags', [TagController::class, 'attach'])->name('tags.attach');
-    Route::delete('tasks/{todo}/tags/{tag}', [TagController::class, 'detach'])->name('tags.detach');
+    Route::put('workspaces/{workspace}/tags/{tag}', [TagController::class, 'update'])
+        ->scopeBindings()
+        ->name('tags.update');
+    Route::delete('workspaces/{workspace}/tags/{tag}', [TagController::class, 'destroy'])
+        ->scopeBindings()
+        ->name('tags.destroy');
+    Route::post('workspaces/{workspace}/tasks/{todo}/tags', [TagController::class, 'attach'])
+        ->scopeBindings()
+        ->name('tags.attach');
+    Route::delete('workspaces/{workspace}/tasks/{todo}/tags/{tag}', [TagController::class, 'detach'])
+        ->scopeBindings()
+        ->name('tags.detach');
 
     // Attachments
     Route::post('tasks/{todo}/attachments', [AttachmentController::class, 'store'])->name('attachments.store');

@@ -59,6 +59,25 @@ test('workspace ownership and deletion require explicit typed confirmations', ()
     assert.match(dangerPanel, /:confirmation-text="workspace\.name"/);
 });
 
+test('workspace task configuration exposes full label and tag crud', () => {
+    const showPage = source('./Show.vue');
+    const configurationPanel = source(
+        '../../components/workspace/WorkspaceConfigurationPanel.vue',
+    );
+
+    assert.match(showPage, /metadataRoutes/);
+    assert.match(showPage, /:labels="labels"/);
+    assert.match(showPage, /:tags="tags"/);
+    assert.match(configurationPanel, /createLabel/);
+    assert.match(configurationPanel, /updateLabel/);
+    assert.match(configurationPanel, /createTag/);
+    assert.match(configurationPanel, /updateTag/);
+    assert.match(configurationPanel, /deleteMetadata/);
+    assert.match(configurationPanel, /WorkspaceConfirmDialog/);
+    assert.match(configurationPanel, /manage_task_configuration/);
+    assert.match(configurationPanel, /wasSuccessful/);
+});
+
 test('workspace portfolio and settings navigation use the canonical management page', () => {
     const portfolio = source('./Index.vue');
     const settingsLayout = source('../../layouts/settings/Layout.vue');

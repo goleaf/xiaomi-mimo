@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\TodoPriority;
 use App\Enums\TodoStatus;
 use App\Models\Label;
+use App\Models\Tag;
 use App\Models\Todo;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -39,7 +40,10 @@ class UpdateTodoRequest extends FormRequest
                 Rule::exists(Label::class, 'id')->where('workspace_id', $workspaceId),
             ],
             'tag_ids' => ['sometimes', 'array'],
-            'tag_ids.*' => ['uuid', 'exists:tags,id'],
+            'tag_ids.*' => [
+                'uuid',
+                Rule::exists(Tag::class, 'id')->where('workspace_id', $workspaceId),
+            ],
         ];
     }
 }

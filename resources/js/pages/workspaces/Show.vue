@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import {
     ArrowLeft,
     Building2,
@@ -24,6 +24,16 @@ import WorkspaceOverviewPanel from '@/components/workspace/WorkspaceOverviewPane
 import { useUi } from '@/composables/useUi';
 import { cn } from '@/lib/utils';
 import {
+    destroy as destroyLabel,
+    store as storeLabel,
+    update as updateLabel,
+} from '@/routes/labels';
+import {
+    destroy as destroyTag,
+    store as storeTag,
+    update as updateTag,
+} from '@/routes/tags';
+import {
     configuration as workspaceConfiguration,
     danger as workspaceDanger,
     index as workspaceIndex,
@@ -43,6 +53,9 @@ import type {
     WorkspaceManagementMember,
     WorkspaceManagementSection,
     WorkspaceMemberRouteUrls,
+    WorkspaceMetadataRouteUrls,
+    Label,
+    Tag,
 } from '@/types/models';
 
 const props = defineProps<{
@@ -50,6 +63,8 @@ const props = defineProps<{
     workspace: Workspace;
     members: WorkspaceManagementMember[];
     invitations: WorkspaceInvitation[];
+    labels: Label[];
+    tags: Tag[];
     locale: string;
 }>();
 
@@ -99,10 +114,18 @@ const memberRoutes = computed<WorkspaceMemberRouteUrls>(() => ({
     removeMember: (userId: string) =>
         removeWorkspaceMember.url({ workspace: props.workspace, userId }),
 }));
-
-function showOverview(): void {
-    router.visit(showWorkspace(props.workspace));
-}
+const metadataRoutes = computed<WorkspaceMetadataRouteUrls>(() => ({
+    storeLabel: storeLabel.url(props.workspace),
+    updateLabel: (labelId: string) =>
+        updateLabel.url({ workspace: props.workspace, label: labelId }),
+    deleteLabel: (labelId: string) =>
+        destroyLabel.url({ workspace: props.workspace, label: labelId }),
+    storeTag: storeTag.url(props.workspace),
+    updateTag: (tagId: string) =>
+        updateTag.url({ workspace: props.workspace, tag: tagId }),
+    deleteTag: (tagId: string) =>
+        destroyTag.url({ workspace: props.workspace, tag: tagId }),
+}));
 </script>
 
 <template>
@@ -244,7 +267,11 @@ function showOverview(): void {
                     />
                     <WorkspaceConfigurationPanel
                         v-else-if="section === 'configuration'"
-                        @overview="showOverview"
+                        :workspace="workspace"
+                        :labels="labels"
+                        :tags="tags"
+                        :locale="locale"
+                        :routes="metadataRoutes"
                     />
                     <WorkspaceDangerPanel
                         v-else

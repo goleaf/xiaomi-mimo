@@ -4,6 +4,9 @@ namespace App\Http\Requests;
 
 use App\Enums\TodoPriority;
 use App\Enums\TodoStatus;
+use App\Models\Label;
+use App\Models\Tag;
+use App\Models\Workspace;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -17,6 +20,9 @@ class StoreTodoRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
+        $workspace = $this->route('workspace');
+        $workspaceId = $workspace instanceof Workspace ? $workspace->id : '';
+
         return [
             'title' => ['required', 'string', 'max:500'],
             'description' => ['nullable', 'string'],
@@ -29,9 +35,15 @@ class StoreTodoRequest extends FormRequest
             'start_date' => ['nullable', 'date', 'before_or_equal:due_date'],
             'estimated_time' => ['nullable', 'integer', 'min:1'],
             'label_ids' => ['sometimes', 'array'],
-            'label_ids.*' => ['uuid', 'exists:labels,id'],
+            'label_ids.*' => [
+                'uuid',
+                Rule::exists(Label::class, 'id')->where('workspace_id', $workspaceId),
+            ],
             'tag_ids' => ['sometimes', 'array'],
-            'tag_ids.*' => ['uuid', 'exists:tags,id'],
+            'tag_ids.*' => [
+                'uuid',
+                Rule::exists(Tag::class, 'id')->where('workspace_id', $workspaceId),
+            ],
         ];
     }
 

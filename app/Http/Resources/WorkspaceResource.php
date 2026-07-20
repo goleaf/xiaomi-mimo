@@ -40,6 +40,8 @@ class WorkspaceResource extends JsonResource
                 'duplicate' => $canWriteThroughApi && ($user?->can('duplicate', $this->resource) ?? false),
                 'delete' => $canWriteThroughApi && ($user?->can('delete', $this->resource) ?? false),
                 'manage_members' => $canWriteThroughApi && ($user?->can('manageMembers', $this->resource) ?? false),
+                'manage_task_configuration' => $canWriteThroughApi
+                    && ($user?->can('manageTaskConfiguration', $this->resource) ?? false),
                 'transfer_ownership' => $canWriteThroughApi
                     && ($user?->can('transferOwnership', $this->resource) ?? false),
             ],

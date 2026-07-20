@@ -3,13 +3,21 @@
 namespace App\Actions;
 
 use App\Models\Tag;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Validation\ValidationException;
 
 class UpdateTag
 {
     public function handle(Tag $tag, string $name): Tag
     {
-        $tag->update(['name' => $name]);
+        try {
+            $tag->update(['name' => $name]);
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages([
+                'name' => [__('validation.unique', ['attribute' => 'name'])],
+            ]);
+        }
 
-        return $tag->fresh();
+        return $tag->refresh()->load(['workspace'])->loadCount('todos');
     }
 }

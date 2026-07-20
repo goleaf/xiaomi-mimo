@@ -11,10 +11,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Label extends Model
 {
+    public const int MAX_PER_WORKSPACE = 200;
+
     /** @use HasFactory<LabelFactory> */
     use HasFactory, HasUuid;
 
     protected $fillable = ['workspace_id', 'name', 'color'];
+
+    public static function normalizeName(string $name): string
+    {
+        return mb_strtolower(trim($name), 'UTF-8');
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (Label $label): void {
+            if ($label->isDirty('name')) {
+                $label->normalized_name = self::normalizeName($label->name);
+            }
+        });
+    }
 
     /** @return BelongsTo<Workspace, $this> */
     public function workspace(): BelongsTo

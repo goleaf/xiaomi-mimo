@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\LabelResource;
+use App\Http\Resources\TagResource;
 use App\Http\Resources\WorkspaceInvitationResource;
 use App\Http\Resources\WorkspaceMemberResource;
 use App\Http\Resources\WorkspaceResource;
@@ -51,6 +53,12 @@ class WorkspaceManagementController extends Controller
             'invitations' => WorkspaceInvitationResource::collection(
                 $this->query->invitations($workspace, $user),
             )->resolve($request),
+            'labels' => $section === 'configuration'
+                ? LabelResource::collection($this->query->labels($workspace))->resolve($request)
+                : [],
+            'tags' => $section === 'configuration'
+                ? TagResource::collection($this->query->tags($workspace))->resolve($request)
+                : [],
             'locale' => app()->getLocale(),
         ]);
     }
