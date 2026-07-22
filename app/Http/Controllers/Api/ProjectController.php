@@ -37,11 +37,25 @@ class ProjectController extends Controller
         return new ProjectResource($project->loadCount('todos'));
     }
 
+    public function showScoped(Workspace $workspace, Project $project): ProjectResource
+    {
+        return $this->show($project);
+    }
+
     public function update(UpdateProjectRequest $request, Project $project, UpdateProject $action): JsonResponse
     {
         $project = $action->handle($project, $request->validated());
 
         return response()->json(['project' => new ProjectResource($project)]);
+    }
+
+    public function updateScoped(
+        UpdateProjectRequest $request,
+        Workspace $workspace,
+        Project $project,
+        UpdateProject $action,
+    ): JsonResponse {
+        return $this->update($request, $project, $action);
     }
 
     public function destroy(Project $project): JsonResponse
@@ -50,5 +64,10 @@ class ProjectController extends Controller
         $project->delete();
 
         return response()->json(null, 204);
+    }
+
+    public function destroyScoped(Workspace $workspace, Project $project): JsonResponse
+    {
+        return $this->destroy($project);
     }
 }

@@ -40,4 +40,9 @@ class ReminderController extends Controller
 
         return response()->json(null, 204);
     }
+
+    public function destroyScoped(Todo $todo, Reminder $reminder): JsonResponse
+    {
+        return $this->destroy($reminder);
+    }
 }

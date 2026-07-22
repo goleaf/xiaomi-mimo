@@ -60,12 +60,26 @@ class TodoController extends Controller
         return new TodoResource($todo);
     }
 
+    public function showScoped(Workspace $workspace, Todo $todo): TodoResource
+    {
+        return $this->show($todo);
+    }
+
     public function update(UpdateTodoRequest $request, Todo $todo, UpdateTodo $action): JsonResponse
     {
         $this->authorize('update', $todo);
         $todo = $action->handle($todo, $request->validated());
 
         return response()->json(['todo' => new TodoResource($todo)]);
+    }
+
+    public function updateScoped(
+        UpdateTodoRequest $request,
+        Workspace $workspace,
+        Todo $todo,
+        UpdateTodo $action,
+    ): JsonResponse {
+        return $this->update($request, $todo, $action);
     }
 
     public function destroy(Todo $todo, DeleteTodo $action): JsonResponse
@@ -76,6 +90,11 @@ class TodoController extends Controller
         return response()->json(null, 204);
     }
 
+    public function destroyScoped(Workspace $workspace, Todo $todo, DeleteTodo $action): JsonResponse
+    {
+        return $this->destroy($todo, $action);
+    }
+
     public function complete(Todo $todo, CompleteTodo $action): JsonResponse
     {
         $this->authorize('complete', $todo);
@@ -84,11 +103,21 @@ class TodoController extends Controller
         return response()->json(['todo' => new TodoResource($todo)]);
     }
 
+    public function completeScoped(Workspace $workspace, Todo $todo, CompleteTodo $action): JsonResponse
+    {
+        return $this->complete($todo, $action);
+    }
+
     public function uncomplete(Todo $todo, UncompleteTodo $action): JsonResponse
     {
         $this->authorize('complete', $todo);
         $todo = $action->handle($todo);
 
         return response()->json(['todo' => new TodoResource($todo)]);
+    }
+
+    public function uncompleteScoped(Workspace $workspace, Todo $todo, UncompleteTodo $action): JsonResponse
+    {
+        return $this->uncomplete($todo, $action);
     }
 }

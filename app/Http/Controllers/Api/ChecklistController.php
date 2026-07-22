@@ -42,11 +42,29 @@ class ChecklistController extends Controller
         return response()->json(['item' => new ChecklistItemResource($item)], 201);
     }
 
+    public function storeItemScoped(
+        Request $request,
+        Todo $todo,
+        Checklist $checklist,
+        CreateChecklistItem $action,
+    ): JsonResponse {
+        return $this->storeItem($request, $checklist, $action);
+    }
+
     public function toggleItem(ChecklistItem $item, ToggleChecklistItem $action): JsonResponse
     {
         $this->authorize('update', $item->checklist->todo);
         $item = $action->handle($item);
 
         return response()->json(['item' => new ChecklistItemResource($item)]);
+    }
+
+    public function toggleItemScoped(
+        Todo $todo,
+        Checklist $checklist,
+        ChecklistItem $item,
+        ToggleChecklistItem $action,
+    ): JsonResponse {
+        return $this->toggleItem($item, $action);
     }
 }

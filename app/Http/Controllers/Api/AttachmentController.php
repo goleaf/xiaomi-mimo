@@ -41,11 +41,21 @@ class AttachmentController extends Controller
         return response()->json(null, 204);
     }
 
+    public function destroyScoped(Todo $todo, Attachment $attachment, DeleteAttachment $action): JsonResponse
+    {
+        return $this->destroy($attachment, $action);
+    }
+
     public function download(Attachment $attachment): StreamedResponse
     {
         $this->authorize('view', $attachment);
 
         return Storage::disk((string) config('filesystems.attachment_disk'))
             ->download($attachment->path, $attachment->filename);
+    }
+
+    public function downloadScoped(Todo $todo, Attachment $attachment): StreamedResponse
+    {
+        return $this->download($attachment);
     }
 }

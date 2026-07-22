@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Fortify\CreateNewUser;
+use App\Enums\ApiTokenAbility;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\ApiLoginRequest;
+use App\Http\Requests\Api\ApiRegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,45 +16,24 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function login(Request $request): JsonResponse
+    public function login(ApiLoginRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-            'device_name' => 'required|string',
-        ]);
+        $user = User::query()->where('email', $request->string('email')->toString())->first();
 
-        $user = User::where('email', $request->email)->first();
-
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->string('password')->toString(), $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'email' => [__('api.errors.invalid_credentials')],
             ]);
         }
 
-        $token = $user->createToken($request->device_name)->plainTextToken;
-
-        return response()->json(['token' => $token, 'user' => $user]);
+        return $this->tokenResponse($request, $user);
     }
 
-    public function register(Request $request): JsonResponse
+    public function register(ApiRegisterRequest $request, CreateNewUser $action): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'device_name' => 'required|string',
-        ]);
+        $user = $action->create($request->safe()->only(['name', 'email', 'password', 'password_confirmation']));
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password,
-        ]);
-
-        $token = $user->createToken($request->device_name)->plainTextToken;
-
-        return response()->json(['token' => $token, 'user' => $user], 201);
+        return $this->tokenResponse($request, $user, 201);
     }
 
     public function logout(Request $request): JsonResponse
@@ -57,5 +41,20 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(null, 204);
+    }
+
+    private function tokenResponse(Request $request, User $user, int $status = 200): JsonResponse
+    {
+        $abilities = ApiTokenAbility::values();
+        $token = $user->createToken(
+            $request->string('device_name')->toString(),
+            $abilities,
+        )->plainTextToken;
+
+        return response()->json([
+            'token' => $token,
+            'abilities' => $abilities,
+            'user' => new UserResource($user),
+        ], $status);
     }
 }

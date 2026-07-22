@@ -38,11 +38,25 @@ class CommentController extends Controller
         return response()->json(['comment' => new CommentResource($comment)]);
     }
 
+    public function updateScoped(
+        StoreCommentRequest $request,
+        Todo $todo,
+        Comment $comment,
+        UpdateComment $action,
+    ): JsonResponse {
+        return $this->update($request, $comment, $action);
+    }
+
     public function destroy(Comment $comment, DeleteComment $action): JsonResponse
     {
         $this->authorize('delete', $comment);
         $action->handle($comment);
 
         return response()->json(null, 204);
+    }
+
+    public function destroyScoped(Todo $todo, Comment $comment, DeleteComment $action): JsonResponse
+    {
+        return $this->destroy($comment, $action);
     }
 }
