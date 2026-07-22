@@ -2992,6 +2992,60 @@ Completed and pushed.
 - This progress record will be committed separately as `docs: record versioned api contract` and pushed to `origin/main`.
 - The pre-existing Task Detail, Task Index, and Herd Upload progress changes remain preserved and excluded from this phase's staged changes.
 
+## Backend Page Controllers And Query Boundaries
+
+### Status
+
+Completed and pushed.
+
+### Before-Phase Baseline
+
+- The `/tasks`, `/projects`, and `/activity` shortcut routes still resolve the selected workspace, manufacture empty Inertia props, and invoke other controllers from closures through `app()`.
+- Task index/detail, project index/detail, calendar, activity, and notification reads remain embedded in HTTP controllers; only dashboard and workspace management currently use focused query objects.
+- `TodoController::index` still selects Inertia or JSON presentation through `expectsJson()`, while the external API now has dedicated v1 and legacy routes.
+
+### Scope And Decisions
+
+- Replace all query-bearing shortcut closures with named page-controller actions and one selected-workspace query boundary.
+- Move task, project, activity, calendar, and notification read construction into focused query objects while controllers retain authorization, resource transformation, and Inertia presentation.
+- Remove task-index content negotiation from the web controller and keep external JSON reads on the dedicated API routes.
+- Preserve route names, selected-workspace behavior, no-workspace empty states, URL-backed filters, localization, and current Inertia prop shapes.
+- Add controller/query architecture and behavior regressions before implementation; add no dependency or migration.
+
+### Changed Files
+
+- Dedicated task/project index controllers, API membership/invitation/ownership controllers, and selected-workspace/task/project/activity/calendar/notification query objects under `app/`.
+- Task, project, dashboard, calendar, activity, notification, workspace, and legacy-settings controllers plus the now query-free `User` model helper surface.
+- `routes/web.php` and `routes/api.php`, including scoped web project bindings and dedicated API presentation targets.
+- Task detail, workspace member, and ownership frontend request routing under `resources/js/`, now using canonical v1 endpoints for standalone JSON mutations.
+- Focused page/query, task, checklist, comment, task-definition, and workspace-membership regressions under `tests/Feature/`.
+
+### Migrations And Packages
+
+- No database migration was required.
+- No Composer or npm package change was made.
+
+### Verification
+
+- `tests/Feature/PageQueryArchitectureTest.php` passed with 8 tests and 76 assertions, covering named controller actions, complete no-workspace props, Inertia-only task index behavior, first-party v1 session access, no request-header response branching, and scoped project bindings.
+- The combined page/query/API regression set passed with 123 tests and 859 assertions; focused current-workspace/dashboard/settings/data-transfer coverage passed with 45 tests and 353 assertions.
+- Full Pest passed with 502 tests and 2,761 assertions after the presentation split.
+- `vendor/bin/pint --dirty --format agent`, full configured PHPStan with zero errors, Vue TypeScript checking, full ESLint, resource Prettier verification, the frontend regression test, and `git diff --check` passed.
+- The production build passed after transforming 3,398 modules; only the existing optional `fontaine` optimization notice remains.
+- Source and route inspection confirmed no query-bearing product closures, no controller-to-controller container dispatch, no `expectsJson()`/API-path response negotiation in controllers, and dedicated v1 membership/invitation/ownership actions.
+- Live Herd requests for `/tasks`, `/projects`, and `/activity` followed the expected HTTPS/authentication flow to the login page without a server error.
+
+### Known Limitations And Next Work
+
+- Query extraction establishes stable read boundaries; representative query budgets, accessor cleanup, `EXPLAIN QUERY PLAN`, index decisions, and SQLite runtime health remain the next database-performance phase.
+- Web mutation routes now have one deterministic response type. Standalone first-party JSON interactions use named v1 routes; the deprecated unversioned external API remains only for compatibility.
+
+### Git Delivery
+
+- Implementation commit `7851df7` (`refactor: establish page query boundaries`) was pushed successfully to `origin/main`.
+- This progress record will be committed separately as `docs: record page query boundaries` and pushed to `origin/main`.
+- The pre-existing Task Detail, Task Index, and Herd Upload progress changes remain preserved and excluded from this phase's staged changes.
+
 ## Workspace Management Center Phase 3: Labels And Tags
 
 ### Status
