@@ -3294,3 +3294,90 @@ Completed and pushed.
 - Implementation commit `a562bef` (`feat: add workspace management center`) was pushed successfully to `origin/main`.
 - This progress record will be committed as `docs: record workspace management center` and pushed separately.
 - The pre-existing Task Index and Herd Upload progress entries remain preserved and excluded from this phase's staged changes.
+
+## Task Index, Board, Filters, And Bulk Workflow
+
+### Status
+
+Completed and ready for delivery.
+
+### Before-Phase Baseline
+
+- `resources/js/pages/tasks/Index.vue` is a 440-line page that reimplements filtering and list presentation while `TaskFilterBar`, `BoardView`, and `BulkActions` remain unused.
+- The page exposes selection state but has no task-selection controls, no actual bulk mutations, no view switcher, and no pagination navigation despite receiving a paginated response.
+- Visible pending/completed metrics count only the current page, and paginator links do not retain the complete filter/sort state.
+- The dormant board hardcodes three legacy statuses, sends mutations to unversioned web routes, supports pointer drag only, and has no mobile horizontal mode or per-card asynchronous state.
+- Index inputs are read directly from the request without one bounded filter contract; all supported query parameters are not returned to the client for URL/state synchronization.
+- Bulk requests validate workspace IDs, but actions do not re-check the exact submitted set inside the transaction, leaving a soft-delete/TOCTOU partial-operation boundary.
+
+### Delivered Scope And Decisions
+
+- Reduced the task index to a typed coordinator around dedicated filter, list, board, bulk-action, pagination, create-dialog, and detail-drawer components.
+- Added one authorized `TodoIndexRequest` contract for bounded filter, sort, direction, page-size, and list/board state; explicit URL state wins, otherwise the task view follows the saved user preference.
+- Kept search, filtering, sorting, aggregate metrics, and pagination server-backed. Paginator links retain the full validated query string, and same-page changes use narrow Inertia partial reloads.
+- Made filtered metrics cover the complete result set instead of only the current page.
+- Drove board columns and status choices from workspace definitions. Native drag/drop is complemented by a keyboard/touch status select, per-card busy state, keyboard-open behavior, and a horizontally scrollable mobile presentation.
+- Connected the drawer to the versioned task API and extended the detail resource with conditionally loaded collaboration relations.
+- Added accessible per-task/page selection and complete, reopen, archive, and delete bulk controls with destructive confirmation and deterministic processing/error states.
+- Re-resolved and locked every submitted task ID inside each bulk transaction. Stale, soft-deleted, duplicate, mixed, or foreign sets now fail before any task mutation.
+- Exposed the now-implemented board choice in user preferences with English, Lithuanian, and Russian copy.
+
+### Changed Files
+
+- `app/Actions/BulkDeleteTodos.php`
+- `app/Actions/BulkUpdateTodos.php`
+- `app/Actions/ResolveWorkspaceTodos.php`
+- `app/Http/Controllers/Api/TodoController.php`
+- `app/Http/Controllers/TodoIndexController.php`
+- `app/Http/Requests/BulkActionRequest.php`
+- `app/Http/Requests/TodoIndexRequest.php`
+- `app/Http/Resources/TodoResource.php`
+- `app/Queries/TodoIndexQuery.php`
+- `resources/js/components/task/BoardView.vue`
+- `resources/js/components/task/BulkActions.vue`
+- `resources/js/components/task/TaskFilterBar.vue`
+- `resources/js/components/task/TaskList.vue`
+- `resources/js/components/task/TaskPagination.vue`
+- `resources/js/pages/settings/Preferences.vue`
+- `resources/js/pages/tasks/Index.vue`
+- `resources/js/types/api.ts`
+- `lang/en/ui.php`
+- `lang/lt/ui.php`
+- `lang/ru/ui.php`
+- `tests/Feature/FrontendDesignTest.php`
+- `tests/Feature/Settings/PreferencesTest.php`
+- `tests/Feature/TaskIndexWorkflowTest.php`
+- `tests/Feature/TodoTest.php`
+- `docs/progress.md`
+
+### Migrations And Packages
+
+- No migration was required.
+- No Composer or npm dependency changed. The existing DnD packages remain untouched because this phase uses native drag/drop plus an accessible select fallback and dependency removal requires separate approval.
+
+### Verification
+
+- `vendor/bin/pint --dirty --format agent`: passed.
+- Focused task/index/settings/design Pest coverage: passed, 146 tests and 713 assertions.
+- `php artisan test --compact`: passed, 521 tests and 2,957 assertions.
+- `vendor/bin/phpstan analyse --memory-limit=1G --no-progress`: passed with zero errors.
+- `npm run types:check`: passed.
+- `npm run lint:check`: passed.
+- `npm run format:check`: passed.
+- `npm run test:frontend`: passed.
+- `npm run build`: passed; Vite transformed 3,408 modules. The existing optional `fontaine` optimization notice remains non-blocking.
+- `git diff --check`: passed.
+- Live Herd desktop verification passed for list rendering, board switch, dynamic columns, keyboard drawer opening, page selection, and complete bulk controls with no captured console or page errors.
+- Live Herd mobile verification passed at 390 x 844: the filter sheet fits the viewport, the page has no document-level horizontal overflow, and the board scrolls within its own container.
+- Recent Boost browser-log output contained only historical entries from July 19; the July 22 verification produced no new browser errors.
+
+### Known Limitations And Next Work
+
+- Board results intentionally use the same bounded server pagination as list results; bulk selection is likewise page-scoped and clears whenever filters or data refresh.
+- Browser notification delivery, recurrence catch-up, and the deeper task-detail collaboration lifecycle belong to phases 6-8.
+
+### Git Delivery
+
+- Implementation commit `8d0431b` (`feat: complete task index workflow`) was pushed successfully to `origin/main`.
+- This progress record will be committed separately as `docs: record task index workflow` and pushed to `origin/main`.
+- The pre-existing Task Detail, Task Index build-repair, and Herd upload progress edits remain preserved and excluded from this phase's staged changes.
