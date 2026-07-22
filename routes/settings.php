@@ -3,6 +3,7 @@
 use App\Http\Controllers\Settings\BackupController;
 use App\Http\Controllers\Settings\ExportController;
 use App\Http\Controllers\Settings\MembersController;
+use App\Http\Controllers\Settings\PreferencesController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -21,7 +22,7 @@ Route::middleware(['auth'])->group(function () {
         'settings/appearance',
         fn (): RedirectResponse => to_route('preferences.edit'),
     )->name('appearance.edit');
-    Route::inertia('settings/preferences', 'settings/Preferences')->name('preferences.edit');
+    Route::get('settings/preferences', [PreferencesController::class, 'edit'])->name('preferences.edit');
     Route::inertia('settings/notifications', 'settings/Notifications')->name('notifications.edit');
     Route::get('settings/export', [ExportController::class, 'edit'])->name('export.edit');
     Route::get('settings/members', [MembersController::class, 'edit'])->name('members.edit');

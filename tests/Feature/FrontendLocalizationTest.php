@@ -24,6 +24,63 @@ test('frontend translations cover every supported locale', function () {
     }
 });
 
+test('every application translation catalog has locale parity', function () {
+    $catalogs = collect(File::files(lang_path('en')))
+        ->map(fn (SplFileInfo $file): string => $file->getBasename('.php'))
+        ->reject(fn (string $catalog): bool => in_array($catalog, ['auth', 'passwords', 'validation'], true));
+
+    foreach ($catalogs as $catalog) {
+        $englishKeys = collect(Arr::dot(trans($catalog, locale: 'en')))->keys()->all();
+
+        foreach (['lt', 'ru'] as $locale) {
+            expect(collect(Arr::dot(trans($catalog, locale: $locale)))->keys()->all())
+                ->toBe($englishKeys, "The {$locale}/{$catalog}.php catalog is out of sync.");
+        }
+    }
+});
+
+test('guest requests use a supported browser language and English fallback', function () {
+    $this->withHeader('Accept-Language', 'lt-LT,lt;q=0.9')
+        ->get(route('login'))
+        ->assertOk()
+        ->assertSee('<html lang="lt" dir="ltr"', false)
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('ui.auth.login.title', 'Prisijungimas'));
+
+    $this->withHeader('Accept-Language', 'fr-FR')
+        ->get(route('login'))
+        ->assertOk()
+        ->assertSee('<html lang="en" dir="ltr"', false)
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('ui.auth.login.title', 'Log in'));
+});
+
+test('localized framework messages fall back to English for uncovered rules', function () {
+    expect(trans('validation.timezone', locale: 'ru'))
+        ->toContain('часовой пояс')
+        ->and(trans('validation.after_or_equal', locale: 'ru'))
+        ->toBe('The :attribute field must be a date after or equal to :date.')
+        ->and(trans('auth.failed', locale: 'lt'))
+        ->toContain('prisijungimo duomenys');
+});
+
+test('frontend formatters and document locale synchronization are centralized', function () {
+    $ui = File::get(resource_path('js/composables/useUi.ts'));
+    $workspaceUi = File::get(resource_path('js/composables/useWorkspaceUi.ts'));
+    $application = File::get(resource_path('js/app.ts'));
+
+    expect($ui)
+        ->toContain("from '@/lib/formatters'")
+        ->not->toContain('new Intl.DateTimeFormat')
+        ->and($workspaceUi)
+        ->toContain("from '@/lib/formatters'")
+        ->not->toContain('new Intl.DateTimeFormat')
+        ->and($application)
+        ->toContain("router.on('success'")
+        ->toContain('document.documentElement.lang = language')
+        ->toContain("document.documentElement.dir = 'ltr'");
+});
+
 test('shared frontend copy follows the supported user locale with English fallback', function () {
     $user = User::factory()->create();
     $workspace = Workspace::factory()->for($user, 'owner')->create();

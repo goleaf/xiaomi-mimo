@@ -10,8 +10,6 @@ use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    private const SUPPORTED_LOCALES = ['en', 'lt', 'ru'];
-
     protected $rootView = 'app';
 
     public function version(Request $request): ?string
@@ -23,13 +21,6 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $user?->loadMissing('preferences');
-
-        $preferredLocale = $user?->preferences?->language;
-        $locale = is_string($preferredLocale) && in_array($preferredLocale, self::SUPPORTED_LOCALES, true)
-            ? $preferredLocale
-            : config('app.fallback_locale', 'en');
-
-        app()->setLocale($locale);
 
         $navigationData = null;
         $resolveNavigation = function () use ($request, $user, &$navigationData): array {

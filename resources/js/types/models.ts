@@ -308,12 +308,12 @@ export interface UserPreference {
     id: string;
     user_id: string;
     timezone: string;
-    language: string;
-    date_format: string;
-    time_format: string;
+    language: 'en' | 'lt' | 'ru';
+    date_format: 'Y-m-d' | 'd/m/Y' | 'm/d/Y' | 'd.m.Y';
+    time_format: 'H:i' | 'h:i A';
     theme: 'system' | 'light' | 'dark';
     default_view: 'list' | 'board' | 'calendar';
-    start_page: string;
+    start_page: 'dashboard' | 'tasks' | 'projects' | 'calendar';
     notification_email: boolean;
     notification_browser: boolean;
     notification_in_app: boolean;

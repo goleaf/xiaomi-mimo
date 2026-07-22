@@ -1,0 +1,41 @@
+<?php
+
+return [
+    'after' => 'Lauko „:attribute“ data turi būti vėlesnė nei :date.',
+    'before' => 'Lauko „:attribute“ data turi būti ankstesnė nei :date.',
+    'boolean' => 'Lauko „:attribute“ reikšmė turi būti „taip“ arba „ne“.',
+    'confirmed' => 'Lauko „:attribute“ patvirtinimas nesutampa.',
+    'current_password' => 'Slaptažodis neteisingas.',
+    'date' => 'Lauko „:attribute“ reikšmė turi būti tinkama data.',
+    'email' => 'Lauko „:attribute“ reikšmė turi būti tinkamas el. pašto adresas.',
+    'enum' => 'Pasirinkta lauko „:attribute“ reikšmė netinkama.',
+    'in' => 'Pasirinkta lauko „:attribute“ reikšmė netinkama.',
+    'max' => [
+        'array' => 'Lauke „:attribute“ negali būti daugiau nei :max elementų.',
+        'file' => 'Lauko „:attribute“ failas negali būti didesnis nei :max kilobaitų.',
+        'numeric' => 'Lauko „:attribute“ reikšmė negali būti didesnė nei :max.',
+        'string' => 'Laukas „:attribute“ negali būti ilgesnis nei :max simbolių.',
+    ],
+    'mimes' => 'Lauko „:attribute“ failo tipas turi būti vienas iš šių: :values.',
+    'mimetypes' => 'Lauko „:attribute“ failo tipas turi būti vienas iš šių: :values.',
+    'min' => [
+        'array' => 'Lauke „:attribute“ turi būti bent :min elementų.',
+        'file' => 'Lauko „:attribute“ failas turi būti bent :min kilobaitų.',
+        'numeric' => 'Lauko „:attribute“ reikšmė turi būti bent :min.',
+        'string' => 'Laukas „:attribute“ turi būti bent :min simbolių.',
+    ],
+    'required' => 'Laukas „:attribute“ yra privalomas.',
+    'string' => 'Laukas „:attribute“ turi būti tekstas.',
+    'timezone' => 'Lauke „:attribute“ turi būti nurodyta tinkama laiko juosta.',
+    'unique' => 'Tokia lauko „:attribute“ reikšmė jau naudojama.',
+    'uploaded' => 'Lauko „:attribute“ failo įkelti nepavyko.',
+    'uuid' => 'Lauko „:attribute“ reikšmė turi būti tinkamas UUID.',
+    'attributes' => [
+        'date_format' => 'datos formatas',
+        'default_view' => 'numatytasis rodinys',
+        'language' => 'kalba',
+        'start_page' => 'pradinis puslapis',
+        'time_format' => 'laiko formatas',
+        'timezone' => 'laiko juosta',
+    ],
+];

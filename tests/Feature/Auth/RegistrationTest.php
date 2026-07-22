@@ -22,4 +22,9 @@ test('new users can register', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
+    $this->assertDatabaseHas('user_preferences', [
+        'user_id' => auth()->id(),
+        'language' => 'en',
+        'timezone' => 'UTC',
+    ]);
 });

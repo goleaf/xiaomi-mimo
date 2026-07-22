@@ -9,8 +9,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ApiResponseFactory
 {
-    private const array SUPPORTED_LOCALES = ['en', 'lt', 'ru'];
-
     /** @var list<string> */
     private const array ITEM_KEYS = [
         'attachment',
@@ -31,7 +29,6 @@ class ApiResponseFactory
 
     public function prepareRequest(Request $request): string
     {
-        $this->setLocale($request);
         $incomingId = $request->header('X-Request-Id');
         $requestId = is_string($incomingId) && Str::isUuid($incomingId)
             ? Str::lower($incomingId)
@@ -100,7 +97,6 @@ class ApiResponseFactory
         int $status,
         array $details = [],
     ): JsonResponse {
-        $this->setLocale($request);
         $requestId = $this->requestId($request);
         $error = [
             'code' => $code,
@@ -118,12 +114,5 @@ class ApiResponseFactory
             'X-API-Version' => '1',
             'X-Request-Id' => $requestId,
         ]);
-    }
-
-    private function setLocale(Request $request): void
-    {
-        $language = Str::lower(Str::substr((string) $request->header('Accept-Language', ''), 0, 2));
-
-        app()->setLocale(in_array($language, self::SUPPORTED_LOCALES, true) ? $language : 'en');
     }
 }

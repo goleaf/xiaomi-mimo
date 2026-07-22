@@ -25,9 +25,21 @@ use App\Http\Controllers\WorkspaceInvitationController;
 use App\Http\Controllers\WorkspaceManagementController;
 use App\Http\Controllers\WorkspaceMemberController;
 use App\Http\Controllers\WorkspaceOwnershipController;
+use App\Models\UserPreference;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect()->route('dashboard'))->name('home');
+Route::get('/', function (Request $request) {
+    $user = $request->user();
+
+    if (! $user) {
+        return to_route('login');
+    }
+
+    $user->loadMissing('preferences');
+
+    return to_route(UserPreference::startRoute($user->preferences?->start_page));
+})->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');

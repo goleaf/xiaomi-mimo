@@ -2,34 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\UserPreference;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use App\Actions\UpdateUserPreferences;
+use App\Http\Requests\UpdateUserPreferenceRequest;
+use Illuminate\Http\RedirectResponse;
 
 class UserPreferenceController extends Controller
 {
-    public function update(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'timezone' => 'sometimes|string',
-            'language' => 'sometimes|string',
-            'date_format' => 'sometimes|string',
-            'time_format' => 'sometimes|string',
-            'theme' => 'sometimes|string|in:system,light,dark',
-            'default_view' => 'sometimes|string|in:list,board,calendar',
-            'start_page' => 'sometimes|string',
-            'notification_email' => 'sometimes|boolean',
-            'notification_browser' => 'sometimes|boolean',
-            'notification_in_app' => 'sometimes|boolean',
-        ]);
+    public function update(
+        UpdateUserPreferenceRequest $request,
+        UpdateUserPreferences $updateUserPreferences,
+    ): RedirectResponse {
+        $preferences = $updateUserPreferences->execute($request->user(), $request->validated());
+        $request->session()->put('locale', $preferences->language);
 
-        $preferences = UserPreference::firstOrCreate(
-            ['user_id' => $request->user()->id],
-            $validated
-        );
-
-        $preferences->update($validated);
-
-        return response()->json(['preferences' => $preferences]);
+        return back();
     }
 }

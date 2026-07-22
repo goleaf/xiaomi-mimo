@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\UserPreference;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 
@@ -20,6 +21,25 @@ test('users can authenticate using the login screen', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
+});
+
+test('successful login and the home route honor the preferred start page', function () {
+    $user = User::factory()->create();
+    UserPreference::factory()->for($user)->create(['start_page' => 'projects']);
+
+    $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ])->assertRedirect(route('projects', absolute: false));
+
+    $this->get(route('home'))
+        ->assertRedirectToRoute('projects');
+});
+
+test('guest home redirects directly to login without storing a dashboard intention', function () {
+    $this->get(route('home'))
+        ->assertRedirectToRoute('login')
+        ->assertSessionMissing('url.intended');
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {

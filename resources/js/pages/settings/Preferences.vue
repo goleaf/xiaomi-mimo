@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, setLayoutProps, useForm } from '@inertiajs/vue3';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
+import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -24,7 +25,20 @@ import { update } from '@/routes/preferences';
 import type { SettingsLayoutProps } from '@/types';
 import type { UserPreference } from '@/types/models';
 
-const props = defineProps<{ preferences: UserPreference }>();
+type PreferenceFields = Pick<
+    UserPreference,
+    | 'date_format'
+    | 'default_view'
+    | 'language'
+    | 'start_page'
+    | 'time_format'
+    | 'timezone'
+>;
+
+const props = defineProps<{
+    preferences: PreferenceFields;
+    timezones: string[];
+}>();
 const toast = useToast();
 const { t } = useUi();
 
@@ -49,20 +63,14 @@ function submit() {
     });
 }
 
-const timezones = [
-    'UTC',
-    'America/New_York',
-    'America/Chicago',
-    'America/Denver',
-    'America/Los_Angeles',
-    'Europe/London',
-    'Europe/Berlin',
-    'Europe/Moscow',
-    'Asia/Tokyo',
-    'Asia/Shanghai',
-    'Australia/Sydney',
+const languages = [
+    { value: 'en', label: 'settings.preferences.languages.en' },
+    { value: 'lt', label: 'settings.preferences.languages.lt' },
+    { value: 'ru', label: 'settings.preferences.languages.ru' },
 ];
 const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
+const timeFormats = ['H:i', 'h:i A'];
+const startPages = ['dashboard', 'tasks', 'projects', 'calendar'];
 </script>
 
 <template>
@@ -90,27 +98,67 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
                     }}</CardTitle></CardHeader
                 >
                 <CardContent class="space-y-4">
-                    <div class="space-y-2">
-                        <Label>{{
-                            t('settings.preferences.default_view')
-                        }}</Label>
-                        <Select
-                            v-model="form.default_view"
-                            :disabled="form.processing"
-                        >
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="list">{{
-                                    t('settings.preferences.list_view')
-                                }}</SelectItem>
-                                <SelectItem value="board">{{
-                                    t('settings.preferences.board_view')
-                                }}</SelectItem>
-                                <SelectItem value="calendar">{{
-                                    t('settings.preferences.calendar_view')
-                                }}</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-2">
+                            <Label for="default-view">{{
+                                t('settings.preferences.default_view')
+                            }}</Label>
+                            <Select
+                                v-model="form.default_view"
+                                :disabled="form.processing"
+                            >
+                                <SelectTrigger
+                                    id="default-view"
+                                    :aria-invalid="
+                                        Boolean(form.errors.default_view)
+                                    "
+                                    ><SelectValue
+                                /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="list">{{
+                                        t('settings.preferences.list_view')
+                                    }}</SelectItem>
+                                    <SelectItem value="board">{{
+                                        t('settings.preferences.board_view')
+                                    }}</SelectItem>
+                                    <SelectItem value="calendar">{{
+                                        t('settings.preferences.calendar_view')
+                                    }}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="form.errors.default_view" />
+                        </div>
+                        <div class="space-y-2">
+                            <Label for="start-page">{{
+                                t('settings.preferences.start_page')
+                            }}</Label>
+                            <Select
+                                v-model="form.start_page"
+                                :disabled="form.processing"
+                            >
+                                <SelectTrigger
+                                    id="start-page"
+                                    :aria-invalid="
+                                        Boolean(form.errors.start_page)
+                                    "
+                                    ><SelectValue
+                                /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="page in startPages"
+                                        :key="page"
+                                        :value="page"
+                                    >
+                                        {{
+                                            t(
+                                                `settings.preferences.start_pages.${page}`,
+                                            )
+                                        }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="form.errors.start_page" />
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -121,35 +169,78 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
                     }}</CardTitle></CardHeader
                 >
                 <CardContent class="space-y-4">
+                    <p class="text-sm text-muted-foreground">
+                        {{ t('settings.preferences.locale_description') }}
+                    </p>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div class="space-y-2">
-                            <Label>{{
+                            <Label for="language">{{
+                                t('settings.preferences.language')
+                            }}</Label>
+                            <Select
+                                v-model="form.language"
+                                :disabled="form.processing"
+                            >
+                                <SelectTrigger
+                                    id="language"
+                                    :aria-invalid="
+                                        Boolean(form.errors.language)
+                                    "
+                                    ><SelectValue
+                                /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="language in languages"
+                                        :key="language.value"
+                                        :value="language.value"
+                                    >
+                                        {{ t(language.label) }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="form.errors.language" />
+                        </div>
+                        <div class="space-y-2">
+                            <Label for="timezone">{{
                                 t('settings.preferences.timezone')
                             }}</Label>
                             <Select
                                 v-model="form.timezone"
                                 :disabled="form.processing"
                             >
-                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectTrigger
+                                    id="timezone"
+                                    :aria-invalid="
+                                        Boolean(form.errors.timezone)
+                                    "
+                                    ><SelectValue
+                                /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
-                                        v-for="tz in timezones"
+                                        v-for="tz in props.timezones"
                                         :key="tz"
                                         :value="tz"
                                         >{{ tz }}</SelectItem
                                     >
                                 </SelectContent>
                             </Select>
+                            <InputError :message="form.errors.timezone" />
                         </div>
                         <div class="space-y-2">
-                            <Label>{{
+                            <Label for="date-format">{{
                                 t('settings.preferences.date_format')
                             }}</Label>
                             <Select
                                 v-model="form.date_format"
                                 :disabled="form.processing"
                             >
-                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectTrigger
+                                    id="date-format"
+                                    :aria-invalid="
+                                        Boolean(form.errors.date_format)
+                                    "
+                                    ><SelectValue
+                                /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
                                         v-for="f in dateFormats"
@@ -159,6 +250,33 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
                                     >
                                 </SelectContent>
                             </Select>
+                            <InputError :message="form.errors.date_format" />
+                        </div>
+                        <div class="space-y-2">
+                            <Label for="time-format">{{
+                                t('settings.preferences.time_format')
+                            }}</Label>
+                            <Select
+                                v-model="form.time_format"
+                                :disabled="form.processing"
+                            >
+                                <SelectTrigger
+                                    id="time-format"
+                                    :aria-invalid="
+                                        Boolean(form.errors.time_format)
+                                    "
+                                    ><SelectValue
+                                /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="format in timeFormats"
+                                        :key="format"
+                                        :value="format"
+                                        >{{ format }}</SelectItem
+                                    >
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="form.errors.time_format" />
                         </div>
                     </div>
                 </CardContent>
