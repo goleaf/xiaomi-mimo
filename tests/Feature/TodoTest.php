@@ -39,7 +39,7 @@ test('user can update todo', function () {
         'title' => 'Updated Title',
     ]);
 
-    $response->assertOk();
+    $response->assertRedirect();
     $this->assertDatabaseHas('todos', ['id' => $todo->id, 'title' => 'Updated Title']);
 });
 
@@ -70,7 +70,7 @@ test('user can clear optional task fields', function () {
             'description' => null,
             'due_date' => null,
         ])
-        ->assertOk();
+        ->assertRedirect();
 
     $todo->refresh();
 
@@ -124,7 +124,7 @@ test('user can replace and clear task labels', function () {
         ->putJson(route('todos.update', $todo), [
             'label_ids' => [$replacementLabel->id],
         ])
-        ->assertOk();
+        ->assertRedirect();
 
     expect($todo->fresh()->labels->modelKeys())->toBe([$replacementLabel->id]);
 
@@ -132,7 +132,7 @@ test('user can replace and clear task labels', function () {
         ->putJson(route('todos.update', $todo), [
             'label_ids' => [],
         ])
-        ->assertOk();
+        ->assertRedirect();
 
     expect($todo->fresh()->labels)->toBeEmpty();
 });
@@ -167,7 +167,7 @@ test('user can complete todo', function () {
 
     $response = $this->actingAs($user)->postJson(route('todos.complete', $todo->id));
 
-    $response->assertOk();
+    $response->assertRedirect();
     $this->assertDatabaseHas('todos', ['id' => $todo->id, 'status' => 'completed']);
 });
 
@@ -190,7 +190,7 @@ test('user can uncomplete todo', function () {
 
     $response = $this->actingAs($user)->postJson(route('todos.uncomplete', $todo->id));
 
-    $response->assertOk();
+    $response->assertRedirect();
     $this->assertDatabaseHas('todos', ['id' => $todo->id, 'status' => 'pending']);
 });
 
@@ -200,7 +200,7 @@ test('user can delete todo', function () {
 
     $response = $this->actingAs($user)->deleteJson(route('todos.destroy', $todo->id));
 
-    $response->assertNoContent();
+    $response->assertRedirect();
     $this->assertSoftDeleted('todos', ['id' => $todo->id]);
 });
 
@@ -225,7 +225,7 @@ test('user can bulk complete todos', function () {
         'action' => 'complete',
     ]);
 
-    $response->assertNoContent();
+    $response->assertRedirect();
     $this->assertDatabaseHas('todos', ['status' => 'completed']);
 });
 
@@ -248,9 +248,13 @@ test('todo list filters by status', function () {
     Todo::factory()->count(2)->pending()->create(['workspace_id' => $workspace->id]);
     Todo::factory()->count(3)->completed()->create(['workspace_id' => $workspace->id]);
 
-    $response = $this->actingAs($user)->getJson(route('todos.index', ['workspace' => $workspace->id, 'status' => 'completed']));
-
-    $response->assertOk();
+    $this->actingAs($user)
+        ->withSession(['current_workspace_id' => $workspace->id])
+        ->get(route('todos.index', ['status' => 'completed']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('todos.data', 3)
+            ->where('todos.data.0.status', 'completed'));
 });
 
 test('task index exposes only the implemented list view', function () {

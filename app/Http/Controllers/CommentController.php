@@ -6,12 +6,9 @@ use App\Actions\CreateComment;
 use App\Actions\DeleteComment;
 use App\Actions\UpdateComment;
 use App\Http\Requests\StoreCommentRequest;
-use App\Http\Resources\CommentResource;
 use App\Models\Comment;
 use App\Models\Todo;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
@@ -19,44 +16,31 @@ class CommentController extends Controller
         StoreCommentRequest $request,
         Todo $todo,
         CreateComment $action,
-    ): JsonResponse|RedirectResponse {
+    ): RedirectResponse {
         $this->authorize('create', [Comment::class, $todo]);
-        $comment = $action->handle($todo, $request->user(), $request->body);
+        $action->handle($todo, $request->user(), $request->body);
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(['comment' => new CommentResource($comment)], 201);
+        return back();
     }
 
     public function update(
         StoreCommentRequest $request,
         Comment $comment,
         UpdateComment $action,
-    ): JsonResponse|RedirectResponse {
+    ): RedirectResponse {
         $this->authorize('update', $comment);
-        $comment = $action->handle($comment, $request->body);
+        $action->handle($comment, $request->body);
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(['comment' => new CommentResource($comment)]);
+        return back();
     }
 
     public function destroy(
-        Request $request,
         Comment $comment,
         DeleteComment $action,
-    ): JsonResponse|RedirectResponse {
+    ): RedirectResponse {
         $this->authorize('delete', $comment);
         $action->handle($comment);
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(null, 204);
+        return back();
     }
 }

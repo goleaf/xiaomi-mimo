@@ -28,7 +28,7 @@ test('user can create checklist', function () {
         'name' => 'My Checklist',
     ]);
 
-    $response->assertCreated();
+    $response->assertRedirect();
     $this->assertDatabaseHas('checklists', ['todo_id' => $todo->id, 'name' => 'My Checklist']);
 });
 
@@ -55,7 +55,7 @@ test('user can update checklist', function () {
         'name' => 'Updated Checklist',
     ]);
 
-    $response->assertOk();
+    $response->assertRedirect();
     $this->assertDatabaseHas('checklists', ['id' => $checklist->id, 'name' => 'Updated Checklist']);
 });
 
@@ -64,7 +64,7 @@ test('user can delete checklist', function () {
 
     $response = $this->actingAs($user)->deleteJson(route('checklists.destroy', $checklist->id));
 
-    $response->assertNoContent();
+    $response->assertRedirect();
     $this->assertDatabaseMissing('checklists', ['id' => $checklist->id]);
 });
 
@@ -75,7 +75,7 @@ test('user can add checklist item', function () {
         'content' => 'Buy groceries',
     ]);
 
-    $response->assertCreated();
+    $response->assertRedirect();
     $this->assertDatabaseHas('checklist_items', ['checklist_id' => $checklist->id, 'content' => 'Buy groceries', 'is_checked' => false]);
 });
 
@@ -85,7 +85,7 @@ test('user can toggle checklist item', function () {
 
     $response = $this->actingAs($user)->patchJson(route('checklistItems.toggle', $item->id));
 
-    $response->assertOk();
+    $response->assertRedirect();
     $this->assertDatabaseHas('checklist_items', ['id' => $item->id, 'is_checked' => true]);
 });
 
@@ -95,6 +95,6 @@ test('user can delete checklist item', function () {
 
     $response = $this->actingAs($user)->deleteJson(route('checklistItems.destroy', $item->id));
 
-    $response->assertNoContent();
+    $response->assertRedirect();
     $this->assertDatabaseMissing('checklist_items', ['id' => $item->id]);
 });

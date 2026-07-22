@@ -10,7 +10,9 @@ use App\Http\Requests\DuplicateWorkspaceRequest;
 use App\Http\Requests\StoreWorkspaceRequest;
 use App\Http\Requests\UpdateWorkspaceRequest;
 use App\Http\Resources\WorkspaceResource;
+use App\Models\User;
 use App\Models\Workspace;
+use App\Queries\CurrentWorkspaceQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -61,14 +63,20 @@ class WorkspaceController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, Workspace $workspace, DeleteWorkspace $action): JsonResponse
-    {
+    public function destroy(
+        Request $request,
+        Workspace $workspace,
+        DeleteWorkspace $action,
+        CurrentWorkspaceQuery $currentWorkspaceQuery,
+    ): JsonResponse {
         $this->authorize('delete', $workspace);
         $deletedCurrentWorkspace = $request->session()->get('current_workspace_id') === $workspace->id;
         $action->handle($workspace);
 
         if ($deletedCurrentWorkspace) {
-            $fallbackWorkspace = $request->user()->currentWorkspace();
+            $user = $request->user();
+            abort_unless($user instanceof User, 403);
+            $fallbackWorkspace = $currentWorkspaceQuery->forUser($user);
 
             if ($fallbackWorkspace) {
                 $request->session()->put('current_workspace_id', $fallbackWorkspace->id);

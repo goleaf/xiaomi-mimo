@@ -7,6 +7,8 @@ use App\Models\TaskPriority;
 use App\Models\TaskStatus;
 use App\Models\Todo;
 use App\Models\User;
+use App\Queries\CalendarQuery;
+use App\Queries\CurrentWorkspaceQuery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
@@ -14,35 +16,25 @@ use Inertia\Response;
 
 class CalendarController extends Controller
 {
-    public function index(Request $request): Response
-    {
+    public function index(
+        Request $request,
+        CurrentWorkspaceQuery $currentWorkspaceQuery,
+        CalendarQuery $calendarQuery,
+    ): Response {
         $user = $request->user();
 
         abort_unless($user instanceof User, 403);
 
-        $workspace = $user->currentWorkspace(
-            (string) $request->session()->get('current_workspace_id'),
+        $workspace = $currentWorkspaceQuery->forUser(
+            $user,
+            $request->session()->get('current_workspace_id'),
         );
 
         if (! $workspace) {
             return Inertia::render('calendar/Index', ['todos' => []]);
         }
 
-        $todos = Todo::query()
-            ->select([
-                'id', 'project_id', 'workspace_id', 'title', 'status', 'status_id',
-                'priority', 'priority_id', 'due_date', 'completed_at',
-            ])
-            ->where('workspace_id', $workspace->id)
-            ->where('is_archived', false)
-            ->whereNotNull('due_date')
-            ->with([
-                'project:id,name,color',
-                'statusDefinition:id,workspace_id,key,name,translation_key,color,is_completed',
-                'priorityDefinition:id,workspace_id,key,name,translation_key,color',
-            ])
-            ->orderBy('due_date')
-            ->get()
+        $todos = $calendarQuery->datedTodos($workspace)
             ->map(function (Todo $todo): array {
                 $project = $todo->getRelation('project');
                 $statusDefinition = $todo->getRelation('statusDefinition');

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Queries\NotificationIndexQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -9,12 +11,14 @@ use Inertia\Response;
 
 class NotificationController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, NotificationIndexQuery $notificationIndexQuery): Response
     {
-        $notifications = $request->user()->notifications()->latest()->paginate(20);
+        $user = $request->user();
+
+        abort_unless($user instanceof User, 403);
 
         return Inertia::render('notifications/Index', [
-            'notifications' => $notifications,
+            'notifications' => $notificationIndexQuery->forUser($user),
         ]);
     }
 

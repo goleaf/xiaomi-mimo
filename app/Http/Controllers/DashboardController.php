@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\TodoResource;
 use App\Models\User;
+use App\Queries\CurrentWorkspaceQuery;
 use App\Services\DashboardQuery;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -11,15 +12,19 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request, DashboardQuery $dashboardQuery): Response
-    {
+    public function index(
+        Request $request,
+        CurrentWorkspaceQuery $currentWorkspaceQuery,
+        DashboardQuery $dashboardQuery,
+    ): Response {
         $user = $request->user();
 
         abort_unless($user instanceof User, 403);
 
         $user->loadMissing('preferences');
-        $workspace = $user->currentWorkspace(
-            (string) $request->session()->get('current_workspace_id'),
+        $workspace = $currentWorkspaceQuery->forUser(
+            $user,
+            $request->session()->get('current_workspace_id'),
         );
         $timezone = $user->preferences?->getAttribute('timezone');
 

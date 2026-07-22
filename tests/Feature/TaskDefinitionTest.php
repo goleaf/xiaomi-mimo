@@ -359,10 +359,10 @@ test('tasks accept workspace status and priority keys or ids with completion sem
     expect($todo->completed_at)->not->toBeNull();
 
     $openStatus = $workspace->taskStatuses()->where('key', 'in_progress')->firstOrFail();
-    $this->putJson(route('todos.update', $todo), ['status_id' => $openStatus->id])
+    $this->putJson(route('api.v1.tasks.update', [$workspace, $todo], false), ['status_id' => $openStatus->id])
         ->assertOk()
-        ->assertJsonPath('todo.status', 'in_progress')
-        ->assertJsonPath('todo.is_completed', false);
+        ->assertJsonPath('data.status', 'in_progress')
+        ->assertJsonPath('data.is_completed', false);
 
     expect($todo->refresh()->completed_at)->toBeNull();
 });

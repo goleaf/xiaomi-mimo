@@ -26,7 +26,7 @@ test('user can create comment on todo', function () {
         'body' => 'This is a comment',
     ]);
 
-    $response->assertCreated();
+    $response->assertRedirect();
     $this->assertDatabaseHas('comments', ['todo_id' => $todo->id, 'body' => 'This is a comment', 'user_id' => $user->id]);
 });
 
@@ -54,7 +54,7 @@ test('user can update own comment', function () {
         'body' => 'Updated comment',
     ]);
 
-    $response->assertOk();
+    $response->assertRedirect();
     $this->assertDatabaseHas('comments', ['id' => $comment->id, 'body' => 'Updated comment']);
 });
 
@@ -64,7 +64,7 @@ test('user can delete own comment', function () {
 
     $response = $this->actingAs($user)->deleteJson(route('comments.destroy', $comment->id));
 
-    $response->assertNoContent();
+    $response->assertRedirect();
     $this->assertSoftDeleted('comments', ['id' => $comment->id]);
 });
 

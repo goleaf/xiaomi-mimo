@@ -105,16 +105,16 @@ test('workspace invitations are normalized pending records and never create user
     $email = 'Future.Member@Example.COM';
 
     $this->actingAs($owner)
-        ->postJson(route('workspaces.invite', $workspace), [
+        ->postJson(route('api.v1.workspace-invitations.store', $workspace, false), [
             'email' => $email,
             'role' => WorkspaceRole::Admin->value,
         ])
         ->assertCreated()
-        ->assertJsonPath('invitation.email', 'future.member@example.com')
-        ->assertJsonPath('invitation.role', WorkspaceRole::Admin->value)
-        ->assertJsonMissingPath('invitation.token')
-        ->assertJsonMissingPath('invitation.token_hash')
-        ->assertJsonMissingPath('invitation.accept_url');
+        ->assertJsonPath('data.email', 'future.member@example.com')
+        ->assertJsonPath('data.role', WorkspaceRole::Admin->value)
+        ->assertJsonMissingPath('data.token')
+        ->assertJsonMissingPath('data.token_hash')
+        ->assertJsonMissingPath('data.accept_url');
 
     expect(User::query()->where('email', 'future.member@example.com')->exists())->toBeFalse();
 
@@ -134,7 +134,7 @@ test('only the invited email can accept once through the expiring signed flow', 
     $invitedUser = User::factory()->create(['email' => 'invitee@example.com']);
     $wrongUser = User::factory()->create(['email' => 'wrong@example.com']);
 
-    $this->actingAs($owner)->postJson(route('workspaces.invite', $workspace), [
+    $this->actingAs($owner)->postJson(route('api.v1.workspace-invitations.store', $workspace, false), [
         'email' => 'INVITEE@example.com',
         'role' => WorkspaceRole::Admin->value,
     ])->assertCreated();
@@ -178,12 +178,13 @@ test('only the invited email can accept once through the expiring signed flow', 
         ->count())->toBe(1);
 
     $this->actingAs($owner)
-        ->postJson(route('workspaces.invite', $workspace), [
+        ->postJson(route('api.v1.workspace-invitations.store', $workspace, false), [
             'email' => $invitedUser->email,
             'role' => WorkspaceRole::Member->value,
         ])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors('email');
+        ->assertJsonPath('error.code', 'validation_failed')
+        ->assertJsonStructure(['error' => ['details' => ['email']]]);
 
     expect(WorkspaceInvitation::query()->firstOrFail()->accepted_at)->not->toBeNull();
 });
@@ -193,7 +194,7 @@ test('expired and cancelled invitations cannot be accepted and resend rotates th
     ['owner' => $owner, 'workspace' => $workspace] = createMembershipManagementWorkspace();
     $invitedUser = User::factory()->create(['email' => 'pending@example.com']);
 
-    $this->actingAs($owner)->postJson(route('workspaces.invite', $workspace), [
+    $this->actingAs($owner)->postJson(route('api.v1.workspace-invitations.store', $workspace, false), [
         'email' => $invitedUser->email,
         'role' => WorkspaceRole::Member->value,
     ])->assertCreated();
@@ -202,10 +203,10 @@ test('expired and cancelled invitations cannot be accepted and resend rotates th
     $originalHash = $invitation->token_hash;
 
     $this->actingAs($owner)
-        ->postJson(route('workspaces.invitations.resend', [$workspace, $invitation]))
+        ->postJson(route('api.v1.workspace-invitations.resend', [$workspace, $invitation], false))
         ->assertOk()
-        ->assertJsonMissingPath('invitation.token_hash')
-        ->assertJsonMissingPath('invitation.accept_url');
+        ->assertJsonMissingPath('data.token_hash')
+        ->assertJsonMissingPath('data.accept_url');
 
     expect($invitation->refresh()->token_hash)->not->toBe($originalHash);
 
@@ -222,7 +223,7 @@ test('expired and cancelled invitations cannot be accepted and resend rotates th
     $acceptUrl = $notification->acceptUrl();
 
     $this->actingAs($owner)
-        ->deleteJson(route('workspaces.invitations.cancel', [$workspace, $invitation]))
+        ->deleteJson(route('api.v1.workspace-invitations.destroy', [$workspace, $invitation], false))
         ->assertNoContent();
 
     $this->actingAs($invitedUser)
@@ -265,15 +266,16 @@ test('workspace managers can update roles and remove only scoped non owner membe
     }
 
     $this->actingAs($owner)
-        ->patchJson(route('workspaces.members.update', [$workspace, $member->id]), [
+        ->patch(route('workspaces.members.update', [$workspace, $member->id]), [
             'role' => WorkspaceRole::Admin->value,
         ])
-        ->assertOk()
-        ->assertJsonPath('member.role', WorkspaceRole::Admin->value);
+        ->assertRedirect(route('workspaces.members', $workspace));
+
+    expect($workspace->memberRole($member))->toBe(WorkspaceRole::Admin->value);
 
     $this->actingAs($admin)
-        ->deleteJson(route('workspaces.removeMember', [$workspace, $member->id]))
-        ->assertNoContent();
+        ->delete(route('workspaces.removeMember', [$workspace, $member->id]))
+        ->assertRedirect(route('workspaces.members', $workspace));
 
     expect($workspace->members()->whereKey($member->id)->exists())->toBeFalse();
 
@@ -302,11 +304,11 @@ test('ownership transfer atomically preserves exactly one owner membership', fun
     ]);
 
     $this->actingAs($owner)
-        ->postJson(route('workspaces.transferOwnership', $workspace), [
+        ->postJson(route('api.v1.workspace-ownership.store', $workspace, false), [
             'user_id' => $newOwner->id,
         ])
         ->assertOk()
-        ->assertJsonPath('workspace.owner_id', $newOwner->id);
+        ->assertJsonPath('data.owner_id', $newOwner->id);
 
     expect($workspace->refresh()->owner_id)->toBe($newOwner->id)
         ->and($workspace->memberRole($owner))->toBe(WorkspaceRole::Admin->value)
@@ -317,7 +319,7 @@ test('ownership transfer atomically preserves exactly one owner membership', fun
             ->count())->toBe(1);
 
     $this->actingAs($owner)
-        ->postJson(route('workspaces.transferOwnership', $workspace), [
+        ->postJson(route('api.v1.workspace-ownership.store', $workspace, false), [
             'user_id' => $owner->id,
         ])
         ->assertForbidden();
@@ -335,11 +337,12 @@ test('ownership transfer rejects foreign members without partial mutation', func
     ]);
 
     $this->actingAs($owner)
-        ->postJson(route('workspaces.transferOwnership', $workspace), [
+        ->postJson(route('api.v1.workspace-ownership.store', $workspace, false), [
             'user_id' => $foreignOwner->id,
         ])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors('user_id');
+        ->assertJsonPath('error.code', 'validation_failed')
+        ->assertJsonStructure(['error' => ['details' => ['user_id']]]);
 
     expect($workspace->refresh()->owner_id)->toBe($owner->id)
         ->and($workspace->memberRole($owner))->toBe(WorkspaceRole::Owner->value)

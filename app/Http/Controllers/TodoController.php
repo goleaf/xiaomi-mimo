@@ -21,11 +21,9 @@ use App\Http\Resources\LabelResource;
 use App\Http\Resources\TaskPriorityResource;
 use App\Http\Resources\TaskStatusResource;
 use App\Http\Resources\TodoResource;
-use App\Models\Label;
 use App\Models\Todo;
 use App\Models\Workspace;
-use App\Services\TodoFilterService;
-use App\Services\TodoSortService;
+use App\Queries\TodoDetailQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,49 +33,6 @@ use Inertia\Response;
 
 class TodoController extends Controller
 {
-    public function __construct(
-        private TodoFilterService $filterService,
-        private TodoSortService $sortService,
-    ) {}
-
-    public function index(Request $request, Workspace $workspace): Response|JsonResponse
-    {
-        $this->authorize('view', $workspace);
-
-        $query = $workspace->todos()
-            ->with(['project', 'assignee', 'labels', 'tags', 'statusDefinition', 'priorityDefinition'])
-            ->active();
-
-        $query = $this->filterService->apply($query->getQuery(), $request->only([
-            'search', 'project_id', 'status', 'priority', 'assigned_to',
-            'label_id', 'tag_id', 'is_pinned', 'is_favorite',
-            'due_date_from', 'due_date_to', 'overdue', 'completed_today',
-        ]));
-
-        $query = $this->sortService->apply($query, $request->sort, $request->direction);
-
-        $todos = $query->paginate($request->get('per_page', 50));
-
-        if ($request->expectsJson()) {
-            return response()->json(TodoResource::collection($todos));
-        }
-
-        return Inertia::render('tasks/Index', [
-            'todos' => TodoResource::collection($todos),
-            'filters' => $request->only(['search', 'project_id', 'status', 'priority']),
-            'projects' => $workspace->projects()->active()->get(),
-            'workspace' => ['id' => $workspace->id],
-            'taskDefinitions' => [
-                'statuses' => TaskStatusResource::collection(
-                    $workspace->taskStatuses()->ordered()->get(),
-                )->resolve($request),
-                'priorities' => TaskPriorityResource::collection(
-                    $workspace->taskPriorities()->ordered()->get(),
-                )->resolve($request),
-            ],
-        ]);
-    }
-
     public function store(StoreTodoRequest $request, Workspace $workspace, CreateTodo $action): JsonResponse
     {
         $this->authorize('create', [Todo::class, $workspace]);
@@ -86,28 +41,22 @@ class TodoController extends Controller
         return response()->json(['todo' => new TodoResource($todo)], 201);
     }
 
-    public function show(Request $request, Todo $todo): Response
+    public function show(Request $request, Todo $todo, TodoDetailQuery $todoDetailQuery): Response
     {
         $this->authorize('view', $todo);
-        $todo->load([
-            'project', 'assignee', 'labels', 'tags', 'comments.user', 'checklists.items',
-            'attachments.user', 'reminders', 'subtasks', 'statusDefinition', 'priorityDefinition',
-        ]);
+        $todo = $todoDetailQuery->todo($todo);
 
         return Inertia::render('tasks/Show', [
             'todo' => new TodoResource($todo),
             'availableLabels' => LabelResource::collection(
-                Label::query()
-                    ->where('workspace_id', $todo->workspace_id)
-                    ->orderBy('name')
-                    ->get()
+                $todoDetailQuery->availableLabels($todo),
             ),
             'taskDefinitions' => [
                 'statuses' => TaskStatusResource::collection(
-                    $todo->workspace->taskStatuses()->ordered()->get(),
+                    $todoDetailQuery->statuses($todo),
                 )->resolve($request),
                 'priorities' => TaskPriorityResource::collection(
-                    $todo->workspace->taskPriorities()->ordered()->get(),
+                    $todoDetailQuery->priorities($todo),
                 )->resolve($request),
             ],
             'labels' => [
@@ -141,127 +90,87 @@ class TodoController extends Controller
         ]);
     }
 
-    public function update(UpdateTodoRequest $request, Todo $todo, UpdateTodo $action): JsonResponse|RedirectResponse
+    public function update(UpdateTodoRequest $request, Todo $todo, UpdateTodo $action): RedirectResponse
     {
         $this->authorize('update', $todo);
-        $todo = $action->handle($todo, $request->validated());
+        $action->handle($todo, $request->validated());
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(['todo' => new TodoResource($todo)]);
+        return back();
     }
 
-    public function destroy(Request $request, Todo $todo, DeleteTodo $action): JsonResponse|RedirectResponse
+    public function destroy(Todo $todo, DeleteTodo $action): RedirectResponse
     {
         $this->authorize('delete', $todo);
         $action->handle($todo);
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(null, 204);
+        return back();
     }
 
-    public function complete(Request $request, Todo $todo, CompleteTodo $action): JsonResponse|RedirectResponse
+    public function complete(Todo $todo, CompleteTodo $action): RedirectResponse
     {
         $this->authorize('complete', $todo);
-        $todo = $action->handle($todo);
+        $action->handle($todo);
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(['todo' => new TodoResource($todo)]);
+        return back();
     }
 
-    public function uncomplete(Request $request, Todo $todo, UncompleteTodo $action): JsonResponse|RedirectResponse
+    public function uncomplete(Todo $todo, UncompleteTodo $action): RedirectResponse
     {
         $this->authorize('complete', $todo);
-        $todo = $action->handle($todo);
+        $action->handle($todo);
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(['todo' => new TodoResource($todo)]);
+        return back();
     }
 
-    public function archive(Request $request, Todo $todo): JsonResponse|RedirectResponse
+    public function archive(Todo $todo): RedirectResponse
     {
         $this->authorize('update', $todo);
         $todo->update(['is_archived' => true]);
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(['todo' => new TodoResource($todo->fresh())]);
+        return back();
     }
 
-    public function restore(Request $request, Todo $todo): JsonResponse|RedirectResponse
+    public function restore(Todo $todo): RedirectResponse
     {
         $this->authorize('update', $todo);
         $todo->update(['is_archived' => false]);
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(['todo' => new TodoResource($todo->fresh())]);
+        return back();
     }
 
-    public function pin(Request $request, Todo $todo, PinTodo $action): JsonResponse|RedirectResponse
+    public function pin(Todo $todo, PinTodo $action): RedirectResponse
     {
         $this->authorize('update', $todo);
-        $todo = $action->handle($todo);
+        $action->handle($todo);
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(['todo' => new TodoResource($todo)]);
+        return back();
     }
 
-    public function favorite(Request $request, Todo $todo, FavoriteTodo $action): JsonResponse|RedirectResponse
+    public function favorite(Todo $todo, FavoriteTodo $action): RedirectResponse
     {
         $this->authorize('update', $todo);
-        $todo = $action->handle($todo);
+        $action->handle($todo);
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(['todo' => new TodoResource($todo)]);
+        return back();
     }
 
-    public function duplicate(Request $request, Todo $todo, DuplicateTodo $action): JsonResponse|RedirectResponse
+    public function duplicate(Todo $todo, DuplicateTodo $action): RedirectResponse
     {
         $this->authorize('create', [Todo::class, $todo->workspace]);
-        $todo = $action->handle($todo);
+        $action->handle($todo);
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(['todo' => new TodoResource($todo)], 201);
+        return back();
     }
 
     public function reorder(
         ReorderTodosRequest $request,
         Workspace $workspace,
         ReorderTodos $action,
-    ): JsonResponse|RedirectResponse {
+    ): RedirectResponse {
         $this->authorize('update', $workspace);
         $action->handle($workspace, $request->items());
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(null, 204);
+        return back();
     }
 
     public function bulk(
@@ -269,7 +178,7 @@ class TodoController extends Controller
         Workspace $workspace,
         BulkUpdateTodos $bulkUpdate,
         BulkDeleteTodos $bulkDelete,
-    ): JsonResponse|RedirectResponse {
+    ): RedirectResponse {
         $this->authorize('update', $workspace);
 
         match ($request->action()) {
@@ -283,10 +192,6 @@ class TodoController extends Controller
             ]),
         };
 
-        if (! $request->expectsJson()) {
-            return back();
-        }
-
-        return response()->json(null, 204);
+        return back();
     }
 }

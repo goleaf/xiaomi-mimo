@@ -24,6 +24,15 @@ import WorkspaceOverviewPanel from '@/components/workspace/WorkspaceOverviewPane
 import { useUi } from '@/composables/useUi';
 import { cn } from '@/lib/utils';
 import {
+    destroy as cancelWorkspaceInvitation,
+    resend as resendWorkspaceInvitation,
+    store as inviteWorkspaceMember,
+} from '@/routes/api/v1/workspace-invitations';
+import {
+    destroy as removeWorkspaceMember,
+    update as updateWorkspaceMember,
+} from '@/routes/api/v1/workspace-members';
+import {
     destroy as destroyLabel,
     store as storeLabel,
     update as updateLabel,
@@ -51,16 +60,9 @@ import {
     configuration as workspaceConfiguration,
     danger as workspaceDanger,
     index as workspaceIndex,
-    invite as inviteWorkspaceMember,
     members as workspaceMembers,
-    removeMember as removeWorkspaceMember,
     show as showWorkspace,
 } from '@/routes/workspaces';
-import {
-    cancel as cancelWorkspaceInvitation,
-    resend as resendWorkspaceInvitation,
-} from '@/routes/workspaces/invitations';
-import { update as updateWorkspaceMember } from '@/routes/workspaces/members';
 import type {
     Workspace,
     WorkspaceInvitation,

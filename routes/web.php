@@ -12,10 +12,12 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\LabelController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectIndexController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TaskPriorityController;
 use App\Http\Controllers\TaskStatusController;
 use App\Http\Controllers\TodoController;
+use App\Http\Controllers\TodoIndexController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Controllers\WorkspaceController;
 use App\Http\Controllers\WorkspaceInvitationAcceptanceController;
@@ -23,75 +25,20 @@ use App\Http\Controllers\WorkspaceInvitationController;
 use App\Http\Controllers\WorkspaceManagementController;
 use App\Http\Controllers\WorkspaceMemberController;
 use App\Http\Controllers\WorkspaceOwnershipController;
-use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', fn () => redirect()->route('dashboard'))->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Shortcut routes resolve the authenticated user's current workspace.
-    Route::get('tasks', function (Request $request) {
-        $user = $request->user();
+    Route::get('tasks', TodoIndexController::class)->name('todos.index');
 
-        if (! $user instanceof User) {
-            abort(403);
-        }
-
-        $workspace = $user->currentWorkspace(
-            (string) $request->session()->get('current_workspace_id'),
-        );
-
-        if (! $workspace) {
-            return Inertia::render('tasks/Index', [
-                'todos' => ['data' => [], 'total' => 0, 'current_page' => 1, 'last_page' => 1, 'per_page' => 50],
-                'filters' => [], 'projects' => ['data' => []], 'workspace' => ['id' => ''],
-            ]);
-        }
-
-        return app(TodoController::class)->index($request, $workspace);
-    })->name('todos.index');
-
-    Route::get('projects', function (Request $request) {
-        $user = $request->user();
-
-        if (! $user instanceof User) {
-            abort(403);
-        }
-
-        $workspace = $user->currentWorkspace(
-            (string) $request->session()->get('current_workspace_id'),
-        );
-
-        if (! $workspace) {
-            return Inertia::render('projects/Index', ['projects' => ['data' => []], 'workspace' => ['id' => '', 'name' => '']]);
-        }
-
-        return app(ProjectController::class)->index($request, $workspace);
-    })->name('projects');
+    Route::get('projects', [ProjectIndexController::class, 'current'])->name('projects');
 
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
 
-    Route::get('activity', function (Request $request) {
-        $user = $request->user();
-
-        if (! $user instanceof User) {
-            abort(403);
-        }
-
-        $workspace = $user->currentWorkspace(
-            (string) $request->session()->get('current_workspace_id'),
-        );
-
-        if (! $workspace) {
-            return inertia('activity/Index', ['activities' => ['data' => []]]);
-        }
-
-        return app(ActivityController::class)->index($request, $workspace);
-    })->name('activity');
+    Route::get('activity', [ActivityController::class, 'current'])->name('activity');
 
     // Workspaces
     Route::get('workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
@@ -125,14 +72,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('workspace-invitations.accept');
 
     // Projects
-    Route::get('workspaces/{workspace}/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::get('workspaces/{workspace}/projects', [ProjectIndexController::class, 'workspace'])->name('projects.index');
     Route::post('workspaces/{workspace}/projects', [ProjectController::class, 'store'])->name('projects.store');
-    Route::get('workspaces/{workspace}/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
-    Route::put('workspaces/{workspace}/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
-    Route::delete('workspaces/{workspace}/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
-    Route::post('workspaces/{workspace}/projects/{project}/archive', [ProjectController::class, 'archive'])->name('projects.archive');
-    Route::post('workspaces/{workspace}/projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore');
-    Route::post('workspaces/{workspace}/projects/{project}/duplicate', [ProjectController::class, 'duplicate'])->name('projects.duplicate');
+    Route::get('workspaces/{workspace}/projects/{project}', [ProjectController::class, 'show'])->scopeBindings()->name('projects.show');
+    Route::put('workspaces/{workspace}/projects/{project}', [ProjectController::class, 'update'])->scopeBindings()->name('projects.update');
+    Route::delete('workspaces/{workspace}/projects/{project}', [ProjectController::class, 'destroy'])->scopeBindings()->name('projects.destroy');
+    Route::post('workspaces/{workspace}/projects/{project}/archive', [ProjectController::class, 'archive'])->scopeBindings()->name('projects.archive');
+    Route::post('workspaces/{workspace}/projects/{project}/restore', [ProjectController::class, 'restore'])->scopeBindings()->name('projects.restore');
+    Route::post('workspaces/{workspace}/projects/{project}/duplicate', [ProjectController::class, 'duplicate'])->scopeBindings()->name('projects.duplicate');
     Route::put('workspaces/{workspace}/projects/reorder', [ProjectController::class, 'reorder'])->name('projects.reorder');
 
     // Todos

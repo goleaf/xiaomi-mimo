@@ -14,6 +14,7 @@ use App\Http\Resources\TaskStatusResource;
 use App\Http\Resources\TodoResource;
 use App\Models\Project;
 use App\Models\Workspace;
+use App\Queries\ProjectDetailQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,40 +22,26 @@ use Inertia\Response;
 
 class ProjectController extends Controller
 {
-    public function index(Request $request, Workspace $workspace): Response
-    {
-        $this->authorize('view', $workspace);
-
-        $projects = $workspace->projects()
-            ->withCount('todos')
-            ->get();
-
-        return Inertia::render('projects/Index', [
-            'projects' => ProjectResource::collection($projects),
-            'workspace' => $workspace,
-        ]);
-    }
-
-    public function show(Request $request, Workspace $workspace, Project $project): Response
-    {
+    public function show(
+        Request $request,
+        Workspace $workspace,
+        Project $project,
+        ProjectDetailQuery $projectDetailQuery,
+    ): Response {
         $this->authorize('view', $project);
-
-        $todos = $project->todos()
-            ->with(['assignee', 'labels', 'tags', 'statusDefinition', 'priorityDefinition'])
-            ->active()
-            ->orderBy('position')
-            ->get();
 
         return Inertia::render('projects/Show', [
             'project' => new ProjectResource($project),
-            'todos' => TodoResource::collection($todos)->resolve($request),
+            'todos' => TodoResource::collection(
+                $projectDetailQuery->todos($workspace, $project->id),
+            )->resolve($request),
             'workspace' => ['id' => $workspace->id],
             'taskDefinitions' => [
                 'statuses' => TaskStatusResource::collection(
-                    $workspace->taskStatuses()->ordered()->get(),
+                    $projectDetailQuery->statuses($workspace),
                 )->resolve($request),
                 'priorities' => TaskPriorityResource::collection(
-                    $workspace->taskPriorities()->ordered()->get(),
+                    $projectDetailQuery->priorities($workspace),
                 )->resolve($request),
             ],
         ]);

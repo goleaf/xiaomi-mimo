@@ -13,9 +13,9 @@ use App\Http\Controllers\Api\TaskStatusController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WorkspaceController;
-use App\Http\Controllers\WorkspaceInvitationController;
-use App\Http\Controllers\WorkspaceMemberController;
-use App\Http\Controllers\WorkspaceOwnershipController;
+use App\Http\Controllers\Api\WorkspaceInvitationController;
+use App\Http\Controllers\Api\WorkspaceMemberController;
+use App\Http\Controllers\Api\WorkspaceOwnershipController;
 use Illuminate\Support\Facades\Route;
 
 $registerApiRoutes = function (bool $versioned): void {

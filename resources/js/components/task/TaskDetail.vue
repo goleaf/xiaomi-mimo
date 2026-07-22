@@ -21,10 +21,15 @@ import {
 import { useTaskDetailState } from '@/composables/useTaskDetailState';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
+import {
+    complete as completeThroughApi,
+    uncomplete as uncompleteThroughApi,
+    update as updateThroughApi,
+} from '@/routes/api/v1/tasks';
 import { store as storeChecklistItem, toggle } from '@/routes/checklistItems';
 import { store as storeChecklist } from '@/routes/checklists';
 import { store as storeComment } from '@/routes/comments';
-import { complete, destroy, uncomplete, update } from '@/routes/todos';
+import { destroy, update } from '@/routes/todos';
 import type { TaskDefinitionCatalog, Todo } from '@/types/models';
 
 const props = defineProps<{
@@ -40,11 +45,11 @@ const { statuses, priorities } = useTaskDefinitions(
 );
 const showDeleteDialog = ref(false);
 const deletingTodo = ref(false);
-const completionRequest = useHttp<Record<string, never>, { todo: Todo }>({});
-const statusRequest = useHttp<{ status: string }, { todo: Todo }>({
+const completionRequest = useHttp<Record<string, never>, { data: Todo }>({});
+const statusRequest = useHttp<{ status: string }, { data: Todo }>({
     status: props.todo.status,
 });
-const priorityRequest = useHttp<{ priority: string }, { todo: Todo }>({
+const priorityRequest = useHttp<{ priority: string }, { data: Todo }>({
     priority: props.todo.priority,
 });
 const { checklistItemDrafts, checklistName, comment, editingTitle, form } =
@@ -70,11 +75,15 @@ async function toggleComplete(): Promise<void> {
         return;
     }
 
-    const target = props.todo.is_completed ? uncomplete : complete;
+    const target = props.todo.is_completed
+        ? uncompleteThroughApi
+        : completeThroughApi;
 
     try {
-        const response = await completionRequest.post(target(props.todo).url);
-        emit('updated', response.todo);
+        const response = await completionRequest.post(
+            target([props.todo.workspace_id, props.todo]).url,
+        );
+        emit('updated', response.data);
     } catch {
         toast.error(t('common.errors.generic'));
     }
@@ -84,8 +93,10 @@ async function setPriority(priority: string): Promise<void> {
     priorityRequest.priority = priority;
 
     try {
-        const response = await priorityRequest.put(update(props.todo).url);
-        emit('updated', response.todo);
+        const response = await priorityRequest.put(
+            updateThroughApi([props.todo.workspace_id, props.todo]).url,
+        );
+        emit('updated', response.data);
     } catch {
         toast.error(t('common.errors.generic'));
     }
@@ -95,8 +106,10 @@ async function setStatus(status: string): Promise<void> {
     statusRequest.status = status;
 
     try {
-        const response = await statusRequest.put(update(props.todo).url);
-        emit('updated', response.todo);
+        const response = await statusRequest.put(
+            updateThroughApi([props.todo.workspace_id, props.todo]).url,
+        );
+        emit('updated', response.data);
     } catch {
         toast.error(t('common.errors.generic'));
     }

@@ -24,15 +24,12 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
-import {
-    destroy,
-    index,
-    transferOwnership as transferWorkspaceOwnership,
-} from '@/routes/workspaces';
+import { store as transferWorkspaceOwnership } from '@/routes/api/v1/workspace-ownership';
+import { destroy, index } from '@/routes/workspaces';
 import type { Workspace, WorkspaceManagementMember } from '@/types/models';
 
 interface WorkspaceResponse {
-    workspace: Workspace;
+    data: Workspace;
 }
 
 const props = defineProps<{
