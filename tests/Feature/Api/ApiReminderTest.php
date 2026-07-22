@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ReminderStatus;
 use App\Models\Reminder;
 use App\Models\Todo;
 use App\Models\User;
@@ -39,8 +40,40 @@ test('API user can create reminder', function () {
             'type' => 'in_app',
         ]);
 
-    $response->assertCreated();
+    $response->assertCreated()
+        ->assertJsonPath('reminder.status', ReminderStatus::Pending->value)
+        ->assertJsonPath('reminder.attempts', 0);
     $this->assertDatabaseHas('reminders', ['todo_id' => $todo->id]);
+});
+
+test('cancelled reminders are retained for audit but excluded from task lists', function () {
+    [$user, $token, $workspace, $todo] = createApiReminderUser();
+    $cancelled = Reminder::factory()->for($todo)->for($user)->create([
+        'status' => ReminderStatus::Cancelled,
+        'cancelled_at' => now(),
+    ]);
+    $pending = Reminder::factory()->for($todo)->for($user)->create();
+
+    $this->withToken($token)
+        ->getJson("/api/tasks/{$todo->id}/reminders")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $pending->id);
+
+    expect($cancelled->fresh())->not->toBeNull();
+});
+
+test('a delivered reminder cannot be cancelled after delivery', function () {
+    [$user, $token, $workspace, $todo] = createApiReminderUser();
+    $reminder = Reminder::factory()->for($todo)->for($user)->create([
+        'is_sent' => true,
+    ]);
+
+    $this->withToken($token)
+        ->deleteJson("/api/reminders/{$reminder->id}")
+        ->assertConflict();
+
+    expect($reminder->fresh()?->status)->toBe(ReminderStatus::Delivered);
 });
 
 test('API user can delete reminder', function () {
@@ -51,7 +84,10 @@ test('API user can delete reminder', function () {
         ->deleteJson("/api/reminders/{$reminder->id}");
 
     $response->assertNoContent();
-    $this->assertDatabaseMissing('reminders', ['id' => $reminder->id]);
+    $this->assertDatabaseHas('reminders', [
+        'id' => $reminder->id,
+        'status' => 'cancelled',
+    ]);
 });
 
 test('reminder API rejects creation for another workspace task', function () {

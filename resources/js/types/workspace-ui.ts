@@ -68,6 +68,15 @@ export interface WorkspaceUiCopy {
         empty_unread_description: string;
         fallback_title: string;
         fallback_body: string;
+        reminder_title: string;
+        reminder_body: string;
+        reminder_subject: string;
+        reminder_footer: string;
+        view_task: string;
+        pagination_label: string;
+        pagination_range: string;
+        previous: string;
+        next: string;
     };
     calendar: {
         title: string;

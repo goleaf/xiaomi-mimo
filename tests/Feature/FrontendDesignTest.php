@@ -414,7 +414,7 @@ test('shared segmented filter consumers keep the correct selection semantics', f
         ->toContain(':aria-selected="activeFilter === filter.value"')
         ->and(File::get(resource_path('js/pages/notifications/Index.vue')))
         ->toContain('role="tab"')
-        ->toContain(':aria-selected="activeTab ===')
+        ->toContain(':aria-selected="filters.status ===')
         ->and(File::get(resource_path('js/pages/calendar/Index.vue')))
         ->toContain(':label="copy.common.filters"')
         ->toContain('role="tab"')
@@ -423,6 +423,21 @@ test('shared segmented filter consumers keep the correct selection semantics', f
         ->toContain('role="group"')
         ->toContain('vertical')
         ->toContain(':aria-pressed="activeFilter === filter.value"');
+});
+
+test('notification surfaces expose server pagination direct links and honest browser limits', function () {
+    $inbox = File::get(resource_path('js/pages/notifications/Index.vue'));
+    $settings = File::get(resource_path('js/pages/settings/Notifications.vue'));
+
+    expect($inbox)
+        ->toContain("only: ['notifications', 'stats', 'filters']")
+        ->toContain('notifications.next_page_url')
+        ->toContain('openNotification(notification)')
+        ->toContain("notification.data.channel !== 'browser'")
+        ->toContain('window.localStorage.getItem(storageKey)')
+        ->and($settings)
+        ->toContain('window.Notification.requestPermission()')
+        ->toContain('settings.notifications.browser_live_only');
 });
 
 test('shared authentication controls use the warm precision interaction contract', function () {

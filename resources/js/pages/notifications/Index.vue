@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     AlertTriangle,
+    ArrowUpRight,
     Bell,
     BellOff,
     Check,
     CheckCheck,
     CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
     Clock3,
     Inbox,
     MailOpen,
     MessageSquareText,
 } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { Component } from 'vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
@@ -24,9 +27,11 @@ import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/composables/useToast';
 import { useWorkspaceUi } from '@/composables/useWorkspaceUi';
 import {
+    index as notificationsIndex,
     markAllRead as markAllReadRoute,
     markRead as markReadRoute,
 } from '@/routes/notifications';
+import type { PaginatedResponse } from '@/types/api';
 
 interface NotificationItem {
     id: string;
@@ -37,41 +42,37 @@ interface NotificationItem {
         message?: unknown;
         todo_title?: unknown;
         reminder_id?: unknown;
+        channel?: unknown;
+        kind?: unknown;
+        todo_id?: unknown;
         [key: string]: unknown;
     };
     read_at: string | null;
     created_at: string;
+    url: string | null;
 }
 
 const props = defineProps<{
-    notifications: {
-        data: NotificationItem[];
+    notifications: PaginatedResponse<NotificationItem>;
+    stats: {
+        total: number;
+        unread: number;
+        read: number;
+    };
+    filters: {
+        status: 'all' | 'unread';
+        per_page: number;
     };
 }>();
 
 const toast = useToast();
 const { copy, formatDate, formatNumber } = useWorkspaceUi();
-const activeTab = ref<'all' | 'unread'>('all');
 const processingIds = ref<Set<string>>(new Set());
 const markingAll = ref(false);
+const filtering = ref(false);
+const visibleNotifications = computed(() => props.notifications.data);
 
-const unreadCount = computed(
-    () =>
-        props.notifications.data.filter((notification) => !notification.read_at)
-            .length,
-);
-const readCount = computed(
-    () => props.notifications.data.length - unreadCount.value,
-);
-const visibleNotifications = computed(() =>
-    activeTab.value === 'unread'
-        ? props.notifications.data.filter(
-              (notification) => !notification.read_at,
-          )
-        : props.notifications.data,
-);
-
-function markRead(id: string): void {
+function markRead(id: string, onSuccess?: () => void): void {
     if (processingIds.value.has(id)) {
         return;
     }
@@ -83,6 +84,8 @@ function markRead(id: string): void {
         {},
         {
             preserveScroll: true,
+            only: ['notifications', 'stats'],
+            onSuccess,
             onFinish: () => {
                 const next = new Set(processingIds.value);
                 next.delete(id);
@@ -93,7 +96,7 @@ function markRead(id: string): void {
 }
 
 function markAllRead(): void {
-    if (markingAll.value || unreadCount.value === 0) {
+    if (markingAll.value || props.stats.unread === 0) {
         return;
     }
 
@@ -104,6 +107,7 @@ function markAllRead(): void {
         {},
         {
             preserveScroll: true,
+            only: ['notifications', 'stats'],
             onSuccess: () => toast.success(copy.value.notifications.marked_all),
             onFinish: () => {
                 markingAll.value = false;
@@ -112,7 +116,49 @@ function markAllRead(): void {
     );
 }
 
+function changeStatus(status: 'all' | 'unread'): void {
+    if (filtering.value || status === props.filters.status) {
+        return;
+    }
+
+    filtering.value = true;
+    router.get(
+        notificationsIndex().url,
+        { status, per_page: props.filters.per_page },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['notifications', 'stats', 'filters'],
+            onFinish: () => {
+                filtering.value = false;
+            },
+        },
+    );
+}
+
+function openNotification(notification: NotificationItem): void {
+    if (!notification.url) {
+        if (!notification.read_at) {
+            markRead(notification.id);
+        }
+
+        return;
+    }
+
+    if (notification.read_at) {
+        router.visit(notification.url);
+
+        return;
+    }
+
+    markRead(notification.id, () => router.visit(notification.url!));
+}
+
 function notificationTitle(notification: NotificationItem): string {
+    if (notification.data.kind === 'reminder') {
+        return copy.value.notifications.reminder_title;
+    }
+
     if (typeof notification.data.title === 'string') {
         return notification.data.title;
     }
@@ -125,6 +171,16 @@ function notificationTitle(notification: NotificationItem): string {
 }
 
 function notificationBody(notification: NotificationItem): string {
+    if (
+        notification.data.kind === 'reminder' &&
+        typeof notification.data.todo_title === 'string'
+    ) {
+        return copy.value.notifications.reminder_body.replace(
+            ':task',
+            notification.data.todo_title,
+        );
+    }
+
     if (typeof notification.data.body === 'string') {
         return notification.data.body;
     }
@@ -135,6 +191,46 @@ function notificationBody(notification: NotificationItem): string {
 
     return copy.value.notifications.fallback_body;
 }
+
+function showBrowserNotifications(): void {
+    if (
+        typeof window === 'undefined' ||
+        !('Notification' in window) ||
+        window.Notification.permission !== 'granted'
+    ) {
+        return;
+    }
+
+    for (const notification of props.notifications.data) {
+        if (notification.read_at || notification.data.channel !== 'browser') {
+            continue;
+        }
+
+        const storageKey = `xiaomi-mimo:browser-reminder:${notification.id}`;
+
+        if (window.localStorage.getItem(storageKey)) {
+            continue;
+        }
+
+        const browserNotification = new window.Notification(
+            notificationTitle(notification),
+            {
+                body: notificationBody(notification),
+                tag: notification.id,
+            },
+        );
+        window.localStorage.setItem(storageKey, 'shown');
+        browserNotification.onclick = () => {
+            window.focus();
+            openNotification(notification);
+            browserNotification.close();
+        };
+    }
+}
+
+watch(() => props.notifications.data, showBrowserNotifications, {
+    immediate: true,
+});
 
 function notificationIcon(notification: NotificationItem): Component {
     const searchable =
@@ -191,7 +287,7 @@ function notificationTone(notification: NotificationItem): string {
                 <template #actions>
                     <Button
                         size="lg"
-                        :disabled="markingAll || unreadCount === 0"
+                        :disabled="markingAll || stats.unread === 0"
                         @click="markAllRead"
                     >
                         <Spinner v-if="markingAll" />
@@ -203,19 +299,19 @@ function notificationTone(notification: NotificationItem): string {
                 <template #metrics>
                     <WorkspaceMetric
                         :label="copy.notifications.total"
-                        :value="formatNumber(notifications.data.length)"
+                        :value="formatNumber(stats.total)"
                         :icon="Inbox"
                         tone="orange"
                     />
                     <WorkspaceMetric
                         :label="copy.notifications.unread"
-                        :value="formatNumber(unreadCount)"
+                        :value="formatNumber(stats.unread)"
                         :icon="Bell"
                         tone="blue"
                     />
                     <WorkspaceMetric
                         :label="copy.notifications.cleared"
-                        :value="formatNumber(readCount)"
+                        :value="formatNumber(stats.read)"
                         :icon="MailOpen"
                         tone="emerald"
                     />
@@ -231,33 +327,35 @@ function notificationTone(notification: NotificationItem): string {
                     <WorkspaceSegmentedControl :label="copy.common.filters">
                         <WorkspaceSegmentedButton
                             role="tab"
-                            :aria-selected="activeTab === 'all'"
-                            :active="activeTab === 'all'"
+                            :aria-selected="filters.status === 'all'"
+                            :active="filters.status === 'all'"
                             class="px-4"
-                            @click="activeTab = 'all'"
+                            :disabled="filtering"
+                            @click="changeStatus('all')"
                         >
                             {{ copy.notifications.all_tab }}
                         </WorkspaceSegmentedButton>
                         <WorkspaceSegmentedButton
                             role="tab"
-                            :aria-selected="activeTab === 'unread'"
-                            :active="activeTab === 'unread'"
+                            :aria-selected="filters.status === 'unread'"
+                            :active="filters.status === 'unread'"
                             class="px-4"
-                            @click="activeTab = 'unread'"
+                            :disabled="filtering"
+                            @click="changeStatus('unread')"
                         >
                             {{ copy.notifications.unread_tab }}
                             <span
-                                v-if="unreadCount"
+                                v-if="stats.unread"
                                 class="rounded-full bg-orange-500 px-1.5 py-0.5 text-[0.65rem] font-semibold text-white tabular-nums"
                             >
-                                {{ unreadCount }}
+                                {{ stats.unread }}
                             </span>
                         </WorkspaceSegmentedButton>
                     </WorkspaceSegmentedControl>
 
                     <p class="text-xs text-muted-foreground" aria-live="polite">
                         {{ formatNumber(visibleNotifications.length) }} /
-                        {{ formatNumber(notifications.data.length) }}
+                        {{ formatNumber(notifications.total) }}
                     </p>
                 </div>
 
@@ -335,6 +433,19 @@ function notificationTone(notification: NotificationItem): string {
                             class="col-start-2 flex items-center gap-2 sm:col-start-auto"
                         >
                             <Button
+                                v-if="notification.url"
+                                variant="ghost"
+                                size="sm"
+                                :disabled="processingIds.has(notification.id)"
+                                @click="openNotification(notification)"
+                            >
+                                <ArrowUpRight
+                                    class="size-4"
+                                    aria-hidden="true"
+                                />
+                                {{ copy.notifications.view_task }}
+                            </Button>
+                            <Button
                                 v-if="!notification.read_at"
                                 variant="outline"
                                 size="sm"
@@ -359,12 +470,12 @@ function notificationTone(notification: NotificationItem): string {
                 <EmptyState
                     v-else
                     :title="
-                        activeTab === 'unread'
+                        filters.status === 'unread'
                             ? copy.notifications.empty_unread_title
                             : copy.notifications.empty_title
                     "
                     :description="
-                        activeTab === 'unread'
+                        filters.status === 'unread'
                             ? copy.notifications.empty_unread_description
                             : copy.notifications.empty_description
                     "
@@ -373,6 +484,78 @@ function notificationTone(notification: NotificationItem): string {
                         <BellOff class="size-7" aria-hidden="true" />
                     </template>
                 </EmptyState>
+
+                <nav
+                    v-if="notifications.last_page > 1"
+                    class="flex flex-col gap-3 border-t border-border/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+                    :aria-label="copy.notifications.pagination_label"
+                >
+                    <p class="text-sm text-muted-foreground">
+                        {{
+                            copy.notifications.pagination_range
+                                .replace(
+                                    ':from',
+                                    formatNumber(notifications.from ?? 0),
+                                )
+                                .replace(
+                                    ':to',
+                                    formatNumber(notifications.to ?? 0),
+                                )
+                                .replace(
+                                    ':total',
+                                    formatNumber(notifications.total),
+                                )
+                        }}
+                    </p>
+                    <div class="flex gap-2">
+                        <Button
+                            v-if="notifications.prev_page_url"
+                            as-child
+                            variant="outline"
+                            size="sm"
+                        >
+                            <Link
+                                :href="notifications.prev_page_url"
+                                :only="['notifications', 'stats', 'filters']"
+                                preserve-scroll
+                                preserve-state
+                            >
+                                <ChevronLeft
+                                    class="size-4"
+                                    aria-hidden="true"
+                                />
+                                {{ copy.notifications.previous }}
+                            </Link>
+                        </Button>
+                        <Button v-else variant="outline" size="sm" disabled>
+                            <ChevronLeft class="size-4" aria-hidden="true" />
+                            {{ copy.notifications.previous }}
+                        </Button>
+                        <Button
+                            v-if="notifications.next_page_url"
+                            as-child
+                            variant="outline"
+                            size="sm"
+                        >
+                            <Link
+                                :href="notifications.next_page_url"
+                                :only="['notifications', 'stats', 'filters']"
+                                preserve-scroll
+                                preserve-state
+                            >
+                                {{ copy.notifications.next }}
+                                <ChevronRight
+                                    class="size-4"
+                                    aria-hidden="true"
+                                />
+                            </Link>
+                        </Button>
+                        <Button v-else variant="outline" size="sm" disabled>
+                            {{ copy.notifications.next }}
+                            <ChevronRight class="size-4" aria-hidden="true" />
+                        </Button>
+                    </div>
+                </nav>
             </section>
         </div>
     </main>

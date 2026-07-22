@@ -18,4 +18,5 @@ enum ActivityEvent: string
     case Unfavorited = 'unfavorited';
     case Attached = 'attached';
     case Detached = 'detached';
+    case RecurrenceGenerated = 'recurrence_generated';
 }

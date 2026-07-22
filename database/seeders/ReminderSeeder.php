@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ReminderStatus;
 use App\Enums\ReminderType;
 use App\Models\Reminder;
 use App\Models\Todo;
@@ -32,6 +33,10 @@ class ReminderSeeder extends Seeder
                     'reminded_at' => $data['reminded_at'],
                     'is_sent' => $data['is_sent'],
                     'type' => $data['type'],
+                    'status' => $data['is_sent']
+                        ? ReminderStatus::Delivered
+                        : ReminderStatus::Pending,
+                    'delivered_at' => $data['is_sent'] ? now() : null,
                 ]);
             }
         }

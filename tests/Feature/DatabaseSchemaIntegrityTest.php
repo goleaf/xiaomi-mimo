@@ -57,6 +57,72 @@ test('fresh SQLite schema uses UUID relations and protects task parents', functi
         ]);
 });
 
+test('recurrence and reminder lifecycle schema exposes durable processing indexes', function () {
+    $indexes = DB::table('sqlite_schema')
+        ->where('type', 'index')
+        ->whereIn('name', [
+            'todos_recurrence_series_sequence_unique',
+            'todos_recurrence_series_date_unique',
+            'todos_recurrence_processing_index',
+            'reminders_delivery_scan_index',
+            'reminders_claim_lease_index',
+        ])
+        ->pluck('name')
+        ->sort()
+        ->values()
+        ->all();
+
+    expect(strtolower((string) sqliteColumnType('todos', 'recurrence_series_id')))->toBe('varchar')
+        ->and(strtolower((string) sqliteColumnType('todos', 'recurrence_anchor_date')))->toBe('date')
+        ->and(strtolower((string) sqliteColumnType('reminders', 'status')))->toBe('varchar')
+        ->and(strtolower((string) sqliteColumnType('reminders', 'attempts')))->toBe('integer')
+        ->and($indexes)->toBe([
+            'reminders_claim_lease_index',
+            'reminders_delivery_scan_index',
+            'todos_recurrence_processing_index',
+            'todos_recurrence_series_date_unique',
+            'todos_recurrence_series_sequence_unique',
+        ]);
+});
+
+test('recurrence and reminder lifecycle migrations preserve and normalize populated rows', function () {
+    $user = User::factory()->create();
+    $workspace = Workspace::factory()->for($user, 'owner')->create();
+    $todo = Todo::factory()->for($workspace)->completed()->create([
+        'is_recurring' => true,
+        'recurring_rule' => 'FREQ=DAILY;INTERVAL=1',
+        'due_date' => '2026-07-22',
+    ]);
+    $reminderId = (string) Str::uuid();
+
+    DB::table('reminders')->insert([
+        'id' => $reminderId,
+        'todo_id' => $todo->id,
+        'user_id' => $user->id,
+        'reminded_at' => now()->subMinute(),
+        'is_sent' => true,
+        'type' => 'in_app',
+        'status' => 'delivered',
+        'attempts' => 0,
+        'delivered_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $todoMigration = require database_path('migrations/2026_07_22_183405_add_occurrence_identity_to_todos_table.php');
+    $reminderMigration = require database_path('migrations/2026_07_22_183406_add_delivery_lifecycle_to_reminders_table.php');
+    $reminderMigration->down();
+    $todoMigration->down();
+    $todoMigration->up();
+    $reminderMigration->up();
+
+    expect(DB::table('todos')->where('id', $todo->id)->value('recurring_rule'))->toBe('FREQ=DAILY')
+        ->and(DB::table('todos')->where('id', $todo->id)->value('recurrence_series_id'))->toBe($todo->id)
+        ->and(DB::table('todos')->where('id', $todo->id)->value('recurrence_occurrence_date'))->toBe('2026-07-22')
+        ->and(DB::table('reminders')->where('id', $reminderId)->value('status'))->toBe('delivered')
+        ->and(DB::table('reminders')->where('id', $reminderId)->value('delivered_at'))->not->toBeNull();
+});
+
 test('task parent constraints reject cross-workspace writes and null children on deletion', function () {
     $firstWorkspace = Workspace::factory()->create();
     $secondWorkspace = Workspace::factory()->create();

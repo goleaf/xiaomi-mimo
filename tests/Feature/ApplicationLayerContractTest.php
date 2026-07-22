@@ -69,7 +69,8 @@ test('recurring task command creates a correctly typed pending task', function (
     $this->artisan('tasks:recurring')->assertSuccessful();
 
     expect($todo->refresh()->status)
-        ->toBe(TodoStatus::Pending)
+        ->toBe(TodoStatus::Completed)
+        ->and($todo->recurring_rule)->toBe('FREQ=DAILY')
         ->and(Todo::whereBelongsTo($workspace)->count())->toBe(2)
         ->and(Todo::whereBelongsTo($workspace)->whereKeyNot($todo->id)->firstOrFail()->status)
         ->toBe(TodoStatus::Pending);

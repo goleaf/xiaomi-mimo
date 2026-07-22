@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ReminderStatus;
 use App\Models\Reminder;
 use App\Models\Todo;
 use App\Models\User;
@@ -14,6 +15,9 @@ class CreateReminder
             'user_id' => $user->id,
             'reminded_at' => $remindedAt,
             'type' => $type,
+            'status' => ReminderStatus::Pending,
+            'is_sent' => false,
+            'attempts' => 0,
         ]);
     }
 }

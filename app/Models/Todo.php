@@ -39,6 +39,11 @@ use Illuminate\Support\Carbon;
  * @property bool $is_archived
  * @property bool $is_recurring
  * @property string|null $recurring_rule
+ * @property string|null $recurrence_series_id
+ * @property int|null $recurrence_sequence
+ * @property Carbon|null $recurrence_anchor_date
+ * @property Carbon|null $recurrence_occurrence_date
+ * @property Carbon|null $recurrence_generated_at
  * @property int $position
  * @property Carbon|null $completed_at
  */
@@ -52,7 +57,9 @@ class Todo extends Model
         'title', 'description', 'status', 'status_id', 'priority', 'priority_id',
         'due_date', 'start_date', 'estimated_time', 'spent_time',
         'is_pinned', 'is_favorite', 'is_archived', 'is_recurring',
-        'recurring_rule', 'position', 'completed_at',
+        'recurring_rule', 'recurrence_series_id', 'recurrence_sequence',
+        'recurrence_anchor_date', 'recurrence_occurrence_date',
+        'recurrence_generated_at', 'position', 'completed_at',
     ];
 
     protected function casts(): array
@@ -63,6 +70,10 @@ class Todo extends Model
             'due_date' => 'date:Y-m-d',
             'start_date' => 'date',
             'completed_at' => 'datetime',
+            'recurrence_sequence' => 'integer',
+            'recurrence_anchor_date' => 'date:Y-m-d',
+            'recurrence_occurrence_date' => 'date:Y-m-d',
+            'recurrence_generated_at' => 'datetime',
             'is_pinned' => 'boolean',
             'is_favorite' => 'boolean',
             'is_archived' => 'boolean',

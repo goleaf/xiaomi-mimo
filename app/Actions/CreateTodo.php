@@ -8,7 +8,10 @@ use Illuminate\Support\Facades\DB;
 
 class CreateTodo
 {
-    public function __construct(private TransitionTodoDefinitions $transition) {}
+    public function __construct(
+        private TransitionTodoDefinitions $transition,
+        private ConfigureTodoRecurrence $configureRecurrence,
+    ) {}
 
     /**
      * @param  array{title: string, project_id?: string|null, assigned_to?: string|null, parent_id?: string|null, description?: string|null, status?: string, priority?: string, due_date?: string|null, start_date?: string|null, estimated_time?: int|null, is_recurring?: bool, recurring_rule?: string|null, label_ids?: list<string>, tag_ids?: list<string>}  $data
@@ -37,6 +40,7 @@ class CreateTodo
                     : null,
                 'position' => $maxPosition + 1,
             ]);
+            $todo = $this->configureRecurrence->handle($todo);
 
             if (! empty($data['label_ids'])) {
                 $todo->labels()->sync($data['label_ids']);

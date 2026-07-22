@@ -10,12 +10,14 @@ class BulkUpdateTodos
     public function __construct(
         private TransitionTodoDefinitions $transition,
         private ResolveWorkspaceTodos $resolveTodos,
+        private GenerateRecurringTodoOccurrence $generateOccurrence,
     ) {}
 
     /** @param list<string> $todoIds */
     public function setCompletion(Workspace $workspace, array $todoIds, bool $completed): int
     {
-        return DB::transaction(function () use ($workspace, $todoIds, $completed): int {
+        $recurringTodos = collect();
+        $count = DB::transaction(function () use ($workspace, $todoIds, $completed, &$recurringTodos): int {
             $todos = $this->resolveTodos->handle($workspace, $todoIds);
             $todos->load(['workspace', 'statusDefinition', 'priorityDefinition']);
 
@@ -25,8 +27,18 @@ class BulkUpdateTodos
                     : $this->transition->uncomplete($todo);
             }
 
+            if ($completed) {
+                $recurringTodos = $todos->filter(fn ($todo): bool => $todo->is_recurring);
+            }
+
             return $todos->count();
         }, 5);
+
+        foreach ($recurringTodos as $todo) {
+            $this->generateOccurrence->handle($todo);
+        }
+
+        return $count;
     }
 
     /** @param list<string> $todoIds */

@@ -165,6 +165,10 @@ export interface Todo {
     is_archived: boolean;
     is_recurring: boolean;
     recurring_rule: string | null;
+    recurrence_series_id: string | null;
+    recurrence_sequence: number | null;
+    recurrence_anchor_date: string | null;
+    recurrence_occurrence_date: string | null;
     position: number;
     completed_at: string | null;
     project?: Project;
@@ -286,6 +290,10 @@ export interface Reminder {
     reminded_at: string;
     is_sent: boolean;
     type: 'email' | 'in_app' | 'browser';
+    status: 'pending' | 'processing' | 'delivered' | 'failed' | 'cancelled';
+    attempts: number;
+    delivered_at: string | null;
+    failed_at: string | null;
     permissions?: {
         delete: boolean;
     };

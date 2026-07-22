@@ -160,8 +160,15 @@ async function deleteReminder(reminder: Reminder): Promise<void> {
                         {{ t(`tasks.detail.reminder_types.${reminder.type}`) }}
                     </Badge>
                 </div>
-                <Badge v-if="reminder.is_sent" variant="secondary">
-                    {{ t('tasks.detail.reminder_sent') }}
+                <Badge
+                    v-if="reminder.status !== 'pending'"
+                    :variant="
+                        reminder.status === 'failed'
+                            ? 'destructive'
+                            : 'secondary'
+                    "
+                >
+                    {{ t(`tasks.detail.reminder_statuses.${reminder.status}`) }}
                 </Badge>
                 <Button
                     v-if="reminder.permissions?.delete"

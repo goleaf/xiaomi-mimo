@@ -2,32 +2,35 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Reminder;
+use App\Actions\ClaimDueReminders;
+use App\Jobs\DeliverReminder;
 use Illuminate\Console\Command;
 
 class SendReminders extends Command
 {
-    protected $signature = 'reminders:send';
+    protected $signature = 'reminders:send {--limit=100 : Maximum due reminders to claim}';
+
     protected $description = 'Send pending reminders that are due';
 
-    public function handle(): int
+    public function handle(ClaimDueReminders $claimDueReminders): int
     {
-        $reminders = Reminder::where('is_sent', false)
-            ->where('reminded_at', '<=', now())
-            ->with('todo', 'user')
-            ->get();
+        $limit = filter_var($this->option('limit'), FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1, 'max_range' => 500],
+        ]);
 
-        $count = 0;
+        if ($limit === false) {
+            $this->error('The limit must be between 1 and 500.');
 
-        foreach ($reminders as $reminder) {
-            if ($reminder->todo && $reminder->user) {
-                $reminder->user->notify(new \App\Notifications\ReminderNotification($reminder));
-                $reminder->update(['is_sent' => true]);
-                $count++;
-            }
+            return self::FAILURE;
         }
 
-        $this->info("Sent {$count} reminders.");
+        $reminders = $claimDueReminders->handle($limit);
+
+        foreach ($reminders as $reminder) {
+            DeliverReminder::dispatch($reminder->id, (string) $reminder->claim_token);
+        }
+
+        $this->info("Claimed {$reminders->count()} reminders for delivery.");
 
         return self::SUCCESS;
     }

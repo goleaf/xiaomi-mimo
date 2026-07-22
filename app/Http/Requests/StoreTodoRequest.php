@@ -5,20 +5,14 @@ namespace App\Http\Requests;
 use App\Models\Label;
 use App\Models\Tag;
 use App\Models\Workspace;
+use App\Services\RecurrenceSchedule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreTodoRequest extends FormRequest
 {
     /** @var list<string> */
-    public const array RECURRING_RULES = [
-        'FREQ=DAILY',
-        'FREQ=WEEKLY',
-        'FREQ=MONTHLY',
-        'FREQ=YEARLY',
-        'FREQ=DAILY;INTERVAL=2',
-        'FREQ=WEEKLY;INTERVAL=2',
-    ];
+    public const array RECURRING_RULES = RecurrenceSchedule::RULES;
 
     public function authorize(): bool
     {

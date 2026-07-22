@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, setLayoutProps, useForm } from '@inertiajs/vue3';
 import { BellRing, Mail, Monitor } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -34,6 +34,19 @@ const form = useForm({
     notification_browser: props.preferences.notification_browser,
     notification_in_app: props.preferences.notification_in_app,
 });
+type BrowserPermissionState = NotificationPermission | 'unsupported';
+const browserPermission = ref<BrowserPermissionState>('unsupported');
+
+onMounted(() => {
+    browserPermission.value =
+        'Notification' in window
+            ? window.Notification.permission
+            : 'unsupported';
+});
+
+const browserPermissionLabel = computed(() =>
+    t(`settings.notifications.browser_permission_${browserPermission.value}`),
+);
 
 const notificationOptions = computed(() => [
     {
@@ -60,6 +73,15 @@ function submit() {
     form.put(update.url(), {
         onSuccess: () => toast.success(t('settings.notifications.saved')),
     });
+}
+
+async function requestBrowserPermission(): Promise<void> {
+    if (!('Notification' in window)) {
+        return;
+    }
+
+    browserPermission.value = await window.Notification.requestPermission();
+    toast.success(t('settings.notifications.browser_permission_updated'));
 }
 </script>
 
@@ -113,6 +135,42 @@ function submit() {
                                 form[option.key] = Boolean($event)
                             "
                         />
+                    </div>
+
+                    <div
+                        class="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                    >
+                        <div
+                            class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                            <div>
+                                <p class="text-sm font-medium">
+                                    {{
+                                        t(
+                                            'settings.notifications.browser_permission_title',
+                                        )
+                                    }}
+                                </p>
+                                <p class="mt-1 text-sm text-muted-foreground">
+                                    {{ browserPermissionLabel }}
+                                </p>
+                            </div>
+                            <Button
+                                v-if="browserPermission === 'default'"
+                                type="button"
+                                variant="outline"
+                                @click="requestBrowserPermission"
+                            >
+                                {{
+                                    t(
+                                        'settings.notifications.browser_request_permission',
+                                    )
+                                }}
+                            </Button>
+                        </div>
+                        <p class="mt-3 text-xs leading-5 text-muted-foreground">
+                            {{ t('settings.notifications.browser_live_only') }}
+                        </p>
                     </div>
                 </CardContent>
             </Card>
