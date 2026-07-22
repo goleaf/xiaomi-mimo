@@ -18,7 +18,10 @@ class ChecklistResource extends JsonResource
             'name' => $this->name,
             'position' => $this->position,
             'items' => ChecklistItemResource::collection($this->whenLoaded('items')),
-            'progress' => $this->whenLoaded('items', fn () => $this->items->where('is_checked')->count() / max($this->items->count(), 1) * 100),
+            'progress' => $this->whenLoaded(
+                'items',
+                fn (): float => round($this->items->where('is_checked')->count() / max($this->items->count(), 1) * 100, 2),
+            ),
             'created_at' => $this->created_at,
         ];
     }

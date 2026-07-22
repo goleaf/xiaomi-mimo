@@ -3,6 +3,32 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+$sqliteInteger = static function (string $key, int $default, int $minimum, int $maximum): int {
+    $value = env($key, $default);
+
+    if (filter_var($value, FILTER_VALIDATE_INT) === false) {
+        throw new InvalidArgumentException("{$key} must be an integer.");
+    }
+
+    $value = (int) $value;
+
+    if ($value < $minimum || $value > $maximum) {
+        throw new InvalidArgumentException("{$key} must be between {$minimum} and {$maximum}.");
+    }
+
+    return $value;
+};
+
+$sqliteChoice = static function (string $key, string $default, array $allowed): string {
+    $value = Str::upper(trim((string) env($key, $default)));
+
+    if (! in_array($value, $allowed, true)) {
+        throw new InvalidArgumentException("{$key} has an unsupported value.");
+    }
+
+    return $value;
+};
+
 return [
 
     'default' => env('DB_CONNECTION', 'sqlite'),
@@ -15,10 +41,28 @@ return [
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => 5000,
-            'journal_mode' => 'WAL',
-            'synchronous' => 'NORMAL',
-            'transaction_mode' => 'DEFERRED',
+            'busy_timeout' => $sqliteInteger('DB_BUSY_TIMEOUT', 5000, 0, 60_000),
+            'journal_mode' => $sqliteChoice(
+                'DB_JOURNAL_MODE',
+                'WAL',
+                ['DELETE', 'TRUNCATE', 'PERSIST', 'MEMORY', 'WAL'],
+            ),
+            'synchronous' => $sqliteChoice(
+                'DB_SYNCHRONOUS',
+                'NORMAL',
+                ['NORMAL', 'FULL', 'EXTRA'],
+            ),
+            'transaction_mode' => $sqliteChoice(
+                'DB_TRANSACTION_MODE',
+                'DEFERRED',
+                ['DEFERRED', 'IMMEDIATE', 'EXCLUSIVE'],
+            ),
+            'allowed_directory' => env('DB_SQLITE_ALLOWED_DIRECTORY', database_path()),
+            'pragmas' => [
+                'cache_size' => $sqliteInteger('DB_CACHE_SIZE', -20_000, -1_000_000, 1_000_000),
+                'temp_store' => $sqliteChoice('DB_TEMP_STORE', 'MEMORY', ['DEFAULT', 'FILE', 'MEMORY']),
+                'wal_autocheckpoint' => $sqliteInteger('DB_WAL_AUTOCHECKPOINT', 1000, 0, 1_000_000),
+            ],
         ],
 
         'mysql' => [

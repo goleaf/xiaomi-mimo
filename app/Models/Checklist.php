@@ -25,14 +25,6 @@ class Checklist extends Model
     /** @return HasMany<ChecklistItem, $this> */
     public function items(): HasMany
     {
-        return $this->hasMany(ChecklistItem::class)->orderBy('position');
-    }
-
-    public function getProgressAttribute(): float
-    {
-        $total = $this->items()->count();
-        $checked = $this->items()->where('is_checked', true)->count();
-
-        return $total > 0 ? round(($checked / $total) * 100) : 0;
+        return $this->hasMany(ChecklistItem::class)->orderBy('position')->orderBy('id');
     }
 }

@@ -57,10 +57,12 @@ test('dashboard information is calculated independently for the selected workspa
         'created_at' => '2026-07-20 00:30:00',
     ]);
     Todo::factory()->for($workspace)->for($project)->completed()->create([
+        'due_date' => null,
         'completed_at' => '2026-07-20 00:30:00',
         'created_at' => '2026-07-20 00:30:00',
     ]);
     Todo::factory()->for($workspace)->for($project)->completed()->create([
+        'due_date' => null,
         'completed_at' => '2026-07-18 20:00:00',
         'created_at' => '2026-07-20 00:30:00',
     ]);

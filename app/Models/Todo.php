@@ -191,18 +191,6 @@ class Todo extends Model
         return $query->whereDate('completed_at', now()->toDateString());
     }
 
-    public function getProgressAttribute(): float
-    {
-        $total = $this->checklists()->sum(
-            \DB::raw('(SELECT COUNT(*) FROM checklist_items WHERE checklist_id = checklists.id)')
-        );
-        $checked = $this->checklists()->sum(
-            \DB::raw('(SELECT COUNT(*) FROM checklist_items WHERE checklist_id = checklists.id AND is_checked = 1)')
-        );
-
-        return $total > 0 ? round(($checked / $total) * 100) : 0;
-    }
-
     public function statusKey(): string
     {
         return $this->status instanceof BackedEnum

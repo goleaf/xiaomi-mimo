@@ -18,6 +18,7 @@ class ProjectDetailQuery
             ->with(['assignee', 'labels', 'tags', 'statusDefinition', 'priorityDefinition'])
             ->active()
             ->orderBy('position')
+            ->orderBy('id')
             ->get();
     }
 

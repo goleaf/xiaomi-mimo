@@ -13,7 +13,8 @@ class ActivityIndexQuery
     {
         return $workspace->activityLogs()
             ->with('user')
-            ->latest()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate($perPage);
     }
 }

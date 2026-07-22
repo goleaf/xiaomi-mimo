@@ -17,7 +17,7 @@ class TodoSortService
     {
         $resolvedDirection = $direction === 'desc' ? 'desc' : 'asc';
 
-        return match ($sort) {
+        $query = match ($sort) {
             'due_date' => $query->orderBy('due_date', $resolvedDirection)->orderBy('position'),
             'priority' => $query->orderBy(
                 TaskPriority::query()
@@ -35,5 +35,7 @@ class TodoSortService
             ),
             default => $query->orderBy('is_pinned', 'desc')->orderBy('position'),
         };
+
+        return $query->orderBy('id');
     }
 }

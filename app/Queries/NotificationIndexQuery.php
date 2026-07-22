@@ -12,7 +12,8 @@ class NotificationIndexQuery
     public function forUser(User $user, int $perPage = 20): LengthAwarePaginator
     {
         return $user->notifications()
-            ->latest()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate($perPage);
     }
 }

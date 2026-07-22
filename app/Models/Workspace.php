@@ -58,7 +58,7 @@ class Workspace extends Model
     /** @return HasMany<Project, $this> */
     public function projects(): HasMany
     {
-        return $this->hasMany(Project::class)->orderBy('position');
+        return $this->hasMany(Project::class)->orderBy('position')->orderBy('id');
     }
 
     /** @return HasMany<Todo, $this> */
