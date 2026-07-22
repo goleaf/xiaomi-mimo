@@ -2885,6 +2885,59 @@ Completed and pushed.
 - This progress record will be committed as `docs: record database backup hardening` and pushed separately.
 - The pre-existing Task Detail, Task Index, and Herd Upload progress changes remain preserved and excluded from this phase's staged changes.
 
+## SQLite UUID And Task Parent Integrity
+
+### Status
+
+Completed and pushed.
+
+### Before-Phase Baseline
+
+- The live `passkeys.user_id`, `notifications.notifiable_id`, and `personal_access_tokens.tokenable_id` columns retain integer affinity even though user identifiers are UUID strings.
+- Five live tasks use `parent_id`, but the database has no self-referencing foreign key and no database-level same-workspace guard for parent assignment.
+- The live database currently has five UUID-backed notification rows, zero passkeys, zero personal access tokens, five parent links, and zero reported foreign-key violations.
+
+### Scope And Decisions
+
+- Correct both fresh-install migrations and the populated SQLite upgrade path so user-backed relations use UUID columns without losing rows or indexes.
+- Preserve polymorphic type/index contracts for notifications and Sanctum tokens while validating that every populated user-backed row still resolves.
+- Add a nullable self-reference for task parents and SQLite insert/update guards that reject cross-workspace parent links atomically.
+- Keep rollback populated-safe and prove migrate, rollback, and re-migrate behavior against SQLite fixtures before touching the live database.
+
+### Changed Files
+
+- Corrected the original passkey, notification, Sanctum token, and todo migrations for fresh SQLite installations.
+- Added a populated-safe corrective migration with preflight validation, UUID column changes, the task-parent foreign key, same-workspace/self-parent triggers, and restoration of task-definition triggers after SQLite table rebuilds.
+- Added focused schema-integrity coverage and updated the declared todo foreign-key count in the supporting infrastructure contract.
+
+### Migrations And Packages
+
+- Added `2026_07_22_154915_correct_uuid_relations_and_task_parent_integrity.php`; it ran as batch 7 on the populated live SQLite database.
+- Created pre-migration recovery snapshot `5bf5e5c0-3b15-478b-9ba4-672d68cbe1f3` and current-schema recovery snapshot `a57e2662-8f55-446b-bfe3-4c120dc88060` through the signed backup service.
+- No Composer or npm package change was made.
+
+### Verification
+
+- Focused schema-integrity coverage passed with 4 tests and 35 assertions; the combined schema/infrastructure run passed with 36 tests and 77 assertions.
+- The populated rollback and re-apply both completed successfully; the final migration is recorded as batch 7.
+- Live schema inspection confirmed `varchar` affinity for all three UUID relation columns, the self-referencing `todos.parent_id` foreign key with `ON DELETE SET NULL`, all four parent/task-definition triggers, and all original indexes.
+- Live data remained at 5 notifications, 27 tasks, and 5 parent links, with zero invalid parent links and zero `pragma_foreign_key_check` rows; the empty passkey and token tables remained intact.
+- Full Pest passed with 481 tests and 2,572 assertions; full configured PHPStan passed with zero errors.
+- `vendor/bin/pint --dirty --format agent`, Vue TypeScript checking, full ESLint, resource Prettier verification, the frontend regression test, Composer strict validation, and `git diff --check` passed.
+- The production build passed after transforming 3,394 modules; only the existing optional `fontaine` optimization notice remains.
+
+### Known Limitations And Next Work
+
+- Notifications and Sanctum tokens remain polymorphic, so database foreign keys cannot target a single table; the migration validates existing User-backed rows while preserving the polymorphic type/index contract.
+- Database triggers reject missing, cross-workspace, and direct self-parent assignments. General multi-node cycle detection remains an application-level concern if parent reassignment is exposed in a future write flow.
+- The pre-migration snapshot intentionally has the old schema fingerprint and can only be restored while running the matching migration set; use the post-migration snapshot for the current application version.
+
+### Git Delivery
+
+- Implementation commit `b7c9673` (`fix: enforce sqlite uuid and parent integrity`) was pushed successfully to `origin/main`.
+- This progress record will be committed as `docs: record sqlite relation integrity` and pushed separately.
+- The pre-existing Task Detail, Task Index, and Herd Upload progress changes remain preserved and excluded from this phase's staged changes.
+
 ## Workspace Management Center Phase 3: Labels And Tags
 
 ### Status
