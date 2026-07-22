@@ -20,11 +20,13 @@ class CommentPolicy
 
     public function update(User $user, Comment $comment): bool
     {
-        return $comment->user_id === $user->id || $comment->todo->workspace->isOwner($user);
+        return $comment->user_id === $user->id
+            || $user->can('update', $comment->todo->workspace);
     }
 
     public function delete(User $user, Comment $comment): bool
     {
-        return $comment->user_id === $user->id || $comment->todo->workspace->isOwner($user);
+        return $comment->user_id === $user->id
+            || $user->can('update', $comment->todo->workspace);
     }
 }

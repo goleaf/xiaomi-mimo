@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\CreateReminder;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreReminderRequest;
 use App\Http\Resources\ReminderResource;
 use App\Models\Reminder;
 use App\Models\Todo;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ReminderController extends Controller
@@ -20,15 +20,14 @@ class ReminderController extends Controller
         return ReminderResource::collection($todo->reminders()->get());
     }
 
-    public function store(Request $request, Todo $todo, CreateReminder $action): JsonResponse
+    public function store(StoreReminderRequest $request, Todo $todo, CreateReminder $action): JsonResponse
     {
-        $this->authorize('update', $todo);
-        $request->validate([
-            'reminded_at' => 'required|date|after:now',
-            'type' => 'sometimes|string|in:email,in_app,browser',
-        ]);
-
-        $reminder = $action->handle($todo, $request->user(), $request->reminded_at, $request->type ?? 'in_app');
+        $reminder = $action->handle(
+            $todo,
+            $request->user(),
+            $request->remindedAt(),
+            $request->type(),
+        );
 
         return response()->json(['reminder' => new ReminderResource($reminder)], 201);
     }

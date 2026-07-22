@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\CreateTag;
 use App\Actions\DeleteTag;
+use App\Actions\SyncTodoTag;
 use App\Actions\UpdateTag;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AttachTagRequest;
 use App\Http\Requests\DeleteTagRequest;
+use App\Http\Requests\DetachTagRequest;
 use App\Http\Requests\StoreTagRequest;
 use App\Http\Resources\TagResource;
 use App\Models\Tag;
+use App\Models\Todo;
 use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -76,6 +80,30 @@ class TagController extends Controller
         DeleteTag $action,
     ): JsonResponse {
         $action->handle($tag);
+
+        return response()->json(null, 204);
+    }
+
+    public function attach(
+        AttachTagRequest $request,
+        Workspace $workspace,
+        Todo $todo,
+        SyncTodoTag $action,
+    ): JsonResponse {
+        $tag = $workspace->tags()->findOrFail($request->tagId());
+        $action->attach($todo, $tag);
+
+        return response()->json(['tag' => new TagResource($tag)]);
+    }
+
+    public function detach(
+        DetachTagRequest $request,
+        Workspace $workspace,
+        Todo $todo,
+        Tag $tag,
+        SyncTodoTag $action,
+    ): JsonResponse {
+        $action->detach($todo, $tag);
 
         return response()->json(null, 204);
     }

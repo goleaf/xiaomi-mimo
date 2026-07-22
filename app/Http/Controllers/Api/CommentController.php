@@ -6,6 +6,7 @@ use App\Actions\CreateComment;
 use App\Actions\DeleteComment;
 use App\Actions\UpdateComment;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CommentIndexRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Resources\CommentResource;
 use App\Models\Comment;
@@ -15,11 +16,16 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CommentController extends Controller
 {
-    public function index(Todo $todo): AnonymousResourceCollection
+    public function index(CommentIndexRequest $request, Todo $todo): AnonymousResourceCollection
     {
-        $this->authorize('view', $todo);
-
-        return CommentResource::collection($todo->comments()->with('user')->latest()->get());
+        return CommentResource::collection(
+            $todo->comments()
+                ->with(['user', 'todo.workspace'])
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->cursorPaginate($request->perPage())
+                ->withQueryString(),
+        );
     }
 
     public function store(StoreCommentRequest $request, Todo $todo, CreateComment $action): JsonResponse

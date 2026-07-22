@@ -10,6 +10,16 @@ use Illuminate\Validation\Rule;
 
 class StoreTodoRequest extends FormRequest
 {
+    /** @var list<string> */
+    public const array RECURRING_RULES = [
+        'FREQ=DAILY',
+        'FREQ=WEEKLY',
+        'FREQ=MONTHLY',
+        'FREQ=YEARLY',
+        'FREQ=DAILY;INTERVAL=2',
+        'FREQ=WEEKLY;INTERVAL=2',
+    ];
+
     public function authorize(): bool
     {
         return true;
@@ -63,6 +73,13 @@ class StoreTodoRequest extends FormRequest
             'due_date' => ['nullable', 'date'],
             'start_date' => ['nullable', 'date', 'before_or_equal:due_date'],
             'estimated_time' => ['nullable', 'integer', 'min:1'],
+            'is_recurring' => ['sometimes', 'boolean'],
+            'recurring_rule' => [
+                'exclude_unless:is_recurring,true',
+                'required',
+                'string',
+                Rule::in(self::RECURRING_RULES),
+            ],
             'label_ids' => ['sometimes', 'array'],
             'label_ids.*' => [
                 'uuid',
@@ -77,7 +94,7 @@ class StoreTodoRequest extends FormRequest
     }
 
     /**
-     * @return array{title: string, project_id?: string|null, assigned_to?: string|null, parent_id?: string|null, description?: string|null, status?: string, status_id?: string, priority?: string, priority_id?: string, due_date?: string|null, start_date?: string|null, estimated_time?: int|null, label_ids?: list<string>, tag_ids?: list<string>}
+     * @return array{title: string, project_id?: string|null, assigned_to?: string|null, parent_id?: string|null, description?: string|null, status?: string, status_id?: string, priority?: string, priority_id?: string, due_date?: string|null, start_date?: string|null, estimated_time?: int|null, is_recurring: bool, recurring_rule: string|null, label_ids?: list<string>, tag_ids?: list<string>}
      */
     public function todoData(): array
     {
@@ -98,6 +115,11 @@ class StoreTodoRequest extends FormRequest
 
         $estimatedTime = $this->validated('estimated_time');
         $data['estimated_time'] = is_int($estimatedTime) ? $estimatedTime : null;
+        $data['is_recurring'] = $this->boolean('is_recurring');
+        $recurringRule = $this->validated('recurring_rule');
+        $data['recurring_rule'] = $data['is_recurring'] && is_string($recurringRule)
+            ? $recurringRule
+            : null;
 
         foreach (['label_ids', 'tag_ids'] as $key) {
             $value = $this->validated($key);

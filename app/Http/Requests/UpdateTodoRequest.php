@@ -84,6 +84,13 @@ class UpdateTodoRequest extends FormRequest
             'start_date' => ['nullable', 'date'],
             'estimated_time' => ['nullable', 'integer', 'min:1'],
             'spent_time' => ['nullable', 'integer', 'min:0'],
+            'is_recurring' => ['sometimes', 'boolean'],
+            'recurring_rule' => [
+                'exclude_unless:is_recurring,true',
+                'required',
+                'string',
+                Rule::in(StoreTodoRequest::RECURRING_RULES),
+            ],
             'label_ids' => ['sometimes', 'array'],
             'label_ids.*' => [
                 'uuid',

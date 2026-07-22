@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\DeleteAttachment;
+use App\Actions\DownloadAttachment;
 use App\Actions\UploadAttachment;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAttachmentRequest;
@@ -11,7 +12,6 @@ use App\Models\Attachment;
 use App\Models\Todo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttachmentController extends Controller
@@ -20,7 +20,9 @@ class AttachmentController extends Controller
     {
         $this->authorize('view', $todo);
 
-        return AttachmentResource::collection($todo->attachments()->with('user')->get());
+        return AttachmentResource::collection(
+            $todo->attachments()->with(['user', 'todo.workspace'])->get(),
+        );
     }
 
     public function store(
@@ -28,7 +30,8 @@ class AttachmentController extends Controller
         Todo $todo,
         UploadAttachment $action,
     ): JsonResponse {
-        $attachment = $action->handle($todo, $request->user(), $request->uploadedFile());
+        $attachment = $action->handle($todo, $request->user(), $request->uploadedFile())
+            ->load(['user', 'todo.workspace']);
 
         return response()->json(['attachment' => new AttachmentResource($attachment)], 201);
     }
@@ -46,16 +49,18 @@ class AttachmentController extends Controller
         return $this->destroy($attachment, $action);
     }
 
-    public function download(Attachment $attachment): StreamedResponse
+    public function download(Attachment $attachment, DownloadAttachment $action): StreamedResponse
     {
         $this->authorize('view', $attachment);
 
-        return Storage::disk((string) config('filesystems.attachment_disk'))
-            ->download($attachment->path, $attachment->filename);
+        return $action->handle($attachment);
     }
 
-    public function downloadScoped(Todo $todo, Attachment $attachment): StreamedResponse
-    {
-        return $this->download($attachment);
+    public function downloadScoped(
+        Todo $todo,
+        Attachment $attachment,
+        DownloadAttachment $action,
+    ): StreamedResponse {
+        return $this->download($attachment, $action);
     }
 }

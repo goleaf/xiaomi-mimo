@@ -171,6 +171,8 @@ export interface Todo {
     assignee?: User;
     labels?: Label[];
     tags?: Tag[];
+    available_labels?: Label[];
+    available_tags?: Tag[];
     checklists?: Checklist[];
     comments?: Comment[];
     attachments?: Attachment[];
@@ -254,6 +256,10 @@ export interface Comment {
     user_id: string;
     body: string;
     user?: User;
+    permissions?: {
+        update: boolean;
+        delete: boolean;
+    };
     created_at: string;
     updated_at: string;
 }
@@ -263,11 +269,13 @@ export interface Attachment {
     todo_id: string;
     user_id: string;
     filename: string;
-    path: string;
     mime_type: string;
     size: number;
-    url: string;
+    download_url: string;
     user?: User;
+    permissions?: {
+        delete: boolean;
+    };
     created_at: string;
 }
 
@@ -278,6 +286,9 @@ export interface Reminder {
     reminded_at: string;
     is_sent: boolean;
     type: 'email' | 'in_app' | 'browser';
+    permissions?: {
+        delete: boolean;
+    };
     created_at: string;
 }
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router, useHttp } from '@inertiajs/vue3';
 import { CheckCircle2, Clock3, ListChecks, Plus } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
 import WorkspaceConfirmDialog from '@/components/shared/WorkspaceConfirmDialog.vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
@@ -48,6 +48,7 @@ const bulkSelect = useBulkSelect<Todo>();
 const toast = useToast();
 const { formatNumber, t } = useUi();
 const selectedTodo = ref<Todo | null>(null);
+const taskDetailTrigger = ref<HTMLElement | null>(null);
 const showCreateDialog = ref(false);
 const todoToDelete = ref<Todo | null>(null);
 const deletingTodo = ref(false);
@@ -85,6 +86,11 @@ async function selectTodo(todo: Todo): Promise<void> {
         return;
     }
 
+    taskDetailTrigger.value =
+        document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+
     try {
         const response = await detailRequest.get(
             showThroughApi([props.workspace.id, todo]).url,
@@ -93,6 +99,15 @@ async function selectTodo(todo: Todo): Promise<void> {
     } catch {
         toast.error(t('common.errors.generic'));
     }
+}
+
+function closeTaskDetail(): void {
+    selectedTodo.value = null;
+
+    void nextTick(() => {
+        taskDetailTrigger.value?.focus();
+        taskDetailTrigger.value = null;
+    });
 }
 
 function updateSelectedTodo(todo: Todo): void {
@@ -338,7 +353,8 @@ function deleteTodo(): void {
             :todo="selectedTodo"
             :open="Boolean(selectedTodo)"
             :task-definitions="taskDefinitions"
-            @close="selectedTodo = null"
+            @close="closeTaskDetail"
+            @deleted="refreshIndex"
             @refresh="selectTodo(selectedTodo)"
             @updated="updateSelectedTodo"
         />

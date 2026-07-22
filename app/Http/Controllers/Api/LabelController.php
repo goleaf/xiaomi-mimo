@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\CreateLabel;
 use App\Actions\DeleteLabel;
+use App\Actions\SyncTodoLabel;
 use App\Actions\UpdateLabel;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AttachLabelRequest;
 use App\Http\Requests\DeleteLabelRequest;
+use App\Http\Requests\DetachLabelRequest;
 use App\Http\Requests\StoreLabelRequest;
 use App\Http\Resources\LabelResource;
 use App\Models\Label;
+use App\Models\Todo;
 use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -76,6 +80,30 @@ class LabelController extends Controller
         DeleteLabel $action,
     ): JsonResponse {
         $action->handle($label);
+
+        return response()->json(null, 204);
+    }
+
+    public function attach(
+        AttachLabelRequest $request,
+        Workspace $workspace,
+        Todo $todo,
+        SyncTodoLabel $action,
+    ): JsonResponse {
+        $label = $workspace->labels()->findOrFail($request->labelId());
+        $action->attach($todo, $label);
+
+        return response()->json(['label' => new LabelResource($label)]);
+    }
+
+    public function detach(
+        DetachLabelRequest $request,
+        Workspace $workspace,
+        Todo $todo,
+        Label $label,
+        SyncTodoLabel $action,
+    ): JsonResponse {
+        $action->detach($todo, $label);
 
         return response()->json(null, 204);
     }

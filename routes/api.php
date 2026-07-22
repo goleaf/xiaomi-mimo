@@ -137,16 +137,34 @@ $registerApiRoutes = function (bool $versioned): void {
         Route::post('tasks/{todo}/checklists', [ChecklistController::class, 'store'])
             ->middleware('abilities:tasks:write')
             ->name('checklists.store');
+        Route::put('tasks/{todo}/checklists/reorder', [ChecklistController::class, 'reorder'])
+            ->middleware('abilities:tasks:write')
+            ->name('checklists.reorder');
+        Route::put('tasks/{todo}/checklists/{checklist}', [ChecklistController::class, 'update'])
+            ->middleware('abilities:tasks:write')
+            ->name('checklists.update');
+        Route::delete('tasks/{todo}/checklists/{checklist}', [ChecklistController::class, 'destroy'])
+            ->middleware('abilities:tasks:write')
+            ->name('checklists.destroy');
         Route::post(
             $versioned ? 'tasks/{todo}/checklists/{checklist}/items' : 'checklists/{checklist}/items',
             [ChecklistController::class, $versioned ? 'storeItemScoped' : 'storeItem'],
         )->middleware('abilities:tasks:write')->name('checklist-items.store');
+        Route::put('tasks/{todo}/checklists/{checklist}/items/reorder', [ChecklistController::class, 'reorderItems'])
+            ->middleware('abilities:tasks:write')
+            ->name('checklist-items.reorder');
+        Route::put('tasks/{todo}/checklists/{checklist}/items/{item}', [ChecklistController::class, 'updateItem'])
+            ->middleware('abilities:tasks:write')
+            ->name('checklist-items.update');
         Route::patch(
             $versioned
                 ? 'tasks/{todo}/checklists/{checklist}/items/{item}/toggle'
                 : 'checklist-items/{item}/toggle',
             [ChecklistController::class, $versioned ? 'toggleItemScoped' : 'toggleItem'],
         )->middleware('abilities:tasks:write')->name('checklist-items.toggle');
+        Route::delete('tasks/{todo}/checklists/{checklist}/items/{item}', [ChecklistController::class, 'destroyItem'])
+            ->middleware('abilities:tasks:write')
+            ->name('checklist-items.destroy');
 
         Route::get('workspaces/{workspace}/labels', [LabelController::class, 'index'])
             ->middleware('abilities:workspaces:read')
@@ -162,6 +180,12 @@ $registerApiRoutes = function (bool $versioned): void {
             ->middleware('abilities:workspaces:write')
             ->scopeBindings()
             ->name('labels.destroy');
+        Route::post('workspaces/{workspace}/tasks/{todo}/labels', [LabelController::class, 'attach'])
+            ->middleware('abilities:tasks:write')
+            ->name('labels.attach');
+        Route::delete('workspaces/{workspace}/tasks/{todo}/labels/{label}', [LabelController::class, 'detach'])
+            ->middleware('abilities:tasks:write')
+            ->name('labels.detach');
 
         Route::get('workspaces/{workspace}/tags', [TagController::class, 'index'])
             ->middleware('abilities:workspaces:read')
@@ -177,6 +201,12 @@ $registerApiRoutes = function (bool $versioned): void {
             ->middleware('abilities:workspaces:write')
             ->scopeBindings()
             ->name('tags.destroy');
+        Route::post('workspaces/{workspace}/tasks/{todo}/tags', [TagController::class, 'attach'])
+            ->middleware('abilities:tasks:write')
+            ->name('tags.attach');
+        Route::delete('workspaces/{workspace}/tasks/{todo}/tags/{tag}', [TagController::class, 'detach'])
+            ->middleware('abilities:tasks:write')
+            ->name('tags.detach');
 
         if (! $versioned) {
             Route::put('labels/{label}', [LabelController::class, 'legacyUpdate'])

@@ -20,6 +20,20 @@ export interface ApiResponse<T> {
     message?: string;
 }
 
+export interface CursorPaginatedResponse<T> {
+    data: T[];
+    links: {
+        next: string | null;
+        prev: string | null;
+    };
+    meta: {
+        next_cursor: string | null;
+        prev_cursor: string | null;
+        per_page: number;
+        request_id?: string;
+    };
+}
+
 export interface TodoFilters extends Record<
     string,
     string | boolean | number | undefined

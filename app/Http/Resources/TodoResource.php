@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Todo;
+use App\Models\Workspace;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,6 +13,10 @@ class TodoResource extends JsonResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
+        $workspace = $this->relationLoaded('workspace')
+            ? $this->getRelation('workspace')
+            : null;
+
         return [
             'id' => $this->id,
             'project_id' => $this->project_id,
@@ -44,6 +49,14 @@ class TodoResource extends JsonResource
             'assignee' => new UserResource($this->whenLoaded('assignee')),
             'labels' => LabelResource::collection($this->whenLoaded('labels')),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
+            'available_labels' => $this->when(
+                $workspace instanceof Workspace && $workspace->relationLoaded('labels'),
+                fn () => LabelResource::collection($workspace->labels)->resolve($request),
+            ),
+            'available_tags' => $this->when(
+                $workspace instanceof Workspace && $workspace->relationLoaded('tags'),
+                fn () => TagResource::collection($workspace->tags)->resolve($request),
+            ),
             'comments' => CommentResource::collection($this->whenLoaded('comments')),
             'checklists' => ChecklistResource::collection($this->whenLoaded('checklists')),
             'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),

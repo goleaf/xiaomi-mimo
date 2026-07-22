@@ -4,52 +4,52 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateChecklist;
 use App\Actions\CreateChecklistItem;
+use App\Actions\ManageChecklist;
+use App\Actions\ManageChecklistItem;
 use App\Actions\ToggleChecklistItem;
+use App\Http\Requests\StoreChecklistItemRequest;
+use App\Http\Requests\StoreChecklistRequest;
 use App\Models\Checklist;
 use App\Models\ChecklistItem;
 use App\Models\Todo;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 class ChecklistController extends Controller
 {
     public function store(
-        Request $request,
+        StoreChecklistRequest $request,
         Todo $todo,
         CreateChecklist $action,
     ): RedirectResponse {
-        $this->authorize('update', $todo);
-        $request->validate(['name' => 'required|string|max:255']);
-        $action->handle($todo, $request->name);
+        $action->handle($todo, $request->name());
 
         return back();
     }
 
-    public function update(Request $request, Checklist $checklist): RedirectResponse
-    {
-        $this->authorize('update', $checklist->todo);
-        $request->validate(['name' => 'required|string|max:255']);
-        $checklist->update(['name' => $request->name]);
+    public function update(
+        StoreChecklistRequest $request,
+        Checklist $checklist,
+        ManageChecklist $action,
+    ): RedirectResponse {
+        $action->update($checklist, $request->name());
 
         return back();
     }
 
-    public function destroy(Checklist $checklist): RedirectResponse
+    public function destroy(Checklist $checklist, ManageChecklist $action): RedirectResponse
     {
         $this->authorize('update', $checklist->todo);
-        $checklist->delete();
+        $action->delete($checklist);
 
         return back();
     }
 
     public function storeItem(
-        Request $request,
+        StoreChecklistItemRequest $request,
         Checklist $checklist,
         CreateChecklistItem $action,
     ): RedirectResponse {
-        $this->authorize('update', $checklist->todo);
-        $request->validate(['content' => 'required|string|max:500']);
-        $action->handle($checklist, $request->content);
+        $action->handle($checklist, $request->content());
 
         return back();
     }
@@ -64,10 +64,20 @@ class ChecklistController extends Controller
         return back();
     }
 
-    public function destroyItem(ChecklistItem $item): RedirectResponse
+    public function updateItem(
+        StoreChecklistItemRequest $request,
+        ChecklistItem $item,
+        ManageChecklistItem $action,
+    ): RedirectResponse {
+        $action->update($item, $request->content());
+
+        return back();
+    }
+
+    public function destroyItem(ChecklistItem $item, ManageChecklistItem $action): RedirectResponse
     {
         $this->authorize('update', $item->checklist->todo);
-        $item->delete();
+        $action->delete($item);
 
         return back();
     }

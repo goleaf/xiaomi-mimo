@@ -11,7 +11,7 @@ class CreateTodo
     public function __construct(private TransitionTodoDefinitions $transition) {}
 
     /**
-     * @param  array{title: string, project_id?: string|null, assigned_to?: string|null, parent_id?: string|null, description?: string|null, status?: string, priority?: string, due_date?: string|null, start_date?: string|null, estimated_time?: int|null, label_ids?: list<string>, tag_ids?: list<string>}  $data
+     * @param  array{title: string, project_id?: string|null, assigned_to?: string|null, parent_id?: string|null, description?: string|null, status?: string, priority?: string, due_date?: string|null, start_date?: string|null, estimated_time?: int|null, is_recurring?: bool, recurring_rule?: string|null, label_ids?: list<string>, tag_ids?: list<string>}  $data
      */
     public function handle(Workspace $workspace, array $data, ?string $userId = null): Todo
     {
@@ -31,6 +31,10 @@ class CreateTodo
                 'due_date' => $data['due_date'] ?? null,
                 'start_date' => $data['start_date'] ?? null,
                 'estimated_time' => $data['estimated_time'] ?? null,
+                'is_recurring' => $data['is_recurring'] ?? false,
+                'recurring_rule' => ($data['is_recurring'] ?? false)
+                    ? ($data['recurring_rule'] ?? null)
+                    : null,
                 'position' => $maxPosition + 1,
             ]);
 

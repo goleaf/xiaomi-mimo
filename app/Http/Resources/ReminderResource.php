@@ -19,6 +19,9 @@ class ReminderResource extends JsonResource
             'reminded_at' => $this->reminded_at,
             'is_sent' => $this->is_sent,
             'type' => $this->type->value,
+            'permissions' => [
+                'delete' => $request->user()?->can('delete', $this->resource) ?? false,
+            ],
             'created_at' => $this->created_at,
         ];
     }

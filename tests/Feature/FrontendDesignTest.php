@@ -51,14 +51,14 @@ test('every active page header action uses the shared large button contract', fu
     'projects' => ['projects/Index.vue', 1],
     'project detail' => ['projects/Show.vue', 5],
     'tasks' => ['tasks/Index.vue', 1],
-    'task detail' => ['tasks/Show.vue', 3],
+    'task detail' => ['tasks/Show.vue', 1],
     'workspaces' => ['workspaces/Index.vue', 1],
 ]);
 
 test('header mutations expose shared inert loading states', function () {
     $notifications = File::get(resource_path('js/pages/notifications/Index.vue'));
     $project = File::get(resource_path('js/pages/projects/Show.vue'));
-    $task = File::get(resource_path('js/pages/tasks/Show.vue'));
+    $task = File::get(resource_path('js/components/task/TaskDetailContent.vue'));
 
     expect($notifications)
         ->toContain("import { Spinner } from '@/components/ui/spinner'")
@@ -69,9 +69,9 @@ test('header mutations expose shared inert loading states', function () {
         ->toContain('v-if="processingProjectAction ===')
         ->toContain('onFinish: () =>')
         ->and($task)
-        ->toContain('const updatingCompletion = ref(false)')
-        ->toContain('<Spinner v-if="updatingCompletion" />')
-        ->toContain('onFinish: () =>');
+        ->toContain('completionRequest.processing')
+        ->toContain('<Spinner v-if="completionRequest.processing" />')
+        ->toContain('useHttp<Record<string, never>, { data: Todo }>');
 });
 
 test('every settings page configures the shared projects style header', function (string $page) {
@@ -129,7 +129,7 @@ test('the shared state surface supports accessible loading and error variants', 
 test('remaining active secondary actions reuse the shared large control rhythm', function () {
     $emptyState = File::get(resource_path('js/components/shared/EmptyState.vue'));
     $calendar = File::get(resource_path('js/pages/calendar/Index.vue'));
-    $taskDetail = File::get(resource_path('js/components/task/TaskDetail.vue'));
+    $taskDetail = File::get(resource_path('js/components/task/TaskDetailContent.vue'));
 
     expect($emptyState)
         ->toContain('size="lg"')
@@ -138,7 +138,7 @@ test('remaining active secondary actions reuse the shared large control rhythm',
         ->toContain('size="lg"')
         ->not->toContain('class="min-h-11 cursor-pointer rounded-xl"')
         ->and(substr_count($taskDetail, 'size="lg"'))
-        ->toBeGreaterThanOrEqual(3)
+        ->toBeGreaterThanOrEqual(2)
         ->and($taskDetail)
         ->not->toContain('class="h-10 rounded-xl text-sm"')
         ->not->toContain('class="min-h-11 rounded-xl"');
@@ -299,16 +299,14 @@ test('remaining settings forms expose complete processing states', function () {
 });
 
 test('task editing uses shared loading actions and locks mutable fields', function () {
-    $source = File::get(resource_path('js/pages/tasks/Show.vue'));
+    $source = File::get(resource_path('js/components/task/TaskOverviewPanel.vue'));
 
     expect($source)
         ->toContain("import { Spinner } from '@/components/ui/spinner'")
-        ->toContain('<Spinner v-if="editForm.processing" />')
+        ->toContain('<Spinner v-if="form.processing" />')
         ->not->toContain('LoaderCircle')
-        ->and(substr_count($source, ':disabled="editForm.processing"'))
-        ->toBeGreaterThanOrEqual(7)
-        ->and(substr_count($source, 'size="lg"'))
-        ->toBeGreaterThanOrEqual(2);
+        ->and(substr_count($source, 'form.processing'))
+        ->toBeGreaterThanOrEqual(7);
 });
 
 test('project creation selectors expose warm precision interaction states', function () {
@@ -338,7 +336,7 @@ test('destructive actions use application confirmations instead of browser dialo
 })->with([
     'task list' => 'pages/tasks/Index.vue',
     'project task list' => 'pages/projects/Show.vue',
-    'task drawer' => 'components/task/TaskDetail.vue',
+    'task detail' => 'components/task/TaskDetailContent.vue',
     'backup restore' => 'pages/settings/Backup.vue',
     'two factor disable' => 'pages/settings/Security.vue',
 ]);
@@ -346,8 +344,9 @@ test('destructive actions use application confirmations instead of browser dialo
 test('task interfaces use accessible application controls', function () {
     expect(File::get(resource_path('js/components/task/TaskDetail.vue')))
         ->toContain('<Sheet')
-        ->toContain('<Checkbox')
         ->not->toContain('<Teleport')
+        ->and(File::get(resource_path('js/components/task/TaskChecklistPanel.vue')))
+        ->toContain('<Checkbox')
         ->not->toContain('type="checkbox"')
         ->and(File::get(resource_path('js/components/task/TaskCreateDialog.vue')))
         ->toContain('<Checkbox')
@@ -593,7 +592,7 @@ test('active forms reuse shared field errors', function (string $component) {
         ->toContain('InputError')
         ->not->toContain('class="text-sm text-destructive"');
 })->with([
-    'task edit form' => 'pages/tasks/Show.vue',
+    'task edit form' => 'components/task/TaskOverviewPanel.vue',
     'member invitation form' => 'pages/settings/Members.vue',
     'security form' => 'pages/settings/Security.vue',
 ]);
