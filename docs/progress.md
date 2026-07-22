@@ -2826,6 +2826,65 @@ No migration or Composer/npm package change was made.
 - This progress record will be committed as `docs: record workspace portfolio CRUD` and pushed separately.
 - The pre-existing Task Index and Herd Upload progress entries remain preserved and excluded from this phase's staged changes.
 
+## Database Backup And Restore Hardening
+
+### Status
+
+Completed and pushed.
+
+### Before-Phase Baseline
+
+- Every authenticated verified user can create, enumerate, download, and restore application-wide SQLite backups over HTTP.
+- Backup responses expose physical server paths and accept raw filenames, including traversal-shaped input.
+- The service copies only the main database file while WAL mode is active and replaces the live file without integrity, schema, locking, maintenance, or rollback controls.
+- The current settings navigation presents this global administrative surface to every user even though workspace ownership is the application security boundary.
+
+### Scope And Decisions
+
+- Keep scheduled and manual CLI snapshots available while making web backup management an explicit deployment-level operator capability configured by email and additionally requiring workspace ownership.
+- Require verified authentication and recent password confirmation for the web inventory, create, download, and restore routes; ordinary owners, admins, members, and unconfigured deployments remain denied.
+- Create WAL-consistent snapshots with SQLite's online backup API, store them privately under opaque UUID identifiers, and expose no physical path or server filename.
+- Sign snapshot manifests and verify size, checksum, application schema fingerprint, SQLite integrity, and foreign keys before download or restore.
+- Serialize create and restore operations with a database-independent file lock.
+- Restore through SQLite's backup API under a maintenance guard, create a verified rollback snapshot first, and automatically roll back if the restored database fails validation.
+- Keep the existing Inertia settings visual language, generated Wayfinder routes, localized English/Lithuanian/Russian copy, and complete processing/error states.
+
+### Changed Files
+
+- Backup actions, authorized Form Requests, deployment-operator policy, service, controllers, provider registration, routes, and command under `app/`, `bootstrap/`, and `routes/`.
+- Backup configuration and environment contract under `config/backup.php`, `config/nativephp.php`, and `.env.example`.
+- Inertia capability sharing, settings navigation, backup page types and interaction state, and English, Lithuanian, and Russian UI translations.
+- Focused backup/restore and application-layer contract tests.
+
+### Migrations And Packages
+
+- No migration or Composer/npm package change was made.
+- Created one live recovery snapshot through `php artisan backup:run`; its opaque identifier is `1794af6c-63ad-442d-97d4-7e84648d2093`, and both snapshot and signed manifest remain on the private backup path.
+
+### Verification
+
+- Focused backup and application-layer Pest coverage passed with 19 tests and 93 assertions, including committed WAL data, exclusive locking, signed inventory, tamper rejection, schema mismatch rejection, successful isolated restore, rollback, maintenance release, deployment-operator authorization, password confirmation, path rejection, safe controller failures, and private download headers.
+- Full Pest passed with 477 tests and 2,537 assertions.
+- `vendor/bin/pint --dirty --format agent`, full configured PHPStan, Vue TypeScript checking, full ESLint, Prettier verification, frontend tests, and `git diff --check` passed.
+- The production build passed after transforming 3,394 modules; only the existing optional `fontaine` optimization notice remains.
+- Strict Composer validation, Composer security audit, and production npm audit passed with no advisories or vulnerabilities.
+- Route inspection confirmed verified authentication, the deployment-operator gate, recent password confirmation, UUID constraints, and create/restore throttles across the five backup routes.
+- Live Herd QA confirmed an anonymous direct visit redirects to the login page with no new browser console errors; current Boost browser logs contain only historical 2026-07-19 entries.
+- The live recovery snapshot was created and validated without restoring over the development database; successful and failed restore paths were verified against isolated SQLite databases only.
+
+### Known Limitations And Next Work
+
+- Web backup management is deliberately disabled until `BACKUP_OPERATOR_EMAIL` identifies a verified workspace owner; ordinary workspace roles cannot access application-wide database material.
+- Legacy filename-based snapshots are intentionally excluded from the signed opaque inventory and should remain offline or be recreated with the hardened command.
+- Restore intentionally refuses a snapshot whose migration fingerprint differs from the current database, so a fresh recovery snapshot is required after schema changes.
+- Production PHP-FPM, filesystem ownership, encryption-at-rest, and off-host retention remain deployment responsibilities.
+
+### Git Delivery
+
+- Implementation commit `0ae818b` (`fix: harden database backup and restore`) was pushed successfully to `origin/main`.
+- This progress record will be committed as `docs: record database backup hardening` and pushed separately.
+- The pre-existing Task Detail, Task Index, and Herd Upload progress changes remain preserved and excluded from this phase's staged changes.
+
 ## Workspace Management Center Phase 3: Labels And Tags
 
 ### Status
