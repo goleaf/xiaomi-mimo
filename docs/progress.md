@@ -3381,3 +3381,66 @@ Completed and ready for delivery.
 - Implementation commit `8d0431b` (`feat: complete task index workflow`) was pushed successfully to `origin/main`.
 - This progress record will be committed separately as `docs: record task index workflow` and pushed to `origin/main`.
 - The pre-existing Task Detail, Task Index build-repair, and Herd upload progress edits remain preserved and excluded from this phase's staged changes.
+
+## Task Detail And Collaboration Lifecycle
+
+### Status
+
+Completed and ready for delivery.
+
+### Before-Phase Baseline
+
+- The drawer is a 556-line component and the 800-line task show page separately implement the same edits, checklist drafts, checklist mutations, and comment creation.
+- Checklist creation and item toggle exist, but rename/delete/edit/reorder APIs and complete processing/error states do not; web and API controllers still validate several writes inline.
+- Comment listing is unbounded and the UI has no author editing, owner/admin moderation, deletion, pagination, or per-comment permission contract.
+- The drawer displays labels and tags but cannot manage them, and it does not expose recurrence, reminders, attachments, upload progress, safe download, or deletion controls.
+- The detail API returns every comment and exposes private attachment storage paths and disk URLs instead of an authorized download route.
+
+### Delivered Scope And Decisions
+
+- Replaced the duplicated drawer and full-page implementations with one typed `TaskDetailContent` surface composed from overview, taxonomy, checklist, comments, reminders, and attachment panels.
+- Kept drafts keyed by task, checklist, and item identifiers, and reloads the authoritative detail payload after relational mutations.
+- Completed checklist and checklist-item create, rename/edit, toggle, delete, and exact-set reorder operations through authorized Form Requests, transactional actions, scoped bindings, and versioned API routes.
+- Cursor-paginated comments at 10, 20, or 50 rows, bounded the initial task payload to the newest 20, and added author plus workspace owner/admin edit and delete permissions.
+- Added task recurrence editing with an explicit allowlist, workspace-scoped label/tag attach and detach, reminder create/delete, and private attachment upload/download/delete controls.
+- Removed private storage paths and disk URLs from attachment resources. Downloads now pass through policy authorization and return no-store, sandboxed, attachment-only responses with MIME sniffing disabled.
+- Preserved Reka Sheet focus trapping and Escape behavior, and explicitly restores focus to the task row that opened the controlled drawer.
+- Added complete EN/LT/RU semantic copy and shared locale-aware dates and numbers across the new panels.
+
+### Changed Files
+
+- Checklist, taxonomy, attachment, reminder, recurrence, comment, and download actions, Form Requests, controllers, resources, policy, query, and versioned routes under `app/` and `routes/api.php`.
+- `resources/js/components/task/TaskDetail.vue`, `TaskDetailContent.vue`, and the six focused task-detail panel components.
+- `resources/js/pages/tasks/Index.vue`, `resources/js/pages/tasks/Show.vue`, shared API/model types, and English, Lithuanian, and Russian translations.
+- `tests/Feature/TaskDetailCollaborationTest.php` and updated task-detail design regressions in `tests/Feature/FrontendDesignTest.php`.
+
+### Migrations And Packages
+
+- No migration was required; the phase uses the existing checklist, comment, reminder, attachment, label, tag, and recurrence schema.
+- No Composer or npm dependency changed.
+
+### Verification
+
+- `vendor/bin/pint --dirty --format agent`: passed.
+- Focused task-detail, API, localization, and design coverage: passed, 174 tests and 783 assertions.
+- `php artisan test --compact`: passed, 527 tests and 3,035 assertions.
+- `composer run types:check`: passed with zero PHPStan errors.
+- `npm run lint:check`, `npm run format:check`, `npm run test:frontend`, and `npm run types:check`: passed.
+- `npm run build`: passed after transforming 3,424 modules; only the existing optional `fontaine` optimization notice remains.
+- `git diff --check`: passed.
+- Route inspection confirmed the complete nested checklist/item lifecycle plus bounded comments, reminders, and authorized attachment download endpoints under `/api/v1/tasks/{todo}`.
+- Live Herd desktop QA verified every panel renders from the shared surface, the controlled drawer closes with Escape, and focus returns to its originating task row with no captured console or page errors.
+- Live Herd mobile QA at 390 x 844 verified the full drawer, body scroll lock, and zero document-level horizontal overflow.
+- Recent Boost browser logs contain only historical July 19 entries; the July 22 verification produced no new browser errors.
+
+### Known Limitations And Next Work
+
+- Reminder delivery types are now stored and manageable, but the queued dispatch engine, idempotent delivery attempts, catch-up rules, and browser permission UX remain Phase 8 work.
+- Recurrence editing intentionally accepts the application's bounded supported rule set; occurrence generation and completion-driven advancement remain Phase 8 work.
+- Comment history is cursor-paginated newest-first; real-time collaboration is intentionally outside the current SQLite-first roadmap.
+
+### Git Delivery
+
+- Implementation commit `e50ae53` (`feat: complete task detail collaboration`) was pushed successfully to `origin/main`.
+- This progress record will be committed separately as `docs: record task detail collaboration` and pushed to `origin/main`.
+- The pre-existing Task Detail, Task Index build-repair, and Herd upload progress edits remain preserved and excluded from this phase's staged changes.
