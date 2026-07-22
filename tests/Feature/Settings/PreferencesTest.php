@@ -41,11 +41,11 @@ test('preferences page contains the shared appearance control', function () {
         ->not->toContain("label: 'Appearance'");
 });
 
-test('preferences do not offer the unavailable board view', function () {
+test('preferences offer every implemented default view', function () {
     $preferencesPage = file_get_contents(resource_path('js/pages/settings/Preferences.vue'));
 
     expect($preferencesPage)
-        ->not->toContain('value="board"')
+        ->toContain('value="board"')
         ->toContain('value="list"')
         ->toContain('value="calendar"');
 });

@@ -1,61 +1,74 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
-import { CheckCircle2, Archive, Trash2, X } from '@lucide/vue';
+import { Archive, CheckCircle2, RotateCcw, Trash2, X } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/composables/useToast';
+import { Spinner } from '@/components/ui/spinner';
 import { useUi } from '@/composables/useUi';
-import { bulk } from '@/routes/todos';
 
-const props = defineProps<{
-    selectedIds: string[];
-    workspaceId: string;
+defineProps<{ selectedIds: string[]; processing: boolean }>();
+const emit = defineEmits<{
+    action: [action: 'archive' | 'complete' | 'delete' | 'uncomplete'];
+    clear: [];
 }>();
-const emit = defineEmits<{ clear: [] }>();
-const toast = useToast();
 const { formatNumber, t } = useUi();
-
-function bulkAction(action: string) {
-    router.post(
-        bulk(props.workspaceId).url,
-        {
-            ids: props.selectedIds,
-            action,
-        },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success(
-                    t(`tasks.index.bulk_${action}d`, {
-                        count: formatNumber(props.selectedIds.length),
-                    }),
-                );
-                emit('clear');
-            },
-        },
-    );
-}
 </script>
 
 <template>
-    <div class="flex items-center gap-3 rounded-lg border bg-muted/50 p-3">
-        <span class="text-sm font-medium">{{
-            t('common.states.selected', {
-                count: formatNumber(selectedIds.length),
-            })
-        }}</span>
-        <Button variant="outline" size="sm" @click="bulkAction('complete')">
-            <CheckCircle2 class="mr-1 h-3 w-3" />{{
-                t('common.actions.complete')
+    <div
+        class="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-orange-500/15 bg-orange-500/[0.06] p-3"
+        aria-live="polite"
+    >
+        <span class="mr-auto text-sm font-medium">
+            {{
+                t('common.states.selected', {
+                    count: formatNumber(selectedIds.length),
+                })
             }}
+        </span>
+        <Button
+            variant="outline"
+            size="sm"
+            :disabled="processing"
+            @click="emit('action', 'complete')"
+        >
+            <Spinner v-if="processing" />
+            <CheckCircle2 v-else class="size-4" aria-hidden="true" />
+            {{ t('common.actions.complete') }}
         </Button>
-        <Button variant="outline" size="sm" @click="bulkAction('archive')">
-            <Archive class="mr-1 h-3 w-3" />{{ t('common.actions.archive') }}
+        <Button
+            variant="outline"
+            size="sm"
+            :disabled="processing"
+            @click="emit('action', 'uncomplete')"
+        >
+            <RotateCcw class="size-4" aria-hidden="true" />
+            {{ t('common.actions.reopen') }}
         </Button>
-        <Button variant="destructive" size="sm" @click="bulkAction('delete')">
-            <Trash2 class="mr-1 h-3 w-3" />{{ t('common.actions.delete') }}
+        <Button
+            variant="outline"
+            size="sm"
+            :disabled="processing"
+            @click="emit('action', 'archive')"
+        >
+            <Archive class="size-4" aria-hidden="true" />
+            {{ t('common.actions.archive') }}
         </Button>
-        <Button variant="ghost" size="sm" @click="emit('clear')">
-            <X class="h-3 w-3" />
+        <Button
+            variant="destructive"
+            size="sm"
+            :disabled="processing"
+            @click="emit('action', 'delete')"
+        >
+            <Trash2 class="size-4" aria-hidden="true" />
+            {{ t('common.actions.delete') }}
+        </Button>
+        <Button
+            variant="ghost"
+            size="icon-sm"
+            :aria-label="t('tasks.index.clear_selection')"
+            :disabled="processing"
+            @click="emit('clear')"
+        >
+            <X class="size-4" aria-hidden="true" />
         </Button>
     </div>
 </template>

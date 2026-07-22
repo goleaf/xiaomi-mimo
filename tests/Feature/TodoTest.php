@@ -257,12 +257,15 @@ test('todo list filters by status', function () {
             ->where('todos.data.0.status', 'completed'));
 });
 
-test('task index exposes only the implemented list view', function () {
+test('task index exposes the implemented list and board views', function () {
     $taskIndex = file_get_contents(resource_path('js/pages/tasks/Index.vue'));
+    $filterBar = file_get_contents(resource_path('js/components/task/TaskFilterBar.vue'));
 
     expect($taskIndex)
-        ->not->toContain("viewMode = ref<'list' | 'board'>")
-        ->not->toContain("viewMode = 'board'")
-        ->not->toContain('<LayoutGrid')
-        ->not->toContain('v-if="viewMode === \'list\'"');
+        ->toContain('filters.view === \'board\'')
+        ->toContain('<BoardView')
+        ->toContain('<TaskList')
+        ->and($filterBar)
+        ->toContain("setView('list')")
+        ->toContain("setView('board')");
 });

@@ -1,6 +1,13 @@
 <script setup lang="ts">
-import { Search, SlidersHorizontal, X } from '@lucide/vue';
-import { ref } from 'vue';
+import {
+    ArrowDownAZ,
+    Columns3,
+    List,
+    Search,
+    SlidersHorizontal,
+    X,
+} from '@lucide/vue';
+import { ref, watch } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,121 +17,413 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import { useTaskDefinitions } from '@/composables/useTaskDefinitions';
 import { useUi } from '@/composables/useUi';
+import type { TodoFilters } from '@/types/api';
+import type { Project, TaskDefinitionCatalog } from '@/types/models';
 
 const props = defineProps<{
-    filters: Record<string, string>;
-    workspaceId: string;
+    filters: TodoFilters;
+    projects: Project[];
+    taskDefinitions: TaskDefinitionCatalog;
+    processing: boolean;
 }>();
-
-const emit = defineEmits<{ update: [filters: Record<string, string>] }>();
+const emit = defineEmits<{ update: [filters: TodoFilters] }>();
 const { t } = useUi();
+const { statuses, priorities } = useTaskDefinitions(
+    () => props.taskDefinitions,
+);
+const search = ref('');
+const projectId = ref('all');
+const status = ref('all');
+const priority = ref('all');
+const sort = ref('default');
+const direction = ref<'asc' | 'desc'>('asc');
+const perPage = ref<'100' | '25' | '50'>('50');
+const view = ref<'board' | 'list'>('list');
+const mobileFiltersOpen = ref(false);
 
-const searchQuery = ref(props.filters.search ?? '');
-const statusFilter = ref(props.filters.status ?? 'all');
-const priorityFilter = ref(props.filters.priority ?? 'all');
-const showAdvanced = ref(false);
+watch(
+    () => props.filters,
+    (filters) => {
+        search.value = filters.search ?? '';
+        projectId.value = filters.project_id ?? 'all';
+        status.value = filters.status ?? 'all';
+        priority.value = filters.priority ?? 'all';
+        sort.value = filters.sort ?? 'default';
+        direction.value = filters.direction ?? 'asc';
+        perPage.value = String(filters.per_page ?? 50) as '100' | '25' | '50';
+        view.value = filters.view ?? 'list';
+    },
+    { immediate: true, deep: true },
+);
 
-function applyFilters() {
-    const filters: Record<string, string> = {};
-
-    if (searchQuery.value) {
-        filters.search = searchQuery.value;
-    }
-
-    if (statusFilter.value !== 'all') {
-        filters.status = statusFilter.value;
-    }
-
-    if (priorityFilter.value !== 'all') {
-        filters.priority = priorityFilter.value;
-    }
-
-    emit('update', filters);
+function currentFilters(): TodoFilters {
+    return {
+        search: search.value || undefined,
+        project_id: projectId.value === 'all' ? undefined : projectId.value,
+        status: status.value === 'all' ? undefined : status.value,
+        priority: priority.value === 'all' ? undefined : priority.value,
+        sort: sort.value === 'default' ? undefined : sort.value,
+        direction: direction.value,
+        per_page: Number(perPage.value) as 25 | 50 | 100,
+        view: view.value,
+    };
 }
 
-function clearFilters() {
-    searchQuery.value = '';
-    statusFilter.value = 'all';
-    priorityFilter.value = 'all';
-    emit('update', {});
+function apply(): void {
+    mobileFiltersOpen.value = false;
+    emit('update', currentFilters());
+}
+
+function clear(): void {
+    search.value = '';
+    projectId.value = 'all';
+    status.value = 'all';
+    priority.value = 'all';
+    sort.value = 'default';
+    direction.value = 'asc';
+    apply();
+}
+
+function setView(nextView: 'board' | 'list'): void {
+    view.value = nextView;
+    apply();
 }
 </script>
 
 <template>
-    <div class="space-y-3">
-        <div class="flex items-center gap-3">
-            <div class="relative max-w-sm flex-1">
+    <div class="space-y-4 border-b border-border/70 pb-5">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <form
+                class="relative min-w-0 flex-1"
+                role="search"
+                @submit.prevent="apply"
+            >
                 <Search
-                    class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                    class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
                 />
                 <Input
-                    v-model="searchQuery"
+                    v-model="search"
+                    type="search"
                     :placeholder="t('tasks.filters.search')"
-                    class="pl-9"
-                    @keyup.enter="applyFilters"
+                    class="pl-10"
+                    :disabled="processing"
                 />
+            </form>
+
+            <div class="flex items-center gap-2">
+                <Button
+                    type="button"
+                    variant="outline"
+                    class="md:hidden"
+                    :disabled="processing"
+                    @click="mobileFiltersOpen = true"
+                >
+                    <SlidersHorizontal class="size-4" aria-hidden="true" />
+                    {{ t('tasks.filters.filters') }}
+                </Button>
+                <div
+                    class="ml-auto flex rounded-lg border border-border/80 bg-muted/25 p-1"
+                    role="group"
+                    :aria-label="t('tasks.filters.view')"
+                >
+                    <Button
+                        type="button"
+                        size="sm"
+                        :variant="view === 'list' ? 'secondary' : 'ghost'"
+                        :aria-pressed="view === 'list'"
+                        :disabled="processing"
+                        @click="setView('list')"
+                    >
+                        <List class="size-4" aria-hidden="true" />
+                        {{ t('tasks.filters.list') }}
+                    </Button>
+                    <Button
+                        type="button"
+                        size="sm"
+                        :variant="view === 'board' ? 'secondary' : 'ghost'"
+                        :aria-pressed="view === 'board'"
+                        :disabled="processing"
+                        @click="setView('board')"
+                    >
+                        <Columns3 class="size-4" aria-hidden="true" />
+                        {{ t('tasks.filters.board') }}
+                    </Button>
+                </div>
             </div>
-            <Select v-model="statusFilter" @update:model-value="applyFilters">
-                <SelectTrigger class="w-[140px]"
+        </div>
+
+        <div class="hidden gap-3 md:grid md:grid-cols-3 xl:grid-cols-6">
+            <Select
+                v-model="projectId"
+                :disabled="processing"
+                @update:model-value="apply"
+            >
+                <SelectTrigger
+                    ><SelectValue :placeholder="t('tasks.filters.project')"
+                /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">{{
+                        t('tasks.filters.all_projects')
+                    }}</SelectItem>
+                    <SelectItem
+                        v-for="project in projects"
+                        :key="project.id"
+                        :value="project.id"
+                    >
+                        {{ project.name }}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
+            <Select
+                v-model="status"
+                :disabled="processing"
+                @update:model-value="apply"
+            >
+                <SelectTrigger
                     ><SelectValue :placeholder="t('tasks.filters.status')"
                 /></SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">{{
                         t('tasks.filters.all_statuses')
                     }}</SelectItem>
-                    <SelectItem value="pending">{{
-                        t('tasks.statuses.pending')
-                    }}</SelectItem>
-                    <SelectItem value="in_progress">{{
-                        t('tasks.statuses.in_progress')
-                    }}</SelectItem>
-                    <SelectItem value="completed">{{
-                        t('tasks.statuses.completed')
-                    }}</SelectItem>
+                    <SelectItem
+                        v-for="item in statuses"
+                        :key="item.id"
+                        :value="item.key"
+                    >
+                        {{ item.name }}
+                    </SelectItem>
                 </SelectContent>
             </Select>
-            <Select v-model="priorityFilter" @update:model-value="applyFilters">
-                <SelectTrigger class="w-[140px]"
+            <Select
+                v-model="priority"
+                :disabled="processing"
+                @update:model-value="apply"
+            >
+                <SelectTrigger
                     ><SelectValue :placeholder="t('tasks.filters.priority')"
                 /></SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">{{
                         t('tasks.filters.all_priorities')
                     }}</SelectItem>
-                    <SelectItem value="urgent">{{
-                        t('tasks.priorities.urgent')
+                    <SelectItem
+                        v-for="item in priorities"
+                        :key="item.id"
+                        :value="item.key"
+                    >
+                        {{ item.name }}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
+            <Select
+                v-model="sort"
+                :disabled="processing"
+                @update:model-value="apply"
+            >
+                <SelectTrigger
+                    ><SelectValue :placeholder="t('tasks.filters.sort')"
+                /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="default">{{
+                        t('tasks.filters.default_order')
                     }}</SelectItem>
-                    <SelectItem value="high">{{
-                        t('tasks.priorities.high')
+                    <SelectItem value="due_date">{{
+                        t('tasks.filters.due_date')
                     }}</SelectItem>
-                    <SelectItem value="medium">{{
-                        t('tasks.priorities.medium')
+                    <SelectItem value="priority">{{
+                        t('tasks.filters.priority')
                     }}</SelectItem>
-                    <SelectItem value="low">{{
-                        t('tasks.priorities.low')
+                    <SelectItem value="status">{{
+                        t('tasks.filters.status')
+                    }}</SelectItem>
+                    <SelectItem value="title">{{
+                        t('tasks.filters.title')
+                    }}</SelectItem>
+                    <SelectItem value="created_at">{{
+                        t('tasks.filters.created')
                     }}</SelectItem>
                 </SelectContent>
             </Select>
             <Button
-                variant="ghost"
-                size="sm"
-                @click="showAdvanced = !showAdvanced"
-            >
-                <SlidersHorizontal class="h-4 w-4" />
-            </Button>
-            <Button
-                v-if="
-                    searchQuery ||
-                    statusFilter !== 'all' ||
-                    priorityFilter !== 'all'
+                type="button"
+                variant="outline"
+                :disabled="processing"
+                @click="
+                    direction = direction === 'asc' ? 'desc' : 'asc';
+                    apply();
                 "
-                variant="ghost"
-                size="sm"
-                @click="clearFilters"
             >
-                <X class="h-4 w-4" />
+                <ArrowDownAZ class="size-4" aria-hidden="true" />
+                {{
+                    direction === 'asc'
+                        ? t('tasks.filters.ascending')
+                        : t('tasks.filters.descending')
+                }}
             </Button>
+            <div class="flex gap-2">
+                <Select
+                    v-model="perPage"
+                    :disabled="processing"
+                    @update:model-value="apply"
+                >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    :aria-label="t('tasks.filters.clear')"
+                    :disabled="processing"
+                    @click="clear"
+                >
+                    <X class="size-4" aria-hidden="true" />
+                </Button>
+            </div>
         </div>
+
+        <Sheet
+            :open="mobileFiltersOpen"
+            @update:open="mobileFiltersOpen = $event"
+        >
+            <SheetContent
+                side="bottom"
+                class="max-h-[92vh] overflow-y-auto rounded-t-[1.75rem]"
+            >
+                <SheetHeader>
+                    <SheetTitle>{{ t('tasks.filters.filters') }}</SheetTitle>
+                    <SheetDescription>{{
+                        t('tasks.filters.description')
+                    }}</SheetDescription>
+                </SheetHeader>
+                <div class="grid gap-4 px-4 pb-6">
+                    <Select v-model="projectId">
+                        <SelectTrigger
+                            ><SelectValue
+                                :placeholder="t('tasks.filters.project')"
+                        /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">{{
+                                t('tasks.filters.all_projects')
+                            }}</SelectItem>
+                            <SelectItem
+                                v-for="project in projects"
+                                :key="project.id"
+                                :value="project.id"
+                                >{{ project.name }}</SelectItem
+                            >
+                        </SelectContent>
+                    </Select>
+                    <Select v-model="status">
+                        <SelectTrigger
+                            ><SelectValue
+                                :placeholder="t('tasks.filters.status')"
+                        /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">{{
+                                t('tasks.filters.all_statuses')
+                            }}</SelectItem>
+                            <SelectItem
+                                v-for="item in statuses"
+                                :key="item.id"
+                                :value="item.key"
+                                >{{ item.name }}</SelectItem
+                            >
+                        </SelectContent>
+                    </Select>
+                    <Select v-model="priority">
+                        <SelectTrigger
+                            ><SelectValue
+                                :placeholder="t('tasks.filters.priority')"
+                        /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">{{
+                                t('tasks.filters.all_priorities')
+                            }}</SelectItem>
+                            <SelectItem
+                                v-for="item in priorities"
+                                :key="item.id"
+                                :value="item.key"
+                                >{{ item.name }}</SelectItem
+                            >
+                        </SelectContent>
+                    </Select>
+                    <Select v-model="sort">
+                        <SelectTrigger
+                            ><SelectValue
+                                :placeholder="t('tasks.filters.sort')"
+                        /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="default">{{
+                                t('tasks.filters.default_order')
+                            }}</SelectItem>
+                            <SelectItem value="due_date">{{
+                                t('tasks.filters.due_date')
+                            }}</SelectItem>
+                            <SelectItem value="priority">{{
+                                t('tasks.filters.priority')
+                            }}</SelectItem>
+                            <SelectItem value="status">{{
+                                t('tasks.filters.status')
+                            }}</SelectItem>
+                            <SelectItem value="title">{{
+                                t('tasks.filters.title')
+                            }}</SelectItem>
+                            <SelectItem value="created_at">{{
+                                t('tasks.filters.created')
+                            }}</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        @click="
+                            direction = direction === 'asc' ? 'desc' : 'asc'
+                        "
+                    >
+                        <ArrowDownAZ class="size-4" aria-hidden="true" />
+                        {{
+                            direction === 'asc'
+                                ? t('tasks.filters.ascending')
+                                : t('tasks.filters.descending')
+                        }}
+                    </Button>
+                    <Select v-model="perPage">
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="25">25</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                            <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <div class="grid grid-cols-2 gap-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            @click="clear"
+                            >{{ t('tasks.filters.clear') }}</Button
+                        >
+                        <Button type="button" @click="apply">{{
+                            t('tasks.filters.apply')
+                        }}</Button>
+                    </div>
+                </div>
+            </SheetContent>
+        </Sheet>
     </div>
 </template>

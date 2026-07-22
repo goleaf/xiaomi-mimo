@@ -1,192 +1,187 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { GripVertical } from '@lucide/vue';
+import { computed, ref } from 'vue';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { useToast } from '@/composables/useToast';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { safeDefinitionColor } from '@/composables/useTaskDefinitions';
 import { useUi } from '@/composables/useUi';
-import { complete, update } from '@/routes/todos';
-import type { Todo, TodoStatus } from '@/types/models';
+import type {
+    TaskDefinitionCatalog,
+    TaskStatusDefinition,
+    Todo,
+} from '@/types/models';
 
-const props = defineProps<{ todos: Todo[] }>();
-const emit = defineEmits<{ select: [todo: Todo] }>();
-const toast = useToast();
-const { formatDate: formatLocalizedDate, t } = useUi();
+const props = defineProps<{
+    todos: Todo[];
+    taskDefinitions: TaskDefinitionCatalog;
+    busyTodoId: string | null;
+}>();
+const emit = defineEmits<{
+    move: [todo: Todo, status: TaskStatusDefinition];
+    select: [todo: Todo];
+}>();
+const { formatDate, t } = useUi();
+const draggedTodoId = ref<string | null>(null);
+const columns = computed(() =>
+    props.taskDefinitions.statuses.filter((status) => !status.is_archived),
+);
 
-const columns: Array<{ status: TodoStatus; labelKey: string; color: string }> =
-    [
-        { status: 'pending', labelKey: 'tasks.board.to_do', color: '#6b7280' },
-        {
-            status: 'in_progress',
-            labelKey: 'tasks.board.in_progress',
-            color: '#3b82f6',
-        },
-        { status: 'completed', labelKey: 'tasks.board.done', color: '#22c55e' },
-    ];
-
-function getTodosByStatus(status: TodoStatus): Todo[] {
-    return props.todos.filter((t) => t.status === status);
-}
-
-function priorityColor(priority: string): string {
-    return (
-        {
-            urgent: 'bg-red-500',
-            high: 'bg-orange-500',
-            medium: 'bg-yellow-500',
-            low: 'bg-blue-500',
-            none: 'bg-muted-foreground/35',
-        }[priority] ?? 'bg-muted-foreground/35'
+function columnTodos(status: TaskStatusDefinition): Todo[] {
+    return props.todos.filter(
+        (todo) => todo.status_id === status.id || todo.status === status.key,
     );
 }
 
-function formatDate(date: string | null): string {
-    if (!date) {
-        return '';
-    }
+function move(todo: Todo, statusId: string): void {
+    const status = columns.value.find((item) => item.id === statusId);
 
-    return formatLocalizedDate(date, { month: 'short', day: 'numeric' });
-}
-
-function moveTodo(todoId: string, newStatus: TodoStatus) {
-    const todo = props.todos.find((t) => t.id === todoId);
-
-    if (!todo || todo.status === newStatus) {
-        return;
-    }
-
-    if (newStatus === 'completed') {
-        router.post(
-            complete(todoId).url,
-            {},
-            {
-                preserveScroll: true,
-                onSuccess: () => toast.success(t('tasks.board.completed')),
-            },
-        );
-    } else if (newStatus === 'pending' || newStatus === 'in_progress') {
-        router.put(
-            update(todoId).url,
-            { status: newStatus },
-            {
-                preserveScroll: true,
-            },
-        );
+    if (status && todo.status_id !== status.id && props.busyTodoId === null) {
+        emit('move', todo, status);
     }
 }
 
-function onDragStart(event: DragEvent, todo: Todo) {
-    event.dataTransfer?.setData('todo-id', todo.id);
-    event.dataTransfer?.setData('todo-status', todo.status);
-    (event.target as HTMLElement).style.opacity = '0.5';
-}
+function drop(status: TaskStatusDefinition): void {
+    const todo = props.todos.find((item) => item.id === draggedTodoId.value);
 
-function onDragEnd(event: DragEvent) {
-    (event.target as HTMLElement).style.opacity = '1';
-}
-
-function onDragOver(event: DragEvent) {
-    event.preventDefault();
-}
-
-function onDrop(event: DragEvent, targetStatus: TodoStatus) {
-    event.preventDefault();
-
-    const todoId = event.dataTransfer?.getData('todo-id');
-    const sourceStatus = event.dataTransfer?.getData('todo-status');
-
-    if (todoId && sourceStatus !== targetStatus) {
-        moveTodo(todoId, targetStatus);
+    if (todo) {
+        move(todo, status.id);
     }
+
+    draggedTodoId.value = null;
 }
 
-function onDragEnter(event: DragEvent) {
-    event.preventDefault();
-    (event.currentTarget as HTMLElement)?.classList?.add(
-        'ring-2',
-        'ring-primary/50',
-    );
-}
-
-function onDragLeave(event: DragEvent) {
-    (event.currentTarget as HTMLElement)?.classList?.remove(
-        'ring-2',
-        'ring-primary/50',
-    );
+function openWithKeyboard(event: KeyboardEvent, todo: Todo): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        emit('select', todo);
+    }
 }
 </script>
 
 <template>
-    <div class="grid min-h-[500px] grid-cols-3 gap-4">
+    <div class="overflow-x-auto pb-2" :aria-label="t('tasks.board.label')">
         <div
-            v-for="column in columns"
-            :key="column.status"
-            class="rounded-lg bg-muted/30 p-3 transition-all"
-            @dragover="onDragOver"
-            @drop="onDrop($event, column.status)"
-            @dragenter="onDragEnter"
-            @dragleave="onDragLeave"
+            class="flex min-w-max gap-4 xl:grid xl:min-w-0"
+            :style="{
+                gridTemplateColumns: `repeat(${Math.max(columns.length, 1)}, minmax(16rem, 1fr))`,
+            }"
         >
-            <div class="mb-3 flex items-center gap-2">
-                <div
-                    class="h-2 w-2 rounded-full"
-                    :style="{ backgroundColor: column.color }"
-                />
-                <h3 class="text-sm font-medium">{{ t(column.labelKey) }}</h3>
-                <Badge variant="secondary" class="ml-auto text-xs">{{
-                    getTodosByStatus(column.status).length
-                }}</Badge>
-            </div>
-            <div class="space-y-2">
-                <Card
-                    v-for="todo in getTodosByStatus(column.status)"
-                    :key="todo.id"
-                    class="cursor-grab transition-all hover:shadow-md active:cursor-grabbing"
-                    draggable="true"
-                    @dragstart="onDragStart($event, todo)"
-                    @dragend="onDragEnd"
-                    @click="emit('select', todo)"
-                >
-                    <CardContent class="p-3">
+            <section
+                v-for="column in columns"
+                :key="column.id"
+                class="w-[min(82vw,20rem)] rounded-2xl border border-border/75 bg-muted/20 p-3 xl:w-auto"
+                :aria-labelledby="`task-column-${column.id}`"
+                @dragover.prevent
+                @drop="drop(column)"
+            >
+                <header class="mb-3 flex items-center gap-2 px-1">
+                    <span
+                        class="size-2.5 rounded-full"
+                        :style="{
+                            backgroundColor: safeDefinitionColor(column.color),
+                        }"
+                        aria-hidden="true"
+                    />
+                    <h2
+                        :id="`task-column-${column.id}`"
+                        class="text-sm font-semibold"
+                    >
+                        {{ column.name }}
+                    </h2>
+                    <Badge variant="secondary" class="ml-auto tabular-nums">
+                        {{ columnTodos(column).length }}
+                    </Badge>
+                </header>
+
+                <div class="min-h-28 space-y-2.5">
+                    <article
+                        v-for="todo in columnTodos(column)"
+                        :key="todo.id"
+                        class="group rounded-xl border border-border/80 bg-background p-3.5 shadow-sm transition hover:border-orange-500/25 hover:shadow-md focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
+                        :class="
+                            busyTodoId === todo.id
+                                ? 'pointer-events-none opacity-60'
+                                : ''
+                        "
+                        draggable="true"
+                        tabindex="0"
+                        :aria-label="todo.title"
+                        :aria-busy="busyTodoId === todo.id"
+                        @click="emit('select', todo)"
+                        @keydown="openWithKeyboard($event, todo)"
+                        @dragstart="draggedTodoId = todo.id"
+                        @dragend="draggedTodoId = null"
+                    >
                         <div class="flex items-start gap-2">
-                            <div
-                                :class="[
-                                    'mt-1.5 h-2 w-2 shrink-0 rounded-full',
-                                    priorityColor(todo.priority),
-                                ]"
+                            <GripVertical
+                                class="mt-0.5 size-4 shrink-0 text-muted-foreground/60"
+                                aria-hidden="true"
                             />
                             <div class="min-w-0 flex-1">
-                                <p class="truncate text-sm font-medium">
+                                <p class="line-clamp-2 text-sm font-medium">
                                     {{ todo.title }}
                                 </p>
                                 <div
-                                    class="mt-1 flex flex-wrap items-center gap-2"
+                                    class="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
                                 >
-                                    <span
-                                        v-if="todo.due_date"
-                                        class="text-xs text-muted-foreground"
-                                        >{{ formatDate(todo.due_date) }}</span
-                                    >
-                                    <span
-                                        v-if="todo.project"
-                                        class="rounded bg-muted px-1.5 py-0.5 text-xs"
-                                        >{{ todo.project.name }}</span
-                                    >
-                                    <span
-                                        v-for="label in (
-                                            todo.labels ?? []
-                                        ).slice(0, 2)"
-                                        :key="label.id"
-                                        class="h-1.5 w-1.5 rounded-full"
-                                        :style="{
-                                            backgroundColor: label.color,
-                                        }"
-                                    />
+                                    <span v-if="todo.project">{{
+                                        todo.project.name
+                                    }}</span>
+                                    <span v-if="todo.due_date">
+                                        {{
+                                            formatDate(todo.due_date, {
+                                                month: 'short',
+                                                day: 'numeric',
+                                            })
+                                        }}
+                                    </span>
                                 </div>
+                                <Select
+                                    :model-value="todo.status_id"
+                                    :disabled="busyTodoId !== null"
+                                    @click.stop
+                                    @update:model-value="
+                                        move(todo, String($event))
+                                    "
+                                >
+                                    <SelectTrigger
+                                        class="mt-3 h-8 w-full text-xs"
+                                        :aria-label="
+                                            t('tasks.board.move', {
+                                                title: todo.title,
+                                            })
+                                        "
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem
+                                            v-for="status in columns"
+                                            :key="status.id"
+                                            :value="status.id"
+                                        >
+                                            {{ status.name }}
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
-            </div>
+                    </article>
+
+                    <p
+                        v-if="columnTodos(column).length === 0"
+                        class="rounded-xl border border-dashed border-border/80 px-3 py-8 text-center text-xs text-muted-foreground"
+                    >
+                        {{ t('tasks.board.empty') }}
+                    </p>
+                </div>
+            </section>
         </div>
     </div>
 </template>

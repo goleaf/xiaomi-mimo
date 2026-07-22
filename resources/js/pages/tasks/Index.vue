@@ -1,111 +1,215 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
-import {
-    CheckCircle2,
-    Clock3,
-    ListChecks,
-    Plus,
-    Search,
-    Trash2,
-} from '@lucide/vue';
+import { Head, router, useHttp } from '@inertiajs/vue3';
+import { CheckCircle2, Clock3, ListChecks, Plus } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
 import WorkspaceConfirmDialog from '@/components/shared/WorkspaceConfirmDialog.vue';
 import WorkspaceMetric from '@/components/shared/WorkspaceMetric.vue';
 import WorkspacePageHeader from '@/components/shared/WorkspacePageHeader.vue';
+import BoardView from '@/components/task/BoardView.vue';
+import BulkActions from '@/components/task/BulkActions.vue';
 import TaskCreateDialog from '@/components/task/TaskCreateDialog.vue';
 import TaskDetail from '@/components/task/TaskDetail.vue';
-import { Badge } from '@/components/ui/badge';
+import TaskFilterBar from '@/components/task/TaskFilterBar.vue';
+import TaskList from '@/components/task/TaskList.vue';
+import TaskPagination from '@/components/task/TaskPagination.vue';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { useBulkSelect } from '@/composables/useBulkSelect';
-import {
-    safeDefinitionColor,
-    useTaskDefinitions,
-} from '@/composables/useTaskDefinitions';
 import { useToast } from '@/composables/useToast';
 import { useUi } from '@/composables/useUi';
 import {
+    show as showThroughApi,
+    update as updateThroughApi,
+} from '@/routes/api/v1/tasks';
+import {
+    bulk,
     complete,
     destroy,
     index as tasksIndex,
-    show,
     uncomplete,
 } from '@/routes/todos';
-import type { PaginatedResponse } from '@/types/api';
-import type { Project, TaskDefinitionCatalog, Todo } from '@/types/models';
+import type { PaginatedResponse, TodoFilters } from '@/types/api';
+import type {
+    Project,
+    TaskDefinitionCatalog,
+    TaskStatusDefinition,
+    Todo,
+} from '@/types/models';
 
 const props = defineProps<{
-    todos: PaginatedResponse<Todo> & { meta?: { total: number } };
-    filters: Record<string, string>;
+    todos: PaginatedResponse<Todo>;
+    filters: TodoFilters;
+    stats: { total: number; pending: number; completed: number };
     projects: { data: Project[] };
     workspace: { id: string };
     taskDefinitions: TaskDefinitionCatalog;
 }>();
-
 const bulkSelect = useBulkSelect<Todo>();
 const toast = useToast();
-const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
-const { statuses, priorities } = useTaskDefinitions(
-    () => props.taskDefinitions,
-);
-const searchQuery = ref(props.filters.search ?? '');
-const statusFilter = ref(props.filters.status ?? 'all');
-const priorityFilter = ref(props.filters.priority ?? 'all');
+const { formatNumber, t } = useUi();
 const selectedTodo = ref<Todo | null>(null);
 const showCreateDialog = ref(false);
 const todoToDelete = ref<Todo | null>(null);
 const deletingTodo = ref(false);
+const filtering = ref(false);
+const busyTodoId = ref<string | null>(null);
+const bulkProcessing = ref(false);
+const confirmBulkDelete = ref(false);
+const detailRequest = useHttp<Record<string, never>, { data: Todo }>({});
+const statusRequest = useHttp<{ status: string }, { data: Todo }>({
+    status: '',
+});
+const selectedIds = computed(() => Array.from(bulkSelect.selectedIds.value));
 
-const allTodos = computed(() => props.todos.data);
-const totalCount = computed(
-    () => props.todos.meta?.total ?? props.todos.total ?? allTodos.value.length,
-);
-const pendingCount = computed(
-    () => allTodos.value.filter((todo) => !todo.is_completed).length,
-);
-const completedCount = computed(
-    () => allTodos.value.filter((todo) => todo.is_completed).length,
-);
-
-function applyFilters(): void {
-    router.get(
-        tasksIndex.url(),
-        {
-            search: searchQuery.value || undefined,
-            status:
-                statusFilter.value === 'all' ? undefined : statusFilter.value,
-            priority:
-                priorityFilter.value === 'all'
-                    ? undefined
-                    : priorityFilter.value,
+function applyFilters(filters: TodoFilters): void {
+    filtering.value = true;
+    bulkSelect.clearSelection();
+    router.get(tasksIndex.url(), filters, {
+        only: ['todos', 'filters', 'stats'],
+        preserveScroll: true,
+        preserveState: true,
+        replace: true,
+        onFinish: () => {
+            filtering.value = false;
         },
-        { preserveState: true, replace: true },
+    });
+}
+
+function refreshIndex(): void {
+    bulkSelect.clearSelection();
+    router.reload({ only: ['todos', 'filters', 'stats'] });
+}
+
+async function selectTodo(todo: Todo): Promise<void> {
+    if (!props.workspace.id || detailRequest.processing) {
+        return;
+    }
+
+    try {
+        const response = await detailRequest.get(
+            showThroughApi([props.workspace.id, todo]).url,
+        );
+        selectedTodo.value = response.data;
+    } catch {
+        toast.error(t('common.errors.generic'));
+    }
+}
+
+function updateSelectedTodo(todo: Todo): void {
+    if (selectedTodo.value?.id === todo.id) {
+        selectedTodo.value = { ...selectedTodo.value, ...todo };
+    }
+
+    refreshIndex();
+}
+
+function toggleCompletion(todo: Todo): void {
+    if (busyTodoId.value) {
+        return;
+    }
+
+    busyTodoId.value = todo.id;
+    const target = todo.is_completed ? uncomplete(todo) : complete(todo);
+    router.post(
+        target.url,
+        {},
+        {
+            only: ['todos', 'filters', 'stats'],
+            preserveScroll: true,
+            onFinish: () => {
+                busyTodoId.value = null;
+            },
+        },
     );
 }
 
-function toggleComplete(todo: Todo): void {
-    const target = todo.is_completed ? uncomplete(todo) : complete(todo);
+async function moveTodo(
+    todo: Todo,
+    status: TaskStatusDefinition,
+): Promise<void> {
+    if (busyTodoId.value) {
+        return;
+    }
 
-    router.post(target.url, {}, { preserveScroll: true });
+    busyTodoId.value = todo.id;
+    statusRequest.status = status.key;
+
+    try {
+        const response = await statusRequest.put(
+            updateThroughApi([props.workspace.id, todo]).url,
+        );
+        updateSelectedTodo(response.data);
+    } catch {
+        toast.error(t('common.errors.generic'));
+    } finally {
+        busyTodoId.value = null;
+    }
+}
+
+function selectPage(selected: boolean): void {
+    bulkSelect.clearSelection();
+
+    if (selected) {
+        bulkSelect.selectAll(props.todos.data);
+    }
+}
+
+function requestBulkAction(
+    action: 'archive' | 'complete' | 'delete' | 'uncomplete',
+): void {
+    if (action === 'delete') {
+        confirmBulkDelete.value = true;
+
+        return;
+    }
+
+    performBulkAction(action);
+}
+
+function performBulkAction(
+    action: 'archive' | 'complete' | 'delete' | 'uncomplete',
+): void {
+    if (bulkProcessing.value || selectedIds.value.length === 0) {
+        return;
+    }
+
+    const count = selectedIds.value.length;
+    bulkProcessing.value = true;
+    router.post(
+        bulk(props.workspace.id).url,
+        { ids: selectedIds.value, action },
+        {
+            only: ['todos', 'filters', 'stats'],
+            preserveScroll: true,
+            onSuccess: () => {
+                const message = {
+                    archive: 'tasks.index.bulk_archived',
+                    complete: 'tasks.index.bulk_completed',
+                    delete: 'tasks.index.bulk_deleted',
+                    uncomplete: 'tasks.index.bulk_reopened',
+                }[action];
+
+                toast.success(t(message, { count: formatNumber(count) }));
+                bulkSelect.clearSelection();
+                confirmBulkDelete.value = false;
+            },
+            onError: () => toast.error(t('common.errors.generic')),
+            onFinish: () => {
+                bulkProcessing.value = false;
+            },
+        },
+    );
 }
 
 function deleteTodo(): void {
-    if (!todoToDelete.value) {
+    if (!todoToDelete.value || deletingTodo.value) {
         return;
     }
 
     const todo = todoToDelete.value;
     deletingTodo.value = true;
     router.delete(destroy(todo).url, {
+        only: ['todos', 'filters', 'stats'],
         preserveScroll: true,
         onSuccess: () => {
             toast.success(t('tasks.index.deleted'));
@@ -120,52 +224,11 @@ function deleteTodo(): void {
         },
     });
 }
-
-function selectTodo(todo: Todo): void {
-    router.get(
-        show(todo).url,
-        {},
-        {
-            preserveState: true,
-            only: ['todo'],
-            onSuccess: (page) => {
-                selectedTodo.value = (page.props as Record<string, unknown>)
-                    .todo as Todo;
-            },
-        },
-    );
-}
-
-function updateSelectedTodo(todo: Todo): void {
-    if (selectedTodo.value?.id === todo.id) {
-        selectedTodo.value = { ...selectedTodo.value, ...todo };
-    }
-
-    router.reload({ only: ['todos'] });
-}
-
-function refreshSelectedTodo(): void {
-    if (selectedTodo.value) {
-        selectTodo(selectedTodo.value);
-    }
-}
-
-function formatDate(date: string | null): string {
-    if (!date) {
-        return '';
-    }
-
-    return formatLocalizedDate(date, {
-        month: 'short',
-        day: 'numeric',
-    });
-}
 </script>
 
 <template>
     <div>
         <Head :title="t('tasks.index.title')" />
-
         <main class="min-h-full bg-muted/20 px-4 py-5 sm:p-6 lg:p-8">
             <div class="mx-auto flex max-w-[1480px] flex-col gap-6">
                 <WorkspacePageHeader
@@ -173,33 +236,36 @@ function formatDate(date: string | null): string {
                     :title="t('tasks.index.title')"
                     :description="
                         t('tasks.index.count', {
-                            count: formatNumber(totalCount),
+                            count: formatNumber(stats.total),
                         })
                     "
                 >
                     <template #actions>
-                        <Button size="lg" @click="showCreateDialog = true">
+                        <Button
+                            size="lg"
+                            :disabled="!workspace.id"
+                            @click="showCreateDialog = true"
+                        >
                             <Plus class="size-4" aria-hidden="true" />
                             {{ t('tasks.create.new_task') }}
                         </Button>
                     </template>
-
                     <template #metrics>
                         <WorkspaceMetric
                             :label="t('tasks.stats.total')"
-                            :value="formatNumber(totalCount)"
+                            :value="formatNumber(stats.total)"
                             :icon="ListChecks"
                             tone="orange"
                         />
                         <WorkspaceMetric
                             :label="t('tasks.stats.pending')"
-                            :value="formatNumber(pendingCount)"
+                            :value="formatNumber(stats.pending)"
                             :icon="Clock3"
                             tone="blue"
                         />
                         <WorkspaceMetric
                             :label="t('tasks.stats.completed')"
-                            :value="formatNumber(completedCount)"
+                            :value="formatNumber(stats.completed)"
                             :icon="CheckCircle2"
                             tone="emerald"
                         />
@@ -209,195 +275,58 @@ function formatDate(date: string | null): string {
                 <section
                     class="rounded-[1.5rem] border border-border/80 bg-card p-4 shadow-[0_20px_60px_-52px_rgba(15,23,42,0.6)] sm:p-6"
                 >
-                    <div
-                        class="grid gap-3 border-b border-border/70 pb-5 sm:grid-cols-2 lg:grid-cols-[minmax(16rem,1fr)_11rem_11rem]"
-                    >
-                        <div class="relative sm:col-span-2 lg:col-span-1">
-                            <Search
-                                class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-                                aria-hidden="true"
-                            />
-                            <Input
-                                v-model="searchQuery"
-                                type="search"
-                                :placeholder="t('tasks.filters.search')"
-                                class="pl-10"
-                                @keyup.enter="applyFilters"
-                            />
-                        </div>
-                        <Select
-                            v-model="statusFilter"
-                            @update:model-value="applyFilters"
-                        >
-                            <SelectTrigger class="w-full">
-                                <SelectValue
-                                    :placeholder="t('tasks.filters.status')"
-                                />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    {{ t('tasks.filters.all_statuses') }}
-                                </SelectItem>
-                                <SelectItem
-                                    v-for="status in statuses"
-                                    :key="status.id"
-                                    :value="status.key"
-                                >
-                                    {{ status.name }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select
-                            v-model="priorityFilter"
-                            @update:model-value="applyFilters"
-                        >
-                            <SelectTrigger class="w-full">
-                                <SelectValue
-                                    :placeholder="t('tasks.filters.priority')"
-                                />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    {{ t('tasks.filters.all_priorities') }}
-                                </SelectItem>
-                                <SelectItem
-                                    v-for="priority in priorities"
-                                    :key="priority.id"
-                                    :value="priority.key"
-                                >
-                                    {{ priority.name }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div
+                    <TaskFilterBar
+                        :filters="filters"
+                        :projects="projects.data"
+                        :task-definitions="taskDefinitions"
+                        :processing="filtering"
+                        @update="applyFilters"
+                    />
+                    <BulkActions
                         v-if="bulkSelect.hasSelection.value"
-                        class="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-orange-500/15 bg-orange-500/[0.06] p-3"
-                    >
-                        <span class="text-sm">
-                            {{
-                                t('common.states.selected', {
-                                    count: formatNumber(
-                                        bulkSelect.selectedCount.value,
-                                    ),
-                                })
-                            }}
-                        </span>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            @click="bulkSelect.clearSelection"
-                        >
-                            {{ t('common.actions.cancel') }}
-                        </Button>
-                    </div>
+                        :selected-ids="selectedIds"
+                        :processing="bulkProcessing"
+                        @action="requestBulkAction"
+                        @clear="bulkSelect.clearSelection"
+                    />
 
-                    <div v-if="allTodos.length" class="mt-5 space-y-2.5">
-                        <div
-                            v-for="todo in allTodos"
-                            :key="todo.id"
-                            class="group relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border/80 bg-background p-3.5 transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-orange-500/25 hover:shadow-[0_16px_36px_-30px_rgba(234,88,12,0.55)] motion-reduce:transform-none sm:gap-4 sm:p-4"
-                        >
-                            <button
-                                type="button"
-                                class="absolute inset-0 z-10 cursor-pointer rounded-xl focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
-                                :aria-label="todo.title"
-                                @click="selectTodo(todo)"
-                            ></button>
-                            <Checkbox
-                                :model-value="todo.is_completed"
-                                class="relative z-20 size-4.5 data-[state=checked]:border-orange-600 data-[state=checked]:bg-orange-600"
-                                :aria-label="todo.title"
-                                @click.stop
-                                @update:model-value="toggleComplete(todo)"
-                            />
-                            <div
-                                class="pointer-events-none relative z-20 min-w-0"
-                            >
-                                <p
-                                    :class="[
-                                        'truncate text-sm font-medium',
-                                        todo.is_completed
-                                            ? 'text-muted-foreground line-through'
-                                            : '',
-                                    ]"
-                                >
-                                    {{ todo.title }}
-                                </p>
-                                <div
-                                    class="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"
-                                >
-                                    <span
-                                        v-if="todo.project"
-                                        class="truncate text-xs text-muted-foreground"
-                                    >
-                                        {{ todo.project.name }}
-                                    </span>
-                                    <span
-                                        v-if="todo.due_date"
-                                        class="text-xs text-muted-foreground"
-                                    >
-                                        {{ formatDate(todo.due_date) }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div
-                                class="pointer-events-none relative z-20 flex items-center gap-1.5 sm:gap-2"
-                            >
-                                <Badge
-                                    class="hidden sm:inline-flex"
-                                    variant="outline"
-                                    :style="{
-                                        borderColor: safeDefinitionColor(
-                                            todo.priority_definition?.color,
-                                        ),
-                                        color: safeDefinitionColor(
-                                            todo.priority_definition?.color,
-                                        ),
-                                    }"
-                                >
-                                    {{
-                                        todo.priority_definition?.name ??
-                                        todo.priority
-                                    }}
-                                </Badge>
-                                <div class="hidden gap-1 md:flex">
-                                    <span
-                                        v-for="label in (
-                                            todo.labels ?? []
-                                        ).slice(0, 2)"
-                                        :key="label.id"
-                                        class="size-2 rounded-full"
-                                        :style="{
-                                            backgroundColor: label.color,
-                                        }"
-                                    />
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    class="pointer-events-auto text-muted-foreground opacity-70 hover:text-destructive sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
-                                    :aria-label="t('common.actions.delete')"
-                                    @click.stop="todoToDelete = todo"
-                                >
-                                    <Trash2 class="size-4" aria-hidden="true" />
-                                </Button>
-                            </div>
-                        </div>
+                    <div v-if="todos.data.length" class="mt-5">
+                        <BoardView
+                            v-if="filters.view === 'board'"
+                            :todos="todos.data"
+                            :task-definitions="taskDefinitions"
+                            :busy-todo-id="busyTodoId"
+                            @move="moveTodo"
+                            @select="selectTodo"
+                        />
+                        <TaskList
+                            v-else
+                            :todos="todos.data"
+                            :selected-ids="selectedIds"
+                            :busy-todo-id="busyTodoId"
+                            @delete="todoToDelete = $event"
+                            @select="selectTodo"
+                            @select-page="selectPage"
+                            @toggle-completion="toggleCompletion"
+                            @toggle-selection="bulkSelect.toggle($event.id)"
+                        />
+                        <TaskPagination
+                            :pagination="todos"
+                            :processing="filtering"
+                        />
                     </div>
-
                     <EmptyState
                         v-else
+                        class="mt-5"
                         compact
                         :title="t('tasks.index.empty_title')"
                         :description="t('tasks.index.empty_description')"
                         :action-label="t('tasks.create.new_task')"
                         @action="showCreateDialog = true"
                     >
-                        <template #icon>
-                            <ListChecks class="size-7" aria-hidden="true" />
-                        </template>
+                        <template #icon
+                            ><ListChecks class="size-7" aria-hidden="true"
+                        /></template>
                     </EmptyState>
                 </section>
             </div>
@@ -410,18 +339,16 @@ function formatDate(date: string | null): string {
             :open="Boolean(selectedTodo)"
             :task-definitions="taskDefinitions"
             @close="selectedTodo = null"
-            @refresh="refreshSelectedTodo"
+            @refresh="selectTodo(selectedTodo)"
             @updated="updateSelectedTodo"
         />
-
         <TaskCreateDialog
             :open="showCreateDialog"
             :workspace-id="workspace.id"
             :task-definitions="taskDefinitions"
             @close="showCreateDialog = false"
-            @created="applyFilters"
+            @created="refreshIndex"
         />
-
         <WorkspaceConfirmDialog
             :open="todoToDelete !== null"
             :title="t('tasks.index.delete_confirm_title')"
@@ -435,6 +362,20 @@ function formatDate(date: string | null): string {
             :processing="deletingTodo"
             @update:open="!$event && (todoToDelete = null)"
             @confirm="deleteTodo"
+        />
+        <WorkspaceConfirmDialog
+            :open="confirmBulkDelete"
+            :title="t('tasks.index.bulk_delete_confirm_title')"
+            :description="
+                t('tasks.index.bulk_delete_confirm_description', {
+                    count: formatNumber(selectedIds.length),
+                })
+            "
+            :confirm-label="t('common.actions.delete')"
+            :cancel-label="t('common.actions.cancel')"
+            :processing="bulkProcessing"
+            @update:open="!$event && (confirmBulkDelete = false)"
+            @confirm="performBulkAction('delete')"
         />
     </div>
 </template>

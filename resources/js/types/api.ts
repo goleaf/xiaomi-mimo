@@ -4,6 +4,15 @@ export interface PaginatedResponse<T> {
     last_page: number;
     per_page: number;
     total: number;
+    from?: number | null;
+    to?: number | null;
+    next_page_url?: string | null;
+    prev_page_url?: string | null;
+    links?: Array<{
+        url: string | null;
+        label: string;
+        active: boolean;
+    }>;
 }
 
 export interface ApiResponse<T> {
@@ -11,7 +20,10 @@ export interface ApiResponse<T> {
     message?: string;
 }
 
-export interface TodoFilters {
+export interface TodoFilters extends Record<
+    string,
+    string | boolean | number | undefined
+> {
     search?: string;
     project_id?: string;
     status?: string;
@@ -27,4 +39,6 @@ export interface TodoFilters {
     due_date_to?: string;
     sort?: string;
     direction?: 'asc' | 'desc';
+    per_page?: 25 | 50 | 100;
+    view?: 'board' | 'list';
 }

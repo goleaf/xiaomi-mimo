@@ -13,6 +13,7 @@ use App\Http\Requests\UpdateTodoRequest;
 use App\Http\Resources\TodoResource;
 use App\Models\Todo;
 use App\Models\Workspace;
+use App\Queries\TodoDetailQuery;
 use App\Services\TodoFilterService;
 use App\Services\TodoSortService;
 use Illuminate\Http\JsonResponse;
@@ -49,20 +50,19 @@ class TodoController extends Controller
         return response()->json(['todo' => new TodoResource($todo)], 201);
     }
 
-    public function show(Todo $todo): TodoResource
+    public function show(Todo $todo, TodoDetailQuery $todoDetailQuery): TodoResource
     {
         $this->authorize('view', $todo);
-        $todo->load([
-            'project', 'assignee', 'labels', 'tags', 'comments.user', 'checklists.items',
-            'statusDefinition', 'priorityDefinition',
-        ]);
 
-        return new TodoResource($todo);
+        return new TodoResource($todoDetailQuery->todo($todo));
     }
 
-    public function showScoped(Workspace $workspace, Todo $todo): TodoResource
-    {
-        return $this->show($todo);
+    public function showScoped(
+        Workspace $workspace,
+        Todo $todo,
+        TodoDetailQuery $todoDetailQuery,
+    ): TodoResource {
+        return $this->show($todo, $todoDetailQuery);
     }
 
     public function update(UpdateTodoRequest $request, Todo $todo, UpdateTodo $action): JsonResponse

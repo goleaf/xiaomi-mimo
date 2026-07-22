@@ -7,16 +7,17 @@ use Illuminate\Support\Facades\DB;
 
 class BulkUpdateTodos
 {
-    public function __construct(private TransitionTodoDefinitions $transition) {}
+    public function __construct(
+        private TransitionTodoDefinitions $transition,
+        private ResolveWorkspaceTodos $resolveTodos,
+    ) {}
 
     /** @param list<string> $todoIds */
     public function setCompletion(Workspace $workspace, array $todoIds, bool $completed): int
     {
         return DB::transaction(function () use ($workspace, $todoIds, $completed): int {
-            $todos = $workspace->todos()
-                ->whereIn('id', $todoIds)
-                ->with(['workspace', 'statusDefinition', 'priorityDefinition'])
-                ->get();
+            $todos = $this->resolveTodos->handle($workspace, $todoIds);
+            $todos->load(['workspace', 'statusDefinition', 'priorityDefinition']);
 
             foreach ($todos as $todo) {
                 $completed
@@ -31,8 +32,10 @@ class BulkUpdateTodos
     /** @param list<string> $todoIds */
     public function setArchived(Workspace $workspace, array $todoIds, bool $archived): int
     {
-        return $workspace->todos()
-            ->whereIn('id', $todoIds)
-            ->update(['is_archived' => $archived]);
+        return DB::transaction(function () use ($workspace, $todoIds, $archived): int {
+            $todos = $this->resolveTodos->handle($workspace, $todoIds);
+
+            return $todos->toQuery()->update(['is_archived' => $archived]);
+        }, 5);
     }
 }

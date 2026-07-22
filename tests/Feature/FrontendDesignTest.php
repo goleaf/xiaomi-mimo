@@ -352,7 +352,7 @@ test('task interfaces use accessible application controls', function () {
         ->and(File::get(resource_path('js/components/task/TaskCreateDialog.vue')))
         ->toContain('<Checkbox')
         ->not->toContain('type="checkbox"')
-        ->and(File::get(resource_path('js/pages/tasks/Index.vue')))
+        ->and(File::get(resource_path('js/components/task/TaskList.vue')))
         ->toContain('<Checkbox')
         ->not->toContain('type="checkbox"')
         ->and(File::get(resource_path('js/pages/projects/Show.vue')))
@@ -360,16 +360,16 @@ test('task interfaces use accessible application controls', function () {
         ->not->toContain('type="checkbox"');
 });
 
-test('task rows preserve whole-row selection through a keyboard focusable overlay', function (string $page) {
-    expect(File::get(resource_path("js/pages/{$page}")))
+test('task rows preserve whole-row selection through a keyboard focusable overlay', function (string $file) {
+    expect(File::get(resource_path("js/{$file}")))
         ->toContain('absolute inset-0 z-10 cursor-pointer rounded-xl')
         ->toContain('focus-visible:ring-orange-500')
         ->toContain(':aria-label="todo.title"')
-        ->toContain('pointer-events-auto text-muted-foreground')
+        ->toMatch('/pointer-events-auto[^\"]*text-muted-foreground/')
         ->not->toContain('class="group grid cursor-pointer');
 })->with([
-    'task index' => 'tasks/Index.vue',
-    'project task list' => 'projects/Show.vue',
+    'task index list' => 'components/task/TaskList.vue',
+    'project task list' => 'pages/projects/Show.vue',
 ]);
 
 test('segmented controls use the projects muted and card surface contract', function () {

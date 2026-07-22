@@ -103,6 +103,9 @@ const dateFormats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'd.m.Y'];
                                 <SelectItem value="list">{{
                                     t('settings.preferences.list_view')
                                 }}</SelectItem>
+                                <SelectItem value="board">{{
+                                    t('settings.preferences.board_view')
+                                }}</SelectItem>
                                 <SelectItem value="calendar">{{
                                     t('settings.preferences.calendar_view')
                                 }}</SelectItem>

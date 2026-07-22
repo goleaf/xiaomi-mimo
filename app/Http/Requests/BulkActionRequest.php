@@ -30,7 +30,8 @@ class BulkActionRequest extends FormRequest
                 'uuid',
                 'distinct',
                 Rule::exists('todos', 'id')
-                    ->where('workspace_id', $workspace instanceof Workspace ? $workspace->id : ''),
+                    ->where('workspace_id', $workspace instanceof Workspace ? $workspace->id : '')
+                    ->whereNull('deleted_at'),
             ],
             'action' => ['required', 'string', 'in:complete,uncomplete,archive,restore,delete'],
         ];
