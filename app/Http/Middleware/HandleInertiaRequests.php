@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Http\Resources\ProjectResource;
 use App\Http\Resources\WorkspaceResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -94,6 +95,11 @@ class HandleInertiaRequests extends Middleware
                         ? route('profile.avatar.show', ['v' => $user->updated_at?->getTimestamp()])
                         : null,
                 ] : null,
+            ],
+            'capabilities' => [
+                'manageDatabaseBackups' => $user
+                    ? Gate::forUser($user)->allows('manageDatabaseBackups')
+                    : false,
             ],
             'currentWorkspace' => fn () => $resolveNavigation()['currentWorkspace'],
             'navigation' => fn () => $resolveNavigation(),

@@ -10,11 +10,13 @@ use App\Models\Todo;
 use App\Models\Workspace;
 use App\Policies\AttachmentPolicy;
 use App\Policies\CommentPolicy;
+use App\Policies\DatabaseBackupPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\ReminderPolicy;
 use App\Policies\TodoPolicy;
 use App\Policies\WorkspacePolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -30,5 +32,7 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+
+        Gate::define('manageDatabaseBackups', [DatabaseBackupPolicy::class, 'manage']);
     }
 }

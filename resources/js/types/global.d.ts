@@ -21,6 +21,9 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            capabilities: {
+                manageDatabaseBackups: boolean;
+            };
             navigation: SidebarNavigation;
             preferences: UserPreference | null;
             sidebarOpen: boolean;

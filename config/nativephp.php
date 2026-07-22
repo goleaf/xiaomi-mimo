@@ -167,6 +167,7 @@ return [
         'APP_STORE_*',
         'APP_URL',
         'AWS_*',
+        'BACKUP_OPERATOR_EMAIL',
         'DB_HOST',
         'DB_PORT',
         'DB_USERNAME',

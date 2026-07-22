@@ -10,24 +10,19 @@ use App\Services\TodoSortService;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
-test('backup service lists sqlite files with sortable timestamp metadata', function () {
-    $backupDirectory = storage_path('app/backups');
-    $filename = 'contract-'.Str::uuid().'.sqlite';
-    $path = $backupDirectory.'/'.$filename;
-
-    File::ensureDirectoryExists($backupDirectory);
-    File::put($path, 'sqlite');
+test('backup service does not expose legacy filename-based snapshots', function () {
+    $directory = sys_get_temp_dir().'/xiaomi-mimo-backup-contract-'.Str::uuid();
+    $backupDirectory = $directory.'/backups';
+    $databasePath = $directory.'/database.sqlite';
 
     try {
-        $backup = collect((new BackupService)->listBackups())->firstWhere('filename', $filename);
+        File::ensureDirectoryExists($backupDirectory);
+        File::put($databasePath, '');
+        File::put($backupDirectory.'/backup_2026-07-19_185715.sqlite', 'sqlite');
 
-        expect($backup)
-            ->toBeArray()
-            ->and($backup['path'])->toBe($path)
-            ->and($backup['size'])->toBe(6)
-            ->and($backup['created_at'])->toBeInt();
+        expect((new BackupService($databasePath, $backupDirectory))->listBackups())->toBe([]);
     } finally {
-        File::delete($path);
+        File::deleteDirectory($directory);
     }
 });
 

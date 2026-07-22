@@ -23,13 +23,16 @@ Route::middleware(['auth'])->group(function () {
     )->name('appearance.edit');
     Route::inertia('settings/preferences', 'settings/Preferences')->name('preferences.edit');
     Route::inertia('settings/notifications', 'settings/Notifications')->name('notifications.edit');
-    Route::get('settings/backup', [BackupController::class, 'edit'])->name('backup.edit');
     Route::get('settings/export', [ExportController::class, 'edit'])->name('export.edit');
     Route::get('settings/members', [MembersController::class, 'edit'])->name('members.edit');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('settings/backup', [BackupController::class, 'edit'])
+        ->middleware(['can:manageDatabaseBackups', RequirePassword::class])
+        ->name('backup.edit');
 
     Route::get('settings/security', [SecurityController::class, 'edit'])
         ->middleware(RequirePassword::class)

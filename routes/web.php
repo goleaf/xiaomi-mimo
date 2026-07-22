@@ -242,11 +242,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('workspaces/{workspace}/export/{format}', [ExportController::class, 'export'])->name('export');
     Route::post('workspaces/{workspace}/import', [ImportController::class, 'import'])->name('import');
 
-    // Backup
-    Route::post('backup', [BackupController::class, 'backup'])->name('backup.create');
-    Route::get('backups', [BackupController::class, 'list'])->name('backup.list');
-    Route::post('backups/{filename}/restore', [BackupController::class, 'restore'])->name('backup.restore');
-    Route::get('backups/{filename}/download', [BackupController::class, 'download'])->name('backup.download');
+    // Application database backups
+    Route::middleware(['can:manageDatabaseBackups', 'password.confirm'])->group(function () {
+        Route::post('backup', [BackupController::class, 'backup'])
+            ->middleware('throttle:3,1')
+            ->name('backup.create');
+        Route::get('backups', [BackupController::class, 'list'])->name('backup.list');
+        Route::post('backups/{backup}/restore', [BackupController::class, 'restore'])
+            ->middleware('throttle:1,1')
+            ->whereUuid('backup')
+            ->name('backup.restore');
+        Route::get('backups/{backup}/download', [BackupController::class, 'download'])
+            ->whereUuid('backup')
+            ->name('backup.download');
+    });
 });
 
 require __DIR__.'/settings.php';

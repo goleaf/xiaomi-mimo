@@ -8,12 +8,13 @@ use Illuminate\Console\Command;
 class RunBackup extends Command
 {
     protected $signature = 'backup:run';
+
     protected $description = 'Create a database backup';
 
     public function handle(BackupService $service): int
     {
-        $path = $service->backup();
-        $this->info("Backup created: " . basename($path));
+        $backup = $service->create();
+        $this->info('Backup created: '.$backup['id']);
 
         return self::SUCCESS;
     }

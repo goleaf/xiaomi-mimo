@@ -67,11 +67,15 @@ const navItems = computed(() => [
         href: editExport.url(),
         icon: Download,
     },
-    {
-        label: t('settings.navigation.backup'),
-        href: editBackup.url(),
-        icon: Database,
-    },
+    ...(page.props.capabilities.manageDatabaseBackups
+        ? [
+              {
+                  label: t('settings.navigation.backup'),
+                  href: editBackup.url(),
+                  icon: Database,
+              },
+          ]
+        : []),
 ]);
 
 const activeNavItem = computed(() =>

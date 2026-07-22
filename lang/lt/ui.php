@@ -240,11 +240,12 @@ return [
             'failed' => 'Nepavyko sukurti atsarginės kopijos',
             'list_title' => 'Atsarginės kopijos',
             'restore' => 'Atkurti atsarginę kopiją',
-            'restore_confirm' => 'Atkurti iš :filename? Dabartinė duomenų bazė bus pakeista.',
+            'restore_confirm' => 'Atkurti :date momentinę kopiją? Po vientisumo patikrų dabartinė programos duomenų bazė bus pakeista.',
             'restore_failed' => 'Duomenų bazės atkurti nepavyko',
             'restore_title' => 'Atkurti atsarginę kopiją?',
             'restoring' => 'Atkuriama...',
             'restored' => 'Duomenų bazė atkurta',
+            'snapshot' => 'Momentinė kopija: :date',
             'title' => 'Duomenų bazės atsarginė kopija',
         ],
         'export' => [

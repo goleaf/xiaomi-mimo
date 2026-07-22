@@ -240,11 +240,12 @@ return [
             'failed' => 'Backup failed',
             'list_title' => 'Backups',
             'restore' => 'Restore backup',
-            'restore_confirm' => 'Restore from :filename? This will replace the current database.',
+            'restore_confirm' => 'Restore the snapshot from :date? The current application database will be replaced after integrity checks.',
             'restore_failed' => 'The database could not be restored',
             'restore_title' => 'Restore database backup?',
             'restoring' => 'Restoring...',
             'restored' => 'Database restored',
+            'snapshot' => 'Snapshot from :date',
             'title' => 'Database Backup',
         ],
         'export' => [

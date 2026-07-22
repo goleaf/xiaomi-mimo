@@ -27,7 +27,6 @@ const toast = useToast();
 const { formatDate: formatLocalizedDate, formatNumber, t } = useUi();
 const creating = ref(false);
 const restoring = ref(false);
-const selectedBackup = ref<string | null>(null);
 
 setLayoutProps<SettingsLayoutProps>({
     settingsEyebrow: t('account.menu.settings'),
@@ -36,12 +35,13 @@ setLayoutProps<SettingsLayoutProps>({
 });
 
 interface Backup {
-    filename: string;
+    id: string;
     size: number;
     created_at: number;
 }
 
 defineProps<{ backups: Backup[] }>();
+const selectedBackup = ref<Backup | null>(null);
 
 function createBackup() {
     creating.value = true;
@@ -63,8 +63,8 @@ function createBackup() {
     );
 }
 
-function restoreBackup(filename: string): void {
-    selectedBackup.value = filename;
+function restoreBackup(backup: Backup): void {
+    selectedBackup.value = backup;
 }
 
 function confirmRestore(): void {
@@ -74,7 +74,7 @@ function confirmRestore(): void {
 
     restoring.value = true;
     router.post(
-        restore(selectedBackup.value).url,
+        restore(selectedBackup.value.id).url,
         {},
         {
             preserveScroll: true,
@@ -90,8 +90,8 @@ function confirmRestore(): void {
     );
 }
 
-function downloadBackup(filename: string) {
-    window.location.href = download(filename).url;
+function downloadBackup(id: string) {
+    window.location.href = download(id).url;
 }
 
 function formatSize(bytes: number): string {
@@ -155,12 +155,16 @@ function formatDate(timestamp: number): string {
                 <div v-else class="space-y-3">
                     <div
                         v-for="backup in backups"
-                        :key="backup.filename"
+                        :key="backup.id"
                         class="flex flex-col gap-4 rounded-2xl border border-border/70 bg-background p-4 sm:flex-row sm:items-center sm:justify-between"
                     >
                         <div>
                             <p class="text-sm font-medium">
-                                {{ backup.filename }}
+                                {{
+                                    t('settings.backup.snapshot', {
+                                        date: formatDate(backup.created_at),
+                                    })
+                                }}
                             </p>
                             <p class="text-xs text-muted-foreground">
                                 {{ formatSize(backup.size) }} —
@@ -172,7 +176,7 @@ function formatDate(timestamp: number): string {
                                 variant="outline"
                                 size="sm"
                                 :aria-label="t('settings.backup.download')"
-                                @click="downloadBackup(backup.filename)"
+                                @click="downloadBackup(backup.id)"
                             >
                                 <Download class="h-4 w-4" />
                             </Button>
@@ -180,7 +184,7 @@ function formatDate(timestamp: number): string {
                                 variant="outline"
                                 size="sm"
                                 :aria-label="t('settings.backup.restore')"
-                                @click="restoreBackup(backup.filename)"
+                                @click="restoreBackup(backup)"
                             >
                                 <RotateCcw class="h-4 w-4" />
                             </Button>
@@ -195,7 +199,9 @@ function formatDate(timestamp: number): string {
             :title="t('settings.backup.restore_title')"
             :description="
                 t('settings.backup.restore_confirm', {
-                    filename: selectedBackup ?? '',
+                    date: selectedBackup
+                        ? formatDate(selectedBackup.created_at)
+                        : '',
                 })
             "
             :confirm-label="
