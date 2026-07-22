@@ -2826,6 +2826,68 @@ No migration or Composer/npm package change was made.
 - This progress record will be committed as `docs: record workspace portfolio CRUD` and pushed separately.
 - The pre-existing Task Index and Herd Upload progress entries remain preserved and excluded from this phase's staged changes.
 
+## SQLite Runtime Health And Query Performance
+
+### Status
+
+Completed and pushed.
+
+### Before-Phase Baseline
+
+- Laravel resolves the local default to an absolute database path, but `.env.example` still advertises a stale relational-database value and production startup does not validate the file, writable parent, or permitted directory.
+- Foreign keys, WAL, synchronous mode, transaction mode, and a 5-second busy timeout are fixed in `config/database.php`; cache size, temporary storage, and WAL checkpoint cadence are not configurable or verified.
+- Laravel's `/up` route proves only that the application booted. It does not verify SQLite integrity, foreign keys, configured pragmas, or path safety, and there is no path-safe internal diagnostic command.
+- `Todo::progress` and `Checklist::progress` execute relationship queries from model accessors. Major page query counts are not protected by deterministic budgets.
+- Live `EXPLAIN QUERY PLAN` uses the existing workspace/archive task index but creates a temporary B-tree for the default task ordering. Equivalent scoped ordering gaps exist for projects, project tasks, checklists, checklist items, activity, calendar, and notifications.
+
+### Scope And Decisions
+
+- Validate SQLite configuration once at startup, expose environment-backed supported pragmas, and connect database checks to Laravel's health event plus an internal diagnostic command without returning filesystem paths.
+- Remove query-bearing accessors and keep resource progress derived only from loaded data or explicit aggregates.
+- Add only composite indexes justified by captured representative query plans, preserving populated data through a SQLite-compatible migration.
+- Add focused runtime, health, migration, integrity, query-plan, no-hidden-query, query-budget, and busy/constraint classification tests before running the complete quality matrix.
+- Permit in-memory SQLite only for testing/runtime-specific connections; filesystem databases must be absolute, readable/writable, and contained by an explicitly configured allowed directory with a writable parent.
+- Validate every environment-backed integer and enum pragma before the connector interpolates it, and keep unsafe journal/synchronous choices outside the supported configuration contract.
+- Use Laravel's `DiagnosingHealth` event so `/up` remains a path-free generic probe while `app:database-health --json` exposes only boolean check names and never physical paths.
+- Preserve the existing bounded transaction retries and prove their classification against real SQLite locks and unique constraints rather than adding a second retry abstraction.
+- Add stable UUID tie-breakers to ordered reads so composite indexes and pagination have deterministic order.
+
+### Changed Files
+
+- SQLite environment/configuration contract, startup provider integration, health service, and internal command in `.env.example`, `config/database.php`, and `app/`.
+- Todo/checklist progress models and resources plus stable ordering in workspace, task-sort, project-detail, activity, and notification query paths.
+- `2026_07_22_165050_add_scoped_query_indexes.php` for task, project, checklist, activity, calendar/dashboard, and notification reads.
+- `tests/Feature/SqliteRuntimeHealthTest.php`, `tests/Feature/PageQueryBudgetTest.php`, and deterministic dashboard fixture coverage.
+
+### Migrations And Packages
+
+- Added and applied `2026_07_22_165050_add_scoped_query_indexes.php` to the populated live SQLite database; all eight indexes are reversible and no row/table rebuild was required.
+- Added no Composer or npm dependency.
+
+### Verification
+
+- Focused runtime, query-budget, schema-integrity, NativePHP, and page-architecture coverage passed with 45 tests and 525 assertions before the final matrix.
+- The complete Pest suite passed with 516 tests and 2,867 assertions. The previously random dashboard due-date fixture was made deterministic and then passed three consecutive focused runs.
+- `vendor/bin/pint --dirty --format agent`, full configured PHPStan with zero errors, Vue TypeScript checking, full ESLint, resource Prettier verification, the frontend regression test, and `git diff --check` passed.
+- The production build passed after transforming 3,398 modules; only the existing optional `fontaine` optimization notice and build-plugin timing advisory remain.
+- The health report verified the absolute-path policy, foreign keys, WAL, synchronous mode, 5-second busy timeout, cache size, in-memory temp store, WAL autocheckpoint, `quick_check`, and `foreign_key_check` on the live database.
+- Live `EXPLAIN QUERY PLAN` confirmed covering scoped indexes for default task order, project tasks, calendar/dashboard due dates, activity, and notifications with no temporary order B-tree; the focused plan suite also covers projects, checklists, and checklist items.
+- Representative data-growth coverage holds query counts constant and at or below 35 queries for dashboard, task index/detail, project index/detail, activity, calendar, and notifications.
+- A real second SQLite connection proved bounded transactions retry lock failures three times while a unique-constraint violation is attempted once.
+- Live Herd `GET /up` followed the HTTPS redirect and returned `200 {"status":"up"}`; current browser logs contain only historical 2026-07-19 entries.
+
+### Known Limitations And Next Work
+
+- The absolute/allowed-directory guard cannot prove every filesystem's locking semantics; deployments must still keep the database, WAL, and SHM files on a local SQLite-compatible filesystem.
+- Existing low-selectivity single-column indexes remain because this phase found no representative evidence that removing them would improve the current write/read balance.
+- Recurrence, reminder claiming, import/export, and destructive storage flows will reuse the verified SQLite transaction behavior in their dedicated phases.
+
+### Git Delivery
+
+- Implementation commit `1c8d8ac` (`fix: harden sqlite runtime and query performance`) was pushed successfully to `origin/main`.
+- This progress record will be committed separately as `docs: record sqlite runtime and query performance` and pushed to `origin/main`.
+- The pre-existing Task Detail, Task Index, and Herd Upload progress changes remain preserved and excluded from this phase's staged changes.
+
 ## Database Backup And Restore Hardening
 
 ### Status
