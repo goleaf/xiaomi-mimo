@@ -3382,6 +3382,70 @@ Completed and ready for delivery.
 - This progress record will be committed separately as `docs: record task index workflow` and pushed to `origin/main`.
 - The pre-existing Task Detail, Task Index build-repair, and Herd upload progress edits remain preserved and excluded from this phase's staged changes.
 
+## Localization And User Formatting
+
+### Status
+
+Completed and ready for delivery.
+
+### Before-Phase Baseline
+
+- English, Lithuanian, and Russian frontend catalogs have key parity, and most visible page copy already uses semantic keys.
+- Locale selection currently occurs inside Inertia prop sharing, after controllers and Form Request validation have already run; non-Inertia and validation responses therefore cannot reliably follow the user preference.
+- Preference writes accept arbitrary language, timezone, date/time format, and start-page strings, return JSON to Inertia forms, and the preferences UI omits language, time-format, and start-page controls.
+- Newly registered users do not receive a preference record, while the preferences page types the shared nullable preference as always present.
+- `useUi` and `useWorkspaceUi` duplicate formatting logic, ignore saved date/time formats, have no relative formatter, and can shift date-only values across extreme timezones.
+- The initial Blade document language is localized, but SPA navigation does not synchronize the document language after a preference change.
+
+### Delivered Scope And Decisions
+
+- Added request-time locale middleware before Inertia presentation and before API authentication/errors, resolving supported locale from the authenticated preference, session, browser language, then English fallback.
+- Replaced permissive inline preference validation with one authorized Form Request, an atomic update action, bounded language/timezone/date/time/view/start-page values, and an Inertia-compatible redirect response.
+- Added preference defaults during Fortify registration and a dedicated settings page controller that supplies safe defaults plus the complete PHP timezone inventory for existing users without a row.
+- Completed language, timezone, date format, time format, default-view, and start-page controls with validation states and EN/LT/RU semantic copy.
+- Bound a custom Fortify login response and made `/` honor the saved start page without trapping signed-out users behind a stale dashboard intention.
+- Centralized locale, timezone, date, time, number, and relative formatting for both frontend translation surfaces. Date-only values are timezone invariant, saved formats are applied, invalid timezone/locale data falls back safely, and runtime defaults are deterministic.
+- Added Lithuanian and Russian authentication, password-reset, and common validation translations while retaining English fallback for framework rules not overridden locally.
+- Kept the initial Blade `lang` and `dir` attributes and now synchronizes them after every successful Inertia navigation.
+
+### Changed Files
+
+- Locale enum/middleware, preference model/request/action/controllers, Fortify login response/provider binding, registration action, API response service, middleware registration, and home/settings routes under `app/`, `bootstrap/`, and `routes/`.
+- `resources/js/lib/formatters.ts` and its Node test, both UI composables, app document synchronization, preference page, shared model types, and the Inertia root view.
+- English, Lithuanian, and Russian UI additions plus Lithuanian/Russian auth, password, and validation catalogs.
+- Focused localization, preferences, authentication, registration, API contract, and formatter regressions.
+
+### Migrations And Packages
+
+- No migration was required; existing preference columns and database defaults remain compatible.
+- No Composer or npm dependency changed.
+
+### Verification
+
+- `vendor/bin/pint --dirty --format agent`: passed.
+- Focused localization/preferences/auth/API/dashboard coverage: passed, 41 tests and 308 assertions.
+- `php artisan test --compact`: passed, 535 tests and 3,125 assertions.
+- `composer run types:check`: passed with zero PHPStan errors.
+- `npm run types:check`, `npm run lint:check`, `npm run format:check`, and `npm run test:frontend`: passed; four frontend state/formatter regressions passed.
+- `npm run build`: passed after transforming 3,425 modules; only the existing optional `fontaine` optimization notice remains.
+- `git diff --check`: passed.
+- Route inspection confirmed `SetLocale` executes before API authentication and the version contract.
+- Live Herd desktop QA verified all regional/start-page fields, EN to LT navigation, localized page title, immediate document-language synchronization, and restoration to English with no captured console or page errors.
+- Live Herd mobile QA at 390 x 844 verified the complete preferences layout with zero document-level horizontal overflow.
+- Recent Boost browser logs contain only historical July 19 entries; the July 22 verification produced no new browser errors.
+
+### Known Limitations And Next Work
+
+- All supported locales are left-to-right, so `dir` remains `ltr`; adding an RTL locale requires extending the locale metadata rather than component-specific overrides.
+- Common Laravel validation/auth/password messages are localized; uncommon framework validation rules intentionally fall back to English instead of exposing untranslated keys.
+- Relative formatting is centralized and tested for later activity/notification integration in Phases 8 and 10.
+
+### Git Delivery
+
+- Implementation commit `139fbb1` (`feat: complete localization preferences`) was pushed successfully to `origin/main`.
+- This progress record will be committed separately as `docs: record localization preferences` and pushed to `origin/main`.
+- The pre-existing Task Detail, Task Index build-repair, and Herd upload progress edits remain preserved and excluded from this phase's staged changes.
+
 ## Task Detail And Collaboration Lifecycle
 
 ### Status
