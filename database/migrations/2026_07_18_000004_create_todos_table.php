@@ -46,6 +46,8 @@ return new class extends Migration
             $table->index(['project_id', 'status']);
             $table->index(['workspace_id', 'status']);
             $table->index(['workspace_id', 'is_archived']);
+
+            $table->foreign('parent_id')->references('id')->on('todos')->nullOnDelete();
         });
     }
 
