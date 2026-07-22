@@ -2938,6 +2938,60 @@ Completed and pushed.
 - This progress record will be committed as `docs: record sqlite relation integrity` and pushed separately.
 - The pre-existing Task Detail, Task Index, and Herd Upload progress changes remain preserved and excluded from this phase's staged changes.
 
+## Versioned API Contract And Authentication Hardening
+
+### Status
+
+Completed and pushed.
+
+### Before-Phase Baseline
+
+- The API is exposed only through unnamed `/api/*` routes with no version boundary or compatibility/deprecation signal.
+- Successful payloads vary between direct resources, domain-key wrappers, and collections; framework errors have a separate shape and no request correlation identifier.
+- API login and registration have no explicit limiter, and tokens issued by those endpoints receive Sanctum's unrestricted `*` ability.
+- Existing resource-family routes do enforce explicit ability middleware when a scoped token is supplied, and dedicated API controllers already exist for the main domain resources.
+
+### Scope And Decisions
+
+- Introduce canonical, named `/api/v1/*` routes while retaining `/api/*` as an explicitly deprecated compatibility layer backed by the same route definitions and controllers.
+- Standardize v1 success and error envelopes with a UUID request identifier, API version header, deterministic machine code, and localized messages without changing legacy payload bodies.
+- Add bounded credential/IP rate limits for login and registration and issue only the six documented workspace/project/task read/write abilities.
+- Return API user data through `UserResource`, keep Sanctum policies plus route abilities as separate checks, and add no dependency.
+
+### Changed Files
+
+- Versioned API middleware, response factory, token-ability enum, API authentication Form Requests, user controller/resource integration, authentication controller, and scoped child-resource controller adapters under `app/`.
+- `bootstrap/app.php`, `routes/api.php`, and the API authentication limiters in `app/Providers/AppServiceProvider.php`.
+- English, Lithuanian, and Russian API error translations under `lang/`.
+- `tests/Feature/Api/ApiContractTest.php` and `docs/progress.md`.
+
+### Migrations And Packages
+
+- No database migration was required.
+- No Composer or npm package change was made.
+
+### Verification
+
+- The focused v1 contract suite passed with 13 tests and 103 assertions; the complete API suite passed with 51 tests and 242 assertions.
+- Full Pest passed with 494 tests and 2,675 assertions, including the existing unversioned API compatibility suite.
+- `vendor/bin/pint --dirty --format agent`, full configured PHPStan with zero errors, Vue TypeScript checking, full ESLint, resource Prettier verification, the frontend regression test, and `git diff --check` passed.
+- The production build passed after transforming 3,394 modules; only the existing optional `fontaine` optimization notice remains.
+- Route inspection confirmed 65 named canonical `/api/v1/*` routes, globally scoped bindings, explicit workspace/project/task abilities, and separate login/registration limiters; secured legacy names and paths remain available.
+- Contract coverage proves normalized collection/item/204 responses, parent-scoped project and task-child bindings, explicit issued token abilities, 401/403/404/422/429 errors, UUID replacement/correlation, EN/LT fallback behavior, and unchanged legacy response bodies.
+- Live Herd requests confirmed a localized v1 `401` envelope with matching request headers and a legacy `401` body with `Deprecation`, `X-API-Version: legacy`, and a canonical successor link.
+- No current backend or browser error was produced by live API verification; Boost browser logs contain only historical entries from 2026-07-19, while expected test-only backup failure logs remain isolated to the testing environment.
+
+### Known Limitations And Next Work
+
+- The unversioned API remains enabled as a deprecated compatibility layer without a removal date so existing consumers are not broken during this phase.
+- A published consumer-facing OpenAPI schema and external-client migration guide remain future documentation work; the executable Pest contract is the current source of truth.
+
+### Git Delivery
+
+- Implementation commit `aef5b0f` (`feat: establish versioned api contract`) was pushed successfully to `origin/main`.
+- This progress record will be committed separately as `docs: record versioned api contract` and pushed to `origin/main`.
+- The pre-existing Task Detail, Task Index, and Herd Upload progress changes remain preserved and excluded from this phase's staged changes.
+
 ## Workspace Management Center Phase 3: Labels And Tags
 
 ### Status
