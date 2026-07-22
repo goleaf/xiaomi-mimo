@@ -3382,6 +3382,74 @@ Completed and ready for delivery.
 - This progress record will be committed separately as `docs: record task index workflow` and pushed to `origin/main`.
 - The pre-existing Task Detail, Task Index build-repair, and Herd upload progress edits remain preserved and excluded from this phase's staged changes.
 
+## Recurrence, Reminders, And Notifications
+
+### Status
+
+Completed and ready for delivery.
+
+### Before-Phase Baseline
+
+- Recurring tasks are processed by one unbounded command that clones every completed recurring task, advances from completion time, only emits future occurrences, reopens the source task, and has no durable occurrence identity; repeated or concurrent runs can therefore duplicate or skip work.
+- Recurrence rules are stored as allowlisted strings, but scheduling semantics are not centralized, monthly and daylight-saving boundaries are untested, and catch-up has no explicit limit.
+- Reminder dispatch loads every due row, sends before recording completion, and tracks only `is_sent`; there are no atomic claims, retry leases, failure/cancel states, attempt records, or queue-level duplicate protection.
+- Database notifications exist, but their page contract and mutation endpoints require a complete ownership, pagination, unread-count, direct-task-link, and browser-delivery review.
+- The live SQLite database currently contains no recurring tasks, four reminders, and five notifications, so schema changes must preserve those rows without relying on production fixtures.
+
+### Delivered Scope And Decisions
+
+- Added a canonical bounded recurrence schedule with legacy interval-one normalization, calendar-based daily/weekly/monthly/yearly advancement, no-overflow month/year behavior, and user-timezone anchoring when a due date is absent.
+- Added durable series, sequence, anchor, occurrence-date, and processed identity. Completion now generates the next occurrence immediately while the minute scheduler performs bounded catch-up; the completed source remains immutable and uniqueness makes repeated runs idempotent.
+- Copied project/assignee/parent scalar context, labels, tags, and checklist structure into the next occurrence; checklist items reset unchecked while comments, reminders, attachments, spent time, pin/favorite state, and completion state do not carry forward. Generation records an explicit activity event.
+- Replaced reminder `is_sent` scanning with pending/processing/delivered/failed/cancelled states, conditional SQLite-safe claims, ten-minute stale leases, three bounded attempts, persisted errors and retry times, channel-preference enforcement, and cancellable audit rows.
+- Added one unique database-queue job per reminder. In-app and browser deliveries write a deterministic notification and mark delivery in one transaction; email remains synchronous inside the queued delivery job and records success only after the mail channel accepts it.
+- Rebuilt the notification query contract around authenticated-user scoping, validated all/unread filters, stable 20/50-row pagination, global total/unread/read metrics, scoped write actions, and direct task URLs without per-row queries.
+- Completed notification pagination, task-link, semantic reminder copy, browser display deduplication, permission-state, and honest open-tab-only browser delivery UX in English, Lithuanian, and Russian.
+- Scheduled recurrence and reminder claiming every minute with overlap locks; production still uses the existing SQLite database queue and requires the scheduler plus a worker for the `notifications` queue.
+
+### Changed Files
+
+- Recurrence schedule/configuration/generation actions, completion/create/update/bulk integration, commands, todo model/resource, activity enum, reminder lifecycle actions/job/model/resource/notification/controller/query/request, factories, seeder, scheduler, and notification write actions under `app/`, `database/`, and `routes/`.
+- Notification inbox, notification settings, task reminder panel, shared TypeScript models, and EN/LT/RU `ui` and `workspace` catalogs under `resources/js/` and `lang/`.
+- Focused recurrence, reminder delivery, notification inbox, API, schema-upgrade, localization, design, application-contract, and query-budget regressions under `tests/Feature/`.
+- `docs/progress.md`.
+
+### Migrations And Packages
+
+- Added `2026_07_22_183405_add_occurrence_identity_to_todos_table.php`, `2026_07_22_183406_add_delivery_lifecycle_to_reminders_table.php`, and `2026_07_22_185758_optimize_recurring_todo_processing_index.php`.
+- The populated live migration normalized legacy recurrence rules, preserved all four reminder rows, and backfilled one delivered plus three pending lifecycle states before the scheduler smoke completed the three due deliveries.
+- No Composer or npm dependency changed.
+
+### Verification
+
+- `vendor/bin/pint --dirty --format agent`: passed.
+- Focused recurrence/reminder/notification/API/schema coverage: passed, 24 tests and 153 assertions.
+- `php artisan test --compact`: passed, 555 tests and 3,255 assertions.
+- `composer run types:check`: passed with zero PHPStan errors.
+- `npm run types:check`, `npm run lint:check`, `npm run format:check`, and `npm run test:frontend`: passed; four frontend state/formatter regressions passed.
+- `npm run build`: passed after transforming 3,425 modules; only the existing optional `fontaine` optimization notice remains.
+- Isolated `migrate:fresh --seed` passed through all 32 migrations and the complete seed set against a temporary SQLite database inside the allowed directory; the temporary file was then moved to Trash.
+- Populated down/up migration coverage passed, and the live SQLite schema exposes both recurrence uniqueness constraints plus optimized recurrence, reminder delivery, and claim-lease indexes.
+- `EXPLAIN QUERY PLAN` confirmed recurrence processing uses `todos_recurrence_processing_index` without a temporary sort, reminder claims use both delivery/lease indexes, and notification pagination uses `notifications_notifiable_created_index`.
+- Live scheduler/queue smoke processed zero recurring tasks, claimed and delivered the three due seeded reminders, left zero pending/failed jobs, and a repeated reminder scan claimed zero duplicates.
+- Live Herd desktop QA verified global inbox metrics, server-backed unread filtering, ARIA selection, browser permission/limitation state, zero overflow, and no captured console/page errors.
+- Live Herd mobile QA at 390 x 844 verified inbox and notification settings with zero document-level horizontal overflow.
+- Recent Boost browser logs contain only historical July 19 entries; the July 22 verification produced no new browser errors.
+- `git diff --check`: passed.
+
+### Known Limitations And Next Work
+
+- Browser reminders are intentionally open-tab only: there is no service worker, push subscription, or closed-browser delivery. The settings page states this explicitly.
+- Database notification delivery is transactionally idempotent. Email providers cannot guarantee exactly once across a process crash after acceptance but before the local success write; claim tokens, unique jobs, and bounded retries provide duplicate protection and retain failure evidence.
+- A production deployment must run `schedule:run` every minute and a queue worker that consumes the `notifications` queue; deployment reconciliation remains a Phase 11 release gate.
+- Phase 9 will complete versioned import/export, remaining attachment storage boundaries, and WAL-consistent backup/restore.
+
+### Git Delivery
+
+- Implementation commit `2973c2b` (`feat: complete recurrence reminders notifications`) was pushed successfully to `origin/main`.
+- This progress record will be committed separately as `docs: record recurrence reminders notifications` and pushed to `origin/main`.
+- The pre-existing Task Detail, Task Index build-repair, and Herd upload progress edits remain preserved and excluded from this phase's staged changes.
+
 ## Localization And User Formatting
 
 ### Status
